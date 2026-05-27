@@ -1,7 +1,10 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/dist
+client/dist/
+client/out-tsc/
+client/.angular/
+server/dist/
 /tmp
 /out-tsc
 /bazel-out
@@ -31,7 +34,6 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
 .sass-cache/
 /connect.lock
 /coverage
@@ -44,14 +46,10 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Angular build
-waypoint-client/dist/
-waypoint-client/.angular/
-
 # Environment
 .env
-waypoint-client/src/environments/environment*.ts
-!waypoint-client/src/environments/environment.example.ts
+client/src/environments/environment*.ts
+!client/src/environments/environment.example.ts
 
 # Logs
 *.log
