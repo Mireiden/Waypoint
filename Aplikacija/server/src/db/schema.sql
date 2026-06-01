@@ -113,6 +113,3 @@ ALTER TABLE reports
 CREATE INDEX idx_destinations_user ON destinations(user_id);
 CREATE INDEX idx_reviews_destination ON reviews(destination_id);
 CREATE INDEX idx_destinations_geometry ON destinations USING GIST(geometry);
-
-
-
