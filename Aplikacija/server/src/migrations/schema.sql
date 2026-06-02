@@ -23,6 +23,8 @@ CREATE TABLE destinations (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   images TEXT[],
+  city VARCHAR(100),
+  country VARCHAR(100),
   category_id INTEGER,
   user_id INTEGER,
   type VARCHAR(10) NOT NULL CHECK (type IN ('point', 'route')),
@@ -111,5 +113,6 @@ ALTER TABLE reports
 
 --indexes for frequent queries--
 CREATE INDEX idx_destinations_user ON destinations(user_id);
+CREATE INDEX idx_destinations_city_country ON destinations(city, country);
 CREATE INDEX idx_reviews_destination ON reviews(destination_id);
 CREATE INDEX idx_destinations_geometry ON destinations USING GIST(geometry);
