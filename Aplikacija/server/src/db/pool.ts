@@ -1,10 +1,13 @@
 import { Pool } from "pg";
 import config from "../config/config.js";
 
-const connectionString = config.db.url;
-
 const pool = new Pool({
-  connectionString,
+  connectionString: config.db.url,
+});
+
+pool.on("error", (error) => {
+  console.error("Unexpected error on idle PostgreSQL client", error);
+  process.exit(1);
 });
 
 pool.on("connect", () => {
