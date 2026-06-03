@@ -9,6 +9,9 @@ server/dist/
 /out-tsc
 /bazel-out
 
+# Prisma output
+*/generated/prisma
+
 # Node
 node_modules/
 npm-debug.log
