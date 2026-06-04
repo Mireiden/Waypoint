@@ -6,7 +6,7 @@ import perfectionist from "eslint-plugin-perfectionist";
 
 export default defineConfig(
   {
-    ignores: ["**/build/**", "**/dist/**", "**/node_modules/**"],
+    ignores: ["**/build/**", "**/dist/**", "**/node_modules/**", "**/generated/**"],
   },
   {
     plugins: {
