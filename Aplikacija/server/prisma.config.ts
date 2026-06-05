@@ -1,12 +1,14 @@
-import config from "./src/config/config.js";
 import { defineConfig } from "prisma/config";
 
+import config from "./src/config/config.js";
+
 export default defineConfig({
-  schema: "prisma/schema.prisma",
-  migrations: {
-    path: "prisma/migrations",
-  },
   datasource: {
     url: config.db.url,
   },
+  migrations: {
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
+  },
+  schema: "prisma/schema.prisma",
 });
