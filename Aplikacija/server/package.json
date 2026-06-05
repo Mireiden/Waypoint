@@ -4,7 +4,7 @@
   "description": "Waypoint Express.js server application",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx tsx --watch src/app.ts",
+    "dev": "npx tsx --watch src/server.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit",
