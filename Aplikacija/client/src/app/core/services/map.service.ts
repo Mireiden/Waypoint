@@ -1,0 +1,52 @@
+import { Injectable } from '@angular/core';
+import * as L from 'leaflet';
+
+const DEFAULT_CENTER: L.LatLngTuple = [44.8176, 20.4569]; // Belgrade
+const DEFAULT_ZOOM = 13;
+
+// Fix Leaflet's broken default marker icon paths when bundled
+const iconDefault = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+L.Marker.prototype.options.icon = iconDefault;
+
+@Injectable({ providedIn: 'root' })
+export class MapService {
+  private map: L.Map | null = null;
+
+  init(elementId: string): L.Map {
+    this.map = L.map(elementId, {
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
+      zoomControl: false,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(this.map);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+
+    return this.map;
+  }
+
+  flyTo(lat: number, lng: number, zoom = 13): void {
+    this.map?.flyTo([lat, lng], zoom, { duration: 1.2 });
+  }
+
+  getMap(): L.Map | null {
+    return this.map;
+  }
+
+  destroy(): void {
+    this.map?.remove();
+    this.map = null;
+  }
+}
