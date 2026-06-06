@@ -1,0 +1,32 @@
+<div class="map-wrapper">
+  <div class="search-overlay">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search for a city or place…"
+        [value]="searchQuery()"
+        (input)="onSearchInput($any($event.target).value)"
+        (blur)="closeSuggestions()"
+        autocomplete="off"
+      />
+      @if (isSearching()) {
+        <span class="spinner"></span>
+      }
+    </div>
+
+    @if (showSuggestions()) {
+      <ul class="suggestions">
+        @for (result of suggestions(); track result.place_id) {
+          <li class="suggestion-item" (mousedown)="selectLocation(result)">
+            <span class="suggestion-name">{{ result.display_name.split(',')[0] }}</span>
+            <span class="suggestion-sub">{{ result.display_name.split(',').slice(1, 3).join(',') }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div id="map" class="leaflet-map"></div>
+</div>
