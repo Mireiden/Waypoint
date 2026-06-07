@@ -1,5 +1,8 @@
 import dotenv from "dotenv";
+import type { SignOptions } from "jsonwebtoken";
 import { z } from "zod";
+
+type ExpiresIn = Exclude<SignOptions["expiresIn"], undefined>;
 
 dotenv.config();
 
@@ -13,6 +16,7 @@ const envSchema = z.object({
 
   JWT_SECRET: z.string().min(32),
   JWT_ALGO: z.string().default("HS256"),
+  JWT_EXPIRES_IN: z.string().default("7d"),
 });
 
 const env = envSchema.parse(process.env);
@@ -34,6 +38,7 @@ const config = {
   jwt: {
     secret: env.JWT_SECRET,
     algorithm: env.JWT_ALGO,
+    expiresIn: env.JWT_EXPIRES_IN as ExpiresIn,
   },
 };
 
