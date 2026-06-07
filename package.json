@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "@asymmetrik/ngx-leaflet": "^8.1.0",
-    "leaflet": "^1.9.4"
-  },
-  "devDependencies": {
-    "@types/leaflet": "^1.9.21"
-  }
-}
