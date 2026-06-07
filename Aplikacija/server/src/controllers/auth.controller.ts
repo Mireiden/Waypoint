@@ -10,8 +10,8 @@ export const login = async (req: Request, res: Response) => {
     return;
   }
 
-  const { safeUser, token } = await authService.login(loginInfo.data);
-  res.json({ safeUser, token });
+  const { user, token } = await authService.login(loginInfo.data);
+  res.json({ user, token });
 };
 
 export const register = async (req: Request, res: Response) => {
