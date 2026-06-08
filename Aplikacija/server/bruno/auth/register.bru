@@ -5,9 +5,17 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/register
-  body: none
+  url: {{baseUrl}}/api/auth/register
+  body: json
   auth: inherit
+}
+
+body:json {
+  {
+    "name": "Jovan Jovanovic",
+    "email": "jovan@waypoint.com",
+    "password": "sifra123"
+  }
 }
 
 settings {

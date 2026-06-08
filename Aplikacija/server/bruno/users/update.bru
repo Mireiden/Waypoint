@@ -1,0 +1,28 @@
+meta {
+  name: update
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseUrl}}/api/users/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+body:json {
+  {
+    "name":"Admin",
+    "email":"admin@waypoint.rs",
+    "avatarUrl":"https://example.com/avatar.png"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
