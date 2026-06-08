@@ -1,0 +1,20 @@
+# Build output
+dist/
+
+# Prisma generated client
+generated/prisma/
+
+# Node
+node_modules/
+.npm
+
+# Environment
+.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log
+
+# Bruno environments
+bruno/environments/
