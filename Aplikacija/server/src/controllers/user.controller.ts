@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
+import { AppError } from "../errors/appError.js";
 import { updateProfileSchema } from "../schemas/user.schema.js";
 import * as userService from "../services/user.service.js";
 
@@ -44,4 +45,10 @@ export const deleteUser = async (req: Request, res: Response) => {
 
   await userService.deleteUser(id);
   res.status(204).send();
+};
+
+export const getMe = async (req: Request, res: Response) => {
+  if (!req.user) throw new AppError("Unauthorized", 401); //user should never really be undefined, but req.user is nullable so this assertion is here to avoid typescript errors
+  const user = await userService.findById(req.user.id);
+  res.status(200).json(user);
 };
