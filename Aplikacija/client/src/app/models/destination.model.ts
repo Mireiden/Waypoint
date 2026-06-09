@@ -1,6 +1,6 @@
 export interface Destination {
   id: number;
-  name: string;
+  title: string;
   description: string;
   type: 'route' | 'poi';
 }

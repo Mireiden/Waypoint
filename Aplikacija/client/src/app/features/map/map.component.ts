@@ -36,9 +36,9 @@ export class MapComponent implements OnDestroy {
   sidebarOpen = signal(true);
   selectedDestination = signal<Destination | null>(null);
   destinations = signal<Destination[]>([
-    { id: 1, name: 'Kalemegdan', description: 'Historic fortress in Belgrade', type: 'poi' },
-    { id: 2, name: 'Fruška Gora', description: 'Mountain range in Vojvodina', type: 'route' },
-    { id: 3, name: 'Đavolja Varoš', description: 'Unique rock formations', type: 'poi' },
+    { id: 1, title: 'Kalemegdan', description: 'Historic fortress in Belgrade', type: 'poi' },
+    { id: 2, title: 'Fruška Gora', description: 'Mountain range in Vojvodina', type: 'route' },
+    { id: 3, title: 'Đavolja Varoš', description: 'Unique rock formations', type: 'poi' },
   ]);
 
   private readonly search$ = new Subject<string>();

@@ -3,22 +3,22 @@
     <button class="sidebar-toggle" (click)="onClickExpand()">{{ sidebarOpen() ? '‹' : '›' }}</button>
     @if (sidebarOpen()){
     @if (selectedDestination()) {
-      <div class="destination-detail">
-        <button class="back-btn" (click)="selectedDestination.set(null)">← Back</button>
-        <span class="detail-type">{{ selectedDestination()!.type }}</span>
-        <h2 class="detail-name">{{ selectedDestination()!.name }}</h2>
-        <p class="detail-desc">{{ selectedDestination()!.description }}</p>
-      </div>
+    <div class="destination-detail">
+      <button class="back-btn" (click)="selectedDestination.set(null)">← Back</button>
+      <span class="detail-type">{{ selectedDestination()!.type }}</span>
+      <h2 class="detail-name">{{ selectedDestination()!.title }}</h2>
+      <p class="detail-desc">{{ selectedDestination()!.description }}</p>
+    </div>
     } @else {
-      <ul class="sidebar-list">
-        @for (result of destinations(); track result.id) {
-          <li class="destination-item" (click)="selectedDestination.set(result)">
-            <span class="destination-type">{{ result.type }}</span>
-            <span class="destination-name">{{ result.name }}</span>
-            <span class="destination-desc">{{ result.description }}</span>
-          </li>
-        }
-      </ul>
+    <ul class="sidebar-list">
+      @for (result of destinations(); track result.id) {
+      <li class="destination-item" (click)="selectedDestination.set(result)">
+        <span class="destination-type">{{ result.type }}</span>
+        <span class="destination-name">{{ result.title }}</span>
+        <span class="destination-desc">{{ result.description }}</span>
+      </li>
+      }
+    </ul>
     }
     }
   </div>
@@ -27,31 +27,24 @@
     <div class="search-overlay">
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Search for a city or place…"
-          [value]="searchQuery()"
-          (input)="onSearchInput($any($event.target).value)"
-          (blur)="closeSuggestions()"
-          autocomplete="off"
-        />
+        <input type="text" class="search-input" placeholder="Search for a city or place…" [value]="searchQuery()"
+          (input)="onSearchInput($any($event.target).value)" (blur)="closeSuggestions()" autocomplete="off" />
         @if (isSearching()) {
-          <span class="spinner"></span>
+        <span class="spinner"></span>
         }
-    </div>
-    @if (showSuggestions()) {
+      </div>
+      @if (showSuggestions()) {
       <ul class="suggestions">
         @for (result of suggestions(); track result.place_id) {
-          <li class="suggestion-item" (mousedown)="selectLocation(result)">
-            <span class="suggestion-name">{{ result.display_name.split(',')[0] }}</span>
-            <span class="suggestion-sub">{{ result.display_name.split(',').slice(1, 3).join(',') }}</span>
-          </li>
+        <li class="suggestion-item" (mousedown)="selectLocation(result)">
+          <span class="suggestion-name">{{ result.display_name.split(',')[0] }}</span>
+          <span class="suggestion-sub">{{ result.display_name.split(',').slice(1, 3).join(',') }}</span>
+        </li>
         }
       </ul>
-    }
-  </div>
+      }
+    </div>
 
-  <div id="map" class="leaflet-map"></div>
-   </div>
+    <div id="map" class="leaflet-map"></div>
+  </div>
 </div>
