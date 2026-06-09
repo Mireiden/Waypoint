@@ -1,8 +1,168 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
 .map-wrapper {
-  position: relative;
+  display: flex;
   width: 100%;
   height: 100%;
 }
+
+.map-area {
+  position: relative;
+  flex: 1;
+  height: 100%;
+}
+
+.sidebar {
+  position: relative;
+  width: 320px;
+  height: 100%;
+  overflow: hidden;
+  transition: width 0.3s ease;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+
+  &.collapsed {
+    width: 56px;
+  }
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+  z-index: 1;
+
+  &:hover {
+    background: var(--surface-alt);
+    color: var(--primary);
+  }
+}
+
+.sidebar-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 56px 0 0;
+}
+
+.destination-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border);
+
+  &:hover {
+    background: var(--surface-alt);
+
+    .destination-name {
+      color: var(--primary);
+    }
+  }
+}
+
+.destination-type {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-radius: 4px;
+  padding: 2px 7px;
+  width: fit-content;
+}
+
+.destination-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  transition: color 0.15s;
+}
+
+.destination-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.destination-detail {
+  padding: 56px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.detail-type {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-radius: 4px;
+  padding: 2px 7px;
+  width: fit-content;
+}
+
+.detail-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.detail-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 
 .leaflet-map {
   width: 100%;
@@ -30,9 +190,19 @@
   transition: box-shadow 0.2s;
 
   &:focus-within {
-    box-shadow: var(--shadow-md), 0 0 0 3px var(--primary-light);
+    box-shadow:
+      var(--shadow-md),
+      0 0 0 3px var(--primary-light);
     border-color: var(--primary-mid);
   }
+}
+
+.destination-item {
+  gap: 8px;
+  justify-items: center;
+  margin: 5px;
+  display: grid;
+  padding: 10px;
 }
 
 .search-icon {
@@ -65,7 +235,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .suggestions {

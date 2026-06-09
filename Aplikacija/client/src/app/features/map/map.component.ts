@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Destination } from '../../models/destination.model';
 
 import { MapService } from '../../core/services/map.service';
 import { ApiService, NominatimResult } from '../../core/services/api.service';
@@ -32,6 +33,13 @@ export class MapComponent implements OnDestroy {
   suggestions = signal<NominatimResult[]>([]);
   showSuggestions = signal(false);
   isSearching = signal(false);
+  sidebarOpen = signal(true);
+  selectedDestination = signal<Destination | null>(null);
+  destinations = signal<Destination[]>([
+    { id: 1, name: 'Kalemegdan', description: 'Historic fortress in Belgrade', type: 'poi' },
+    { id: 2, name: 'Fruška Gora', description: 'Mountain range in Vojvodina', type: 'route' },
+    { id: 3, name: 'Đavolja Varoš', description: 'Unique rock formations', type: 'poi' },
+  ]);
 
   private readonly search$ = new Subject<string>();
 
@@ -83,5 +91,10 @@ export class MapComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.mapService.destroy();
+  }
+
+  onClickExpand(): void {
+    this.sidebarOpen.set(!this.sidebarOpen());
+    setTimeout(() => this.mapService.invalidateSize(), 300);
   }
 }

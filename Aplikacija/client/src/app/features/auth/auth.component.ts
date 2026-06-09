@@ -274,7 +274,11 @@ export class AuthComponent {
       .subscribe({
         next: () => this.router.navigate(['/map']),
         error: (err) => {
-          const message = err?.error?.error ?? 'Registration failed. Please try again.';
+          const raw = err?.error?.error;
+          const message =
+            typeof raw === 'string'
+              ? raw
+              : 'Invalid input. Password must be 8-64 characters long and contain at least one letter and one number.';
           this.regError.set(message);
         },
       });

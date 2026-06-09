@@ -21,6 +21,11 @@ export class MapService {
   private map: L.Map | null = null;
 
   init(elementId: string): L.Map {
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+
     this.map = L.map(elementId, {
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
@@ -28,7 +33,8 @@ export class MapService {
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(this.map);
 
@@ -48,5 +54,9 @@ export class MapService {
   destroy(): void {
     this.map?.remove();
     this.map = null;
+  }
+
+  invalidateSize(): void {
+    this.map?.invalidateSize();
   }
 }

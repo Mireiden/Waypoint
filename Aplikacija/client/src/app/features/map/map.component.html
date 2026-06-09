@@ -1,21 +1,45 @@
 <div class="map-wrapper">
-  <div class="search-overlay">
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input
-        type="text"
-        class="search-input"
-        placeholder="Search for a city or place…"
-        [value]="searchQuery()"
-        (input)="onSearchInput($any($event.target).value)"
-        (blur)="closeSuggestions()"
-        autocomplete="off"
-      />
-      @if (isSearching()) {
-        <span class="spinner"></span>
-      }
-    </div>
+  <div class="sidebar" [class.collapsed]="!sidebarOpen()">
+    <button class="sidebar-toggle" (click)="onClickExpand()">{{ sidebarOpen() ? '‹' : '›' }}</button>
+    @if (sidebarOpen()){
+    @if (selectedDestination()) {
+      <div class="destination-detail">
+        <button class="back-btn" (click)="selectedDestination.set(null)">← Back</button>
+        <span class="detail-type">{{ selectedDestination()!.type }}</span>
+        <h2 class="detail-name">{{ selectedDestination()!.name }}</h2>
+        <p class="detail-desc">{{ selectedDestination()!.description }}</p>
+      </div>
+    } @else {
+      <ul class="sidebar-list">
+        @for (result of destinations(); track result.id) {
+          <li class="destination-item" (click)="selectedDestination.set(result)">
+            <span class="destination-type">{{ result.type }}</span>
+            <span class="destination-name">{{ result.name }}</span>
+            <span class="destination-desc">{{ result.description }}</span>
+          </li>
+        }
+      </ul>
+    }
+    }
+  </div>
 
+  <div class="map-area">
+    <div class="search-overlay">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search for a city or place…"
+          [value]="searchQuery()"
+          (input)="onSearchInput($any($event.target).value)"
+          (blur)="closeSuggestions()"
+          autocomplete="off"
+        />
+        @if (isSearching()) {
+          <span class="spinner"></span>
+        }
+    </div>
     @if (showSuggestions()) {
       <ul class="suggestions">
         @for (result of suggestions(); track result.place_id) {
@@ -29,4 +53,5 @@
   </div>
 
   <div id="map" class="leaflet-map"></div>
+   </div>
 </div>
