@@ -1,4 +1,4 @@
-import type { Prisma } from "../../generated/prisma/client.js";
+import type { UpdateProfileInput } from "../schemas/user.schema.js";
 
 import { AppError } from "../errors/appError.js";
 import { prisma } from "../lib/prisma.js";
@@ -30,22 +30,17 @@ export const findByEmail = async (email: string) => {
   return user;
 };
 
-export const updateProfile = async (id: number, data: Prisma.UserUpdateInput) => {
+export const updateProfile = async (id: number, data: UpdateProfileInput) => {
   return prisma.user.update({
-    data,
+    where: { id },
+    data: Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)),
     omit: {
       passwordHash: true,
     },
-    where: { id },
   });
 };
 
 export const deleteUser = async (id: number) => {
-  const user = await prisma.user.findFirst({
-    where: { id },
-  });
-  if (!user) throw new AppError("User not found", 404);
-
   await prisma.user.delete({
     where: { id },
   });

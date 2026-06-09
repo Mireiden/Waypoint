@@ -4,21 +4,20 @@ meta {
   seq: 1
 }
 
-put {
+patch {
   url: {{baseUrl}}/api/users/:id
   body: json
   auth: inherit
 }
 
 params:path {
-  id: 1
+  id: 6
 }
 
 body:json {
   {
-    "name":"Admin",
-    "email":"admin@waypoint.rs",
-    "avatarUrl":"https://example.com/avatar.png"
+    "name": "Milica Milicic",
+    "avatarUrl": "https://example.com/tilica.png"
   }
 }
 
