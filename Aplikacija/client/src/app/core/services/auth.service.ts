@@ -1,43 +1,41 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs';
-import type { AuthResponse, LoginPayload, RegisterPayload, User } from '../../models/auth.model';
-
-const TOKEN_KEY = 'waypoint_token';
+import type { AuthResponse, LoginPayload, RegisterPayload } from '../../models/auth.model';
+import type { User } from '../../models/user.model';
+import { environment } from '../../../environments/environment';
 const USER_KEY = 'waypoint_user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiBase = 'http://localhost:3000/api/auth';
+  private readonly apiBase = `${environment.apiUrl}/auth`;
 
   readonly currentUser = signal<User | null>(this.readStoredUser());
-  readonly token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-
   login(payload: LoginPayload) {
     return this.http
-      .post<AuthResponse>(`${this.apiBase}/login`, payload)
+      .post<AuthResponse>(`${this.apiBase}/login`, payload, { withCredentials: true })
       .pipe(tap((response) => this.setSession(response)));
   }
 
   register(payload: RegisterPayload) {
     return this.http
-      .post<AuthResponse>(`${this.apiBase}/register`, payload)
+      .post<AuthResponse>(`${this.apiBase}/register`, payload, { withCredentials: true })
       .pipe(tap((response) => this.setSession(response)));
   }
 
-  logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    this.currentUser.set(null);
-    this.token.set(null);
+  logout() {
+    return this.http.post<void>(`${this.apiBase}/logout`, null, { withCredentials: true }).pipe(
+      tap(() => {
+        localStorage.removeItem(USER_KEY);
+        this.currentUser.set(null);
+      }),
+    );
   }
 
   private setSession(response: AuthResponse): void {
-    localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(USER_KEY, JSON.stringify(response.user));
     this.currentUser.set(response.user);
-    this.token.set(response.token);
   }
 
   private readStoredUser(): User | null {
