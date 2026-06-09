@@ -97,6 +97,38 @@
   flex-shrink: 0;
 }
 
+.explore-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 36px;
+  padding: 12px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  transition: all 0.2s;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.7);
+    color: white;
+
+    svg {
+      transform: translateX(5px);
+    }
+  }
+}
+
 /* ── Form panel ───────────────────────────── */
 .form-panel {
   flex: 0 0 58%;

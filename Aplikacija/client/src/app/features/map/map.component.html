@@ -12,10 +12,16 @@
     } @else {
     <ul class="sidebar-list">
       @for (result of destinations(); track result.id) {
-      <li class="destination-item" (click)="selectedDestination.set(result)">
-        <span class="destination-type">{{ result.type }}</span>
-        <span class="destination-name">{{ result.title }}</span>
-        <span class="destination-desc">{{ result.description }}</span>
+      <li class="destination-item" [class.type-route]="result.type === 'route'" [class.type-poi]="result.type === 'poi'" (click)="selectedDestination.set(result)">
+        <div class="item-accent"></div>
+        <div class="item-body">
+          <span class="destination-name">{{ result.title }}</span>
+          <span class="destination-desc">{{ result.description }}</span>
+          <span class="destination-type">{{ result.type === 'poi' ? 'Point of interest' : 'Route' }}</span>
+        </div>
+        <svg class="item-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </li>
       }
     </ul>
@@ -46,5 +52,30 @@
     </div>
 
     <div id="map" class="leaflet-map"></div>
+    <div class="bottom-sheet" [class.expanded]="bottomSheetOpen()">
+      <div class="bottom-sheet-handle" (click)="bottomSheetOpen.set(!bottomSheetOpen())">
+        <div class="handle-bar"></div>
+      </div>
+      @if (bottomSheetOpen()){
+        @if (selectedDestination()) {
+        <div class="destination-detail">
+          <button class="back-btn" (click)="selectedDestination.set(null)">← Back</button>
+          <span class="detail-type">{{ selectedDestination()!.type }}</span>
+          <h2 class="detail-name">{{ selectedDestination()!.title }}</h2>
+          <p class="detail-desc">{{ selectedDestination()!.description }}</p>
+        </div>
+        } @else {
+        <ul class="sidebar-list">
+          @for (result of destinations(); track result.id) {
+          <li class="destination-item" (click)="selectedDestination.set(result)">
+            <span class="destination-type">{{ result.type }}</span>
+            <span class="destination-name">{{ result.title }}</span>
+            <span class="destination-desc">{{ result.description }}</span>
+          </li>
+          }
+        </ul>
+        }
+      }
+    </div>
   </div>
 </div>

@@ -35,6 +35,7 @@ export class MapComponent implements OnDestroy {
   isSearching = signal(false);
   sidebarOpen = signal(true);
   selectedDestination = signal<Destination | null>(null);
+  bottomSheetOpen = signal(false);
   destinations = signal<Destination[]>([
     { id: 1, title: 'Kalemegdan', description: 'Historic fortress in Belgrade', type: 'poi' },
     { id: 2, title: 'Fruška Gora', description: 'Mountain range in Vojvodina', type: 'route' },

@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -12,99 +12,71 @@ import { AuthService } from '../../../core/services/auth.service';
         Waypoint
       </a>
       <div class="nav-links">
-        <a routerLink="/map" routerLinkActive="active">Map</a>
         @if (auth.currentUser()) {
-          <button class="avatar-btn" type="button" aria-label="Account" routerLink="/profile">
-            <svg class="avatar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <button class="profile-btn" type="button" routerLink="/profile">
+            <svg
+              class="avatar-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <circle cx="12" cy="8" r="4" fill="currentColor" />
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="currentColor" />
             </svg>
+            <span class="user-name">{{ auth.currentUser()!.name }}</span>
           </button>
+
+          <div class="logout-wrap">
+            <button
+              class="icon-btn"
+              type="button"
+              aria-label="Sign out"
+              (click)="confirmingLogout.set(!confirmingLogout())"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M16 17l5-5-5-5M21 12H9M13 5H5a2 2 0 00-2 2v10a2 2 0 002 2h8"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            @if (confirmingLogout()) {
+              <div class="logout-popup">
+                <span class="confirm-label">Sign out?</span>
+                <div class="confirm-actions">
+                  <button class="confirm-btn yes" type="button" (click)="logout()">Yes</button>
+                  <button
+                    class="confirm-btn no"
+                    type="button"
+                    (click)="confirmingLogout.set(false)"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
         } @else {
           <a routerLink="/auth" routerLinkActive="active">Sign in</a>
         }
       </div>
     </nav>
   `,
-  styles: [
-    `
-      .navbar {
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-        background: var(--primary-dark);
-        color: white;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-        position: relative;
-        z-index: 1000;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 1.25rem;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        color: white;
-        text-decoration: none;
-      }
-
-      .brand-icon {
-        font-size: 1.4rem;
-        color: var(--accent);
-      }
-
-      .nav-links {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      .nav-links a {
-        color: rgba(255, 255, 255, 0.8);
-        text-decoration: none;
-        padding: 6px 14px;
-        border-radius: var(--radius);
-        font-size: 0.9rem;
-        transition: all 0.2s;
-      }
-
-      .nav-links a:hover,
-      .nav-links a.active {
-        color: white;
-        background: rgba(255, 255, 255, 0.15);
-      }
-
-      .avatar-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        background: rgba(255, 255, 255, 0.12);
-        color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-        padding: 0;
-      }
-
-      .avatar-btn:hover {
-        background: rgba(255, 255, 255, 0.22);
-        border-color: rgba(255, 255, 255, 0.6);
-      }
-
-      .avatar-icon {
-        width: 20px;
-        height: 20px;
-      }
-    `,
-  ],
+  styleUrl: './navbar.component.scss',
 })
 export class NavbarComponent {
   readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  confirmingLogout = signal(false);
+
+  logout(): void {
+    this.confirmingLogout.set(false);
+    this.auth.logout().subscribe({
+      next: () => this.router.navigate(['/auth']),
+      error: () => this.router.navigate(['/auth']),
+    });
+  }
 }
