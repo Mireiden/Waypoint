@@ -1,11 +1,4 @@
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  avatarUrl: string | null;
-  role: string;
-  createdAt: string;
-}
+import { User } from './user.model';
 
 export interface AuthResponse {
   user: User;
