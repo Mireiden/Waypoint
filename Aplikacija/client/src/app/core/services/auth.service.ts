@@ -24,6 +24,11 @@ export class AuthService {
       .pipe(tap((response) => this.setSession(response)));
   }
 
+  updateStoredUser(user: User): void {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    this.currentUser.set(user);
+  }
+
   logout() {
     return this.http.post<void>(`${this.apiBase}/logout`, null, { withCredentials: true }).pipe(
       tap(() => {
