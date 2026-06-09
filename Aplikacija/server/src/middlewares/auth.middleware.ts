@@ -1,17 +1,20 @@
-import jwt from "jsonwebtoken";
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "../errors/appError.js";
-import config from "../config/config.js";
+
+import jwt from "jsonwebtoken";
+
 import type { AuthUser } from "../types/express.js";
+
+import config from "../config/config.js";
+import { AppError } from "../errors/appError.js";
 
 const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   let token: string | undefined;
 
-  if (authHeader && authHeader.startsWith("Bearer ")) {
+  if (authHeader?.startsWith("Bearer ")) {
     token = authHeader.split(" ").at(1);
-  } else if (req.cookies?.jwt) {
-    token = req.cookies.jwt;
+  } else if (req.cookies.jwt) {
+    token = String(req.cookies.jwt);
   }
   if (!token) throw new AppError("Unauthorized, no token provided", 401);
 

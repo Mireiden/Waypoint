@@ -1,15 +1,16 @@
-import express, { type Application } from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import express, { type Application } from "express";
+
 import config from "./config/config.js";
-import routes from "./routes/index.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import routes from "./routes/index.js";
 
 const app: Application = express();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: config.cors.frontendUrl, credentials: true }));
+app.use(cors({ credentials: true, origin: config.cors.frontendUrl }));
 
 app.use("/api/", routes);
 

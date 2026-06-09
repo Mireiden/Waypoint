@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const passwordRegex: RegExp = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,64}$/; //at least one number, at least one letter, 8-64 in length
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,64}$/; //at least one number, at least one letter, 8-64 in length
 
 export const loginSchema = z.object({
   email: z.email("Invalid email address"),

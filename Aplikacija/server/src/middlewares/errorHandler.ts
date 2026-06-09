@@ -1,7 +1,8 @@
-import type { Request, Response, NextFunction } from "express";
-import { AppError } from "../errors/appError.js";
+import type { NextFunction, Request, Response } from "express";
+
 import { Prisma } from "../../generated/prisma/client.js";
 import config from "../config/config.js";
+import { AppError } from "../errors/appError.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {

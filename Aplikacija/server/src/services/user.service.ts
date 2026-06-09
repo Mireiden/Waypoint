@@ -1,4 +1,5 @@
 import type { Prisma } from "../../generated/prisma/client.js";
+
 import { AppError } from "../errors/appError.js";
 import { prisma } from "../lib/prisma.js";
 
@@ -12,10 +13,10 @@ export const findAll = async () => {
 
 export const findById = async (id: number) => {
   const user = await prisma.user.findUnique({
-    where: { id },
     omit: {
       passwordHash: true,
     },
+    where: { id },
   });
   if (!user) throw new AppError("User not found", 404);
   return user;
@@ -31,11 +32,11 @@ export const findByEmail = async (email: string) => {
 
 export const updateProfile = async (id: number, data: Prisma.UserUpdateInput) => {
   return prisma.user.update({
-    where: { id },
     data,
     omit: {
       passwordHash: true,
     },
+    where: { id },
   });
 };
 

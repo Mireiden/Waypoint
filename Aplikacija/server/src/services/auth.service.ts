@@ -1,9 +1,11 @@
-import { prisma } from "../lib/prisma.js";
-import { AppError } from "../errors/appError.js";
-import type { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
+import type { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
+
 import config from "../config/config.js";
+import { AppError } from "../errors/appError.js";
+import { prisma } from "../lib/prisma.js";
 
 export const register = async (data: RegisterInput) => {
   const { name, password } = data;
@@ -31,7 +33,7 @@ export const register = async (data: RegisterInput) => {
     expiresIn: config.jwt.expiresIn,
   });
 
-  return { user, token };
+  return { token, user };
 };
 
 export const login = async (data: LoginInput) => {

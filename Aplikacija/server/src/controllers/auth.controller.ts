@@ -1,8 +1,10 @@
+import type { Request, Response } from "express";
+
 import { treeifyError } from "zod";
+
+import config from "../config/config.js";
 import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 import * as authService from "../services/auth.service.js";
-import type { Request, Response } from "express";
-import config from "../config/config.js";
 
 export const login = async (req: Request, res: Response) => {
   const loginInfo = await loginSchema.safeParseAsync(req.body);
@@ -15,12 +17,12 @@ export const login = async (req: Request, res: Response) => {
   res
     .cookie("jwt", token, {
       httpOnly: true,
-      secure: config.server.env === `production`,
-      sameSite: "strict",
       maxAge: 1000 * 60 * 60 * 24 * 7,
+      sameSite: "strict",
+      secure: config.server.env === `production`,
     })
-    .status(201)
-    .json({ user, token });
+    .status(200)
+    .json({ user });
 };
 
 export const register = async (req: Request, res: Response) => {
@@ -34,14 +36,14 @@ export const register = async (req: Request, res: Response) => {
   res
     .cookie("jwt", token, {
       httpOnly: true,
-      secure: config.server.env === `production`,
-      sameSite: "strict",
       maxAge: 1000 * 60 * 60 * 24 * 7,
+      sameSite: "strict",
+      secure: config.server.env === `production`,
     })
     .status(201)
-    .json({ user, token });
+    .json({ user });
 };
 
-export const logout = async (req: Request, res: Response) => {
+export const logout = (req: Request, res: Response) => {
   res.clearCookie("jwt").status(200).json({ message: "Logged out successfuly." });
 };

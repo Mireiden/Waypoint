@@ -1,7 +1,8 @@
+import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
+
 import { updateProfileSchema } from "../schemas/user.schema.js";
 import * as userService from "../services/user.service.js";
-import { type Request, type Response } from "express";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await userService.findAll();

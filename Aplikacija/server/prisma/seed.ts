@@ -1,5 +1,6 @@
-import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+import { PrismaClient } from "../generated/prisma/client.js";
 import config from "../src/config/config.js";
 
 const adapter = new PrismaPg({
@@ -21,86 +22,86 @@ async function main() {
   await prisma.category.createMany({
     data: [
       {
-        name: "Hidden Gems",
         description: "Lesser-known spots off the beaten path",
         icon: "gem",
+        name: "Hidden Gems",
       },
       {
-        name: "Scenic",
         description: "Panoramic views and beautiful landscapes",
         icon: "mountain",
+        name: "Scenic",
       },
       {
-        name: "Gastronomic",
         description: "Food, drinks and local specialties",
         icon: "utensils",
+        name: "Gastronomic",
       },
       {
-        name: "Fast Route",
         description: "Quick and efficient routes",
         icon: "zap",
+        name: "Fast Route",
       },
       {
-        name: "Fishing",
         description: "Fishing spots and riverside routes",
         icon: "fish",
+        name: "Fishing",
       },
     ],
     skipDuplicates: true,
   });
 
   const categories = await prisma.category.findMany();
-  const hiddenGems = categories.find((c) => c.name === "Hidden Gems")!;
-  const scenic = categories.find((c) => c.name === "Scenic")!;
-  const gastronomic = categories.find((c) => c.name === "Gastronomic")!;
-  const fishing = categories.find((c) => c.name === "Fishing")!;
+  const hiddenGems = categories.find((c) => c.name === "Hidden Gems");
+  const scenic = categories.find((c) => c.name === "Scenic");
+  const gastronomic = categories.find((c) => c.name === "Gastronomic");
+  const fishing = categories.find((c) => c.name === "Fishing");
 
-  console.log(`Created ${categories.length} categories`);
+  console.log(`Created ${String(categories.length)} categories`);
 
   // ---USERS---
   // TODO:replace passwords
   const admin = await prisma.user.upsert({
-    where: { email: "admin@waypoint.com" },
-    update: {},
     create: {
-      name: "Admin",
       email: "admin@waypoint.com",
+      name: "Admin",
       passwordHash: "hashed_password_here",
       role: "admin",
     },
+    update: {},
+    where: { email: "admin@waypoint.com" },
   });
 
   const miroslav = await prisma.user.upsert({
-    where: { email: "miroslav@waypoint.com" },
-    update: {},
     create: {
-      name: "Miroslav Vucetic",
       email: "miroslav@waypoint.com",
+      name: "Miroslav Vucetic",
       passwordHash: "hashed_password_here",
       role: "user",
     },
+    update: {},
+    where: { email: "miroslav@waypoint.com" },
   });
 
   const strahinja = await prisma.user.upsert({
-    where: { email: "strahinja@waypoint.com" },
-    update: {},
     create: {
-      name: "Strahinja Aleksic",
       email: "strahinja@waypoint.com",
+      name: "Strahinja Aleksic",
       passwordHash: "hashed_password_here",
       role: "user",
     },
+    update: {},
+    where: { email: "strahinja@waypoint.com" },
   });
 
   const petar = await prisma.user.upsert({
-    where: { email: "petar@waypoint.com" },
-    update: {},
     create: {
-      name: "Petar Petrovic",
       email: "petar@waypoint.com",
+      name: "Petar Petrovic",
       passwordHash: "hashed_password_here",
       role: "user",
     },
+    update: {},
+    where: { email: "petar@waypoint.com" },
   });
 
   console.log("Created users");
@@ -111,15 +112,15 @@ async function main() {
 
   const nisFortress = await prisma.destination.create({
     data: {
-      title: "Nis Fortress",
+      categoryId: scenic.id,
+      city: "Nis",
+      country: "Serbia",
       description:
         "A well-preserved 18th-century Ottoman fortress in the heart of Nis, with a riverside promenade along the ramparts and an open-air summer stage inside the walls.",
       images: [],
-      userId: miroslav.id,
-      categoryId: scenic.id,
+      title: "Nis Fortress",
       type: "point",
-      city: "Nis",
-      country: "Serbia",
+      userId: miroslav.id,
     },
   });
 
@@ -131,15 +132,15 @@ async function main() {
 
   const kafanaMarjan = await prisma.destination.create({
     data: {
-      title: "Kafana Marjan",
+      categoryId: gastronomic.id,
+      city: "Drazevac",
+      country: "Serbia",
       description:
         "The oldest kafana in the Nisava district, open for over 50 years. Famous for incredibly fast service, cheap traditional Serbian food, and free salads and pogaca bread with every order. Always packed — reserve ahead.",
       images: [],
-      userId: petar.id,
-      categoryId: gastronomic.id,
+      title: "Kafana Marjan",
       type: "point",
-      city: "Drazevac",
-      country: "Serbia",
+      userId: petar.id,
     },
   });
 
@@ -152,15 +153,15 @@ async function main() {
   // Fishing stops along the Nisava between Duvaniste and Brzi Brod
   const duvanisteBank = await prisma.destination.create({
     data: {
-      title: "Nisava Fishing Bank - Duvaniste",
+      categoryId: fishing.id,
+      city: "Nis",
+      country: "Serbia",
       description:
         "A calm, accessible stretch of the Nisava riverbank in Duvaniste, popular with local anglers. Good for carp and chub, especially in early morning.",
       images: [],
-      userId: strahinja.id,
-      categoryId: fishing.id,
+      title: "Nisava Fishing Bank - Duvaniste",
       type: "point",
-      city: "Nis",
-      country: "Serbia",
+      userId: strahinja.id,
     },
   });
 
@@ -172,15 +173,15 @@ async function main() {
 
   const underBridgeSpot = await prisma.destination.create({
     data: {
-      title: "Under the Old Bridge - Nisava",
+      categoryId: fishing.id,
+      city: "Nis",
+      country: "Serbia",
       description:
         "A shaded fishing spot beneath an old road bridge on the Nisava, between Duvaniste and Brzi Brod. Quieter than the main banks and less frequented by passers-by.",
       images: [],
-      userId: strahinja.id,
-      categoryId: fishing.id,
+      title: "Under the Old Bridge - Nisava",
       type: "point",
-      city: "Nis",
-      country: "Serbia",
+      userId: strahinja.id,
     },
   });
 
@@ -192,15 +193,15 @@ async function main() {
 
   const brziBrodBank = await prisma.destination.create({
     data: {
-      title: "Nisava Fishing Bank - Brzi Brod",
+      categoryId: fishing.id,
+      city: "Nis",
+      country: "Serbia",
       description:
         "A well-known fishing spot at the Brzi Brod stretch of the Nisava, about 6km east of the city center. Known for catfish and carp. Easy access from the road.",
       images: [],
-      userId: petar.id,
-      categoryId: fishing.id,
+      title: "Nisava Fishing Bank - Brzi Brod",
       type: "point",
-      city: "Nis",
-      country: "Serbia",
+      userId: petar.id,
     },
   });
 
@@ -213,15 +214,15 @@ async function main() {
   // Two extra destinations
   const skullTower = await prisma.destination.create({
     data: {
-      title: "Skull Tower (Cele Kula)",
+      categoryId: hiddenGems.id,
+      city: "Nis",
+      country: "Serbia",
       description:
         "A macabre but historically significant tower built by the Ottomans in 1809 using the skulls of Serbian rebels after the Battle of Cegar. One of the most unique monuments in the Balkans, now enclosed in a chapel.",
       images: [],
-      userId: strahinja.id,
-      categoryId: hiddenGems.id,
+      title: "Skull Tower (Cele Kula)",
       type: "point",
-      city: "Nis",
-      country: "Serbia",
+      userId: strahinja.id,
     },
   });
 
@@ -234,15 +235,15 @@ async function main() {
   // Bubanj is a forested hill west of Nis, known for a large WWII memorial and walking trails
   const bubanjWalk = await prisma.destination.create({
     data: {
-      title: "Bubanj Forest Walk",
+      categoryId: scenic.id,
+      city: "Nis",
+      country: "Serbia",
       description:
         "A peaceful forest walk through Bubanj hill, home to one of the largest WWII memorials in Serbia. Well-marked trails wind through oak and pine forest with views over the city. Popular with locals for morning walks.",
       images: [],
-      userId: petar.id,
-      categoryId: scenic.id,
+      title: "Bubanj Forest Walk",
       type: "point",
-      city: "Nis",
-      country: "Serbia",
+      userId: petar.id,
     },
   });
 
@@ -257,15 +258,15 @@ async function main() {
   // ---ROUTE DESTINATIONS---
   const nisavaFishingRoute = await prisma.destination.create({
     data: {
-      title: "Nisava Fishing Route - Duvaniste to Brzi Brod",
+      categoryId: fishing.id,
+      city: "Nis",
+      country: "Serbia",
       description:
         "A riverside fishing route following the Nisava from the Duvaniste bank eastward to Brzi Brod. Three proven spots along the way, all within easy walking or cycling distance of each other.",
       images: [],
-      userId: miroslav.id,
-      categoryId: fishing.id,
+      title: "Nisava Fishing Route - Duvaniste to Brzi Brod",
       type: "route",
-      city: "Nis",
-      country: "Serbia",
+      userId: miroslav.id,
     },
   });
 
@@ -287,9 +288,9 @@ async function main() {
   // ---ROUTE POINTS---
   await prisma.routePoint.createMany({
     data: [
-      { routeId: nisavaFishingRoute.id, pointId: duvanisteBank.id, position: 1 },
-      { routeId: nisavaFishingRoute.id, pointId: underBridgeSpot.id, position: 2 },
-      { routeId: nisavaFishingRoute.id, pointId: brziBrodBank.id, position: 3 },
+      { pointId: duvanisteBank.id, position: 1, routeId: nisavaFishingRoute.id },
+      { pointId: underBridgeSpot.id, position: 2, routeId: nisavaFishingRoute.id },
+      { pointId: brziBrodBank.id, position: 3, routeId: nisavaFishingRoute.id },
     ],
   });
 
@@ -299,68 +300,68 @@ async function main() {
   await prisma.review.createMany({
     data: [
       {
-        userId: petar.id,
-        destinationId: nisFortress.id,
-        rating: 5,
         comment:
           "Beautiful place for an evening walk. The lights on the ramparts at night are stunning.",
+        destinationId: nisFortress.id,
         images: [],
+        rating: 5,
+        userId: petar.id,
       },
       {
-        userId: miroslav.id,
-        destinationId: kafanaMarjan.id,
-        rating: 5,
         comment:
           "Stopped here on the way back from Aleksinac. Food came in under 10 minutes, the free salads alone are worth the visit. Unreal value.",
+        destinationId: kafanaMarjan.id,
         images: [],
+        rating: 5,
+        userId: miroslav.id,
       },
       {
-        userId: strahinja.id,
-        destinationId: kafanaMarjan.id,
-        rating: 5,
         comment:
           "Been coming here for years. Always packed, always good. The roast pork in clay pot is a must.",
+        destinationId: kafanaMarjan.id,
         images: [],
+        rating: 5,
+        userId: strahinja.id,
       },
       {
-        userId: petar.id,
-        destinationId: duvanisteBank.id,
-        rating: 4,
         comment:
           "Good spot, easy to get to. Caught two decent carp early in the morning. Bring your own shade.",
+        destinationId: duvanisteBank.id,
         images: [],
+        rating: 4,
+        userId: petar.id,
       },
       {
-        userId: strahinja.id,
-        destinationId: brziBrodBank.id,
-        rating: 4,
         comment:
           "Solid spot at Brzi Brod. More secluded than the city banks and worth the short drive.",
+        destinationId: brziBrodBank.id,
         images: [],
+        rating: 4,
+        userId: strahinja.id,
       },
       {
-        userId: miroslav.id,
-        destinationId: nisavaFishingRoute.id,
-        rating: 5,
         comment:
           "Did the whole route on a Saturday morning with a friend. Tried all three spots — the bridge one is the best kept secret.",
+        destinationId: nisavaFishingRoute.id,
         images: [],
+        rating: 5,
+        userId: miroslav.id,
       },
       {
-        userId: miroslav.id,
-        destinationId: skullTower.id,
-        rating: 5,
         comment:
           "Genuinely one of the most unusual monuments in Europe. Dark history but incredibly well presented.",
+        destinationId: skullTower.id,
         images: [],
+        rating: 5,
+        userId: miroslav.id,
       },
       {
-        userId: petar.id,
-        destinationId: bubanjWalk.id,
-        rating: 4,
         comment:
           "Great morning walk through the forest. The WWII memorial is massive and worth seeing. Quiet and well maintained.",
+        destinationId: bubanjWalk.id,
         images: [],
+        rating: 4,
+        userId: petar.id,
       },
     ],
   });
@@ -370,7 +371,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch((e: unknown) => {
     console.error(e);
     process.exit(1);
   })
