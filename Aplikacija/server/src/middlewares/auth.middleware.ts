@@ -12,7 +12,7 @@ const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   let token: string | undefined;
 
   if (authHeader?.startsWith("Bearer ")) {
-    token = authHeader.split(" ").at(1);
+    token = authHeader.split(" ")[1];
   } else if (req.cookies.jwt) {
     token = String(req.cookies.jwt);
   }
@@ -27,7 +27,7 @@ const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
 
     next();
   } catch {
-    throw new AppError("Unauthorized, no token provided", 401);
+    throw new AppError("Invalid or expired token.", 401);
   }
 };
 
