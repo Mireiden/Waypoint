@@ -11,7 +11,6 @@ import { UserService } from '../../core/services/user.service';
   template: `
     @if (auth.currentUser(); as user) {
       <div class="profile-page">
-
         <!-- Green hero: avatar + identity all inside -->
         <div class="profile-hero">
           <div class="hero-deco"></div>
@@ -52,7 +51,6 @@ import { UserService } from '../../core/services/user.service';
         </div>
 
         <div class="profile-container">
-
           <!-- Inline edit form -->
           @if (editOpen()) {
             <div class="edit-section">
@@ -150,7 +148,6 @@ import { UserService } from '../../core/services/user.service';
               </div>
             }
           </div>
-
         </div>
       </div>
     }
@@ -191,7 +188,7 @@ export class ProfileComponent {
     const user = this.auth.currentUser()!;
 
     this.userService
-      .updateProfile(user.id, {
+      .updateProfile({
         name: this.nameInput,
         avatarUrl: this.avatarInput.trim() || null,
       })

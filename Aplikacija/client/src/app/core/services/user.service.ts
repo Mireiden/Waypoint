@@ -11,13 +11,17 @@ export interface UpdateProfilePayload {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/users`;
+  private readonly base = `${environment.apiUrl}`;
 
   getMe() {
     return this.http.get<User>(`${this.base}/me`, { withCredentials: true });
   }
 
-  updateProfile(id: number, payload: UpdateProfilePayload) {
-    return this.http.put<User>(`${this.base}/${id}`, payload, { withCredentials: true });
+  updateProfile(payload: UpdateProfilePayload) {
+    return this.http.patch<User>(`${this.base}/me`, payload, { withCredentials: true });
+  }
+
+  deleteProfile() {
+    return this.http.delete<User>(`${this.base}/me`, { withCredentials: true });
   }
 }
