@@ -1,81 +1,257 @@
-<div class="map-wrapper">
-  <div class="sidebar" [class.collapsed]="!sidebarOpen()">
-    <button class="sidebar-toggle" (click)="onClickExpand()">{{ sidebarOpen() ? '‹' : '›' }}</button>
-    @if (sidebarOpen()){
-    @if (selectedDestination()) {
-    <div class="destination-detail">
-      <button class="back-btn" (click)="selectedDestination.set(null)">← Back</button>
-      <span class="detail-type">{{ selectedDestination()!.type }}</span>
-      <h2 class="detail-name">{{ selectedDestination()!.title }}</h2>
-      <p class="detail-desc">{{ selectedDestination()!.description }}</p>
-    </div>
-    } @else {
-    <ul class="sidebar-list">
-      @for (result of destinations(); track result.id) {
-      <li class="destination-item" [class.type-route]="result.type === 'route'" [class.type-poi]="result.type === 'poi'" (click)="selectedDestination.set(result)">
-        <div class="item-accent"></div>
-        <div class="item-body">
-          <span class="destination-name">{{ result.title }}</span>
-          <span class="destination-desc">{{ result.description }}</span>
-          <span class="destination-type">{{ result.type === 'poi' ? 'Point of interest' : 'Route' }}</span>
-        </div>
-        <svg class="item-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </li>
-      }
-    </ul>
-    }
-    }
-  </div>
+<div class="explore-layout">
 
+  <!-- ══════════════════════════════════════════════
+       SIDE PANEL
+  ══════════════════════════════════════════════ -->
+  <aside class="side-panel" [class.collapsed]="panelCollapsed()" [class.expanded]="panelExpanded()">
+
+    <!-- Mobile drag handle -->
+    <div class="panel-handle" (click)="togglePanel()"></div>
+
+    <!-- Header -->
+    <div class="panel-header">
+      @if (!panelCollapsed()) {
+        <div class="panel-header-inner">
+          <span class="panel-icon">◈</span>
+          <span class="panel-title">Explore</span>
+        </div>
+        <button
+          class="header-btn expand-btn"
+          (click)="toggleExpanded()"
+          [title]="panelExpanded() ? 'Shrink panel' : 'Expand panel'"
+        >{{ panelExpanded() ? '⤡' : '⤢' }}</button>
+      }
+      <button
+        class="header-btn"
+        (click)="togglePanel()"
+        [title]="panelCollapsed() ? 'Open panel' : 'Collapse panel'"
+      >{{ panelCollapsed() ? '›' : '‹' }}</button>
+    </div>
+
+    <!-- ─── Expanded content ───────────────────── -->
+    @if (!panelCollapsed()) {
+
+      @if (panelView() === 'list') {
+
+        <!-- Filter tabs -->
+        <div class="filter-tabs">
+          <button class="filter-tab" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">All</button>
+          <button class="filter-tab" [class.active]="activeFilter() === 'route'" (click)="setFilter('route')">Routes</button>
+          <button class="filter-tab" [class.active]="activeFilter() === 'point'" (click)="setFilter('point')">Points</button>
+        </div>
+
+        <!-- Destination list -->
+        <div class="dest-list">
+          @if (filteredDestinations().length === 0) {
+            <div class="empty-state">
+              <span class="empty-icon">🗺</span>
+              <p>No destinations found</p>
+            </div>
+          } @else {
+            @for (dest of filteredDestinations(); track dest.id) {
+              <button class="dest-card" (click)="selectDestination(dest)">
+                <div
+                  class="card-icon"
+                  [style.background]="dest.categoryColor + '18'"
+                  [style.border-color]="dest.categoryColor + '40'"
+                >{{ dest.categoryIcon }}</div>
+                <div class="card-body">
+                  <h3 class="card-title">{{ dest.title }}</h3>
+                  <div class="card-tags">
+                    <span class="tag cat-tag" [style.color]="dest.categoryColor">{{ dest.category }}</span>
+                    <span class="tag-sep">·</span>
+                    <span class="tag">{{ dest.type === 'route' ? 'Route' : 'Point' }}</span>
+                  </div>
+                  <div class="card-meta">
+                    <div class="card-rating">
+                      <span class="stars">
+                        @for (filled of stars(dest.rating); track $index) {
+                          <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                        }
+                      </span>
+                      <span class="rating-val">{{ dest.rating }}</span>
+                      <span class="review-count">({{ dest.reviewCount }})</span>
+                    </div>
+                    <span class="card-city">{{ dest.city }}</span>
+                  </div>
+                  @if (dest.distance || dest.duration) {
+                    <div class="card-pills">
+                      @if (dest.distance) { <span class="pill">📏 {{ dest.distance }}</span> }
+                      @if (dest.duration) { <span class="pill">⏱ {{ dest.duration }}</span> }
+                    </div>
+                  }
+                </div>
+              </button>
+            }
+          }
+        </div>
+      }
+
+      @if (panelView() === 'detail') {
+        @if (selectedDest(); as dest) {
+          <div class="panel-detail">
+
+            <button class="detail-back" (click)="backToList()">
+              <span class="back-arrow">←</span>
+              Back to list
+            </button>
+
+            <div class="detail-content">
+
+              <!-- Hero -->
+              <div
+                class="detail-hero"
+                [style.background]="'linear-gradient(145deg, ' + dest.categoryColor + ', ' + dest.categoryColor + '88)'"
+              >
+                <span class="detail-hero-icon">{{ dest.categoryIcon }}</span>
+              </div>
+
+              <!-- Body -->
+              <div class="detail-body">
+                <h2 class="detail-title">{{ dest.title }}</h2>
+
+                <div class="detail-badges">
+                  <span
+                    class="badge cat-badge"
+                    [style.color]="dest.categoryColor"
+                    [style.background]="dest.categoryColor + '18'"
+                    [style.border-color]="dest.categoryColor + '40'"
+                  >{{ dest.categoryIcon }} {{ dest.category }}</span>
+                  <span class="badge type-badge">{{ dest.type === 'route' ? '🗺 Route' : '📍 Point' }}</span>
+                </div>
+
+                <div class="detail-rating-row">
+                  <span class="stars detail-stars">
+                    @for (filled of stars(dest.rating); track $index) {
+                      <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                    }
+                  </span>
+                  <strong class="detail-rating-val">{{ dest.rating }}</strong>
+                  <span class="detail-review-count">{{ dest.reviewCount }} reviews</span>
+                </div>
+
+                @if (dest.distance || dest.duration) {
+                  <div class="route-stats">
+                    @if (dest.distance) {
+                      <div class="stat-pill"><span>📏</span><span>{{ dest.distance }}</span></div>
+                    }
+                    @if (dest.duration) {
+                      <div class="stat-pill"><span>⏱</span><span>{{ dest.duration }}</span></div>
+                    }
+                  </div>
+                }
+
+                <div class="detail-location">
+                  <span>📍</span>
+                  <span>{{ dest.city }}, {{ dest.country }}</span>
+                </div>
+
+                <p class="detail-description">{{ dest.description }}</p>
+              </div>
+
+              <!-- Waypoints (routes only) -->
+              @if (dest.waypoints?.length) {
+                <div class="waypoints-section">
+                  <h3 class="waypoints-title">
+                    <span>Waypoints</span>
+                    <span class="reviews-count-badge">{{ dest.waypoints!.length }}</span>
+                  </h3>
+                  <ol class="waypoints-list">
+                    @for (wp of dest.waypoints!; track $index; let last = $last) {
+                      <li class="waypoint-item">
+                        <div class="wp-marker">
+                          <span class="wp-dot">{{ $index + 1 }}</span>
+                          @if (!last) { <div class="wp-connector"></div> }
+                        </div>
+                        <span class="wp-title">{{ wp.title }}</span>
+                      </li>
+                    }
+                  </ol>
+                </div>
+              }
+
+              <!-- Reviews -->
+              <div class="reviews-section">
+                <h3 class="reviews-title">
+                  <span>Reviews</span>
+                  <span class="reviews-count-badge">{{ dest.reviews.length }}</span>
+                </h3>
+
+                @for (review of dest.reviews; track $index) {
+                  <div class="review-card">
+                    <div class="review-header">
+                      <div class="review-left">
+                        <span class="review-avatar">{{ review.author[0] }}</span>
+                        <span class="review-author">{{ review.author }}</span>
+                      </div>
+                      <div class="review-right">
+                        <span class="stars stars-sm">
+                          @for (filled of stars(review.rating); track $index) {
+                            <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                          }
+                        </span>
+                        <span class="review-date">{{ review.date }}</span>
+                      </div>
+                    </div>
+                    <p class="review-comment">{{ review.comment }}</p>
+                  </div>
+                }
+              </div>
+
+            </div>
+          </div>
+        }
+      }
+    }
+
+    <!-- ─── Collapsed strip ──────────────────── -->
+    @if (panelCollapsed()) {
+      <div class="collapsed-strip">
+        <span class="collapsed-count">{{ destinations().length }}</span>
+        <span class="collapsed-label">spots</span>
+      </div>
+    }
+
+  </aside>
+
+  <!-- ══════════════════════════════════════════════
+       MAP AREA
+  ══════════════════════════════════════════════ -->
   <div class="map-area">
+
+    @if (panelExpanded()) {
+      <div class="map-dim-overlay" (click)="toggleExpanded()"></div>
+    }
+
     <div class="search-overlay">
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" placeholder="Search for a city or place…" [value]="searchQuery()"
-          (input)="onSearchInput($any($event.target).value)" (blur)="closeSuggestions()" autocomplete="off" />
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search for a city or place…"
+          [value]="searchQuery()"
+          (input)="onSearchInput($any($event.target).value)"
+          (blur)="closeSuggestions()"
+          autocomplete="off"
+        />
         @if (isSearching()) {
-        <span class="spinner"></span>
+          <span class="spinner"></span>
         }
       </div>
       @if (showSuggestions()) {
-      <ul class="suggestions">
-        @for (result of suggestions(); track result.place_id) {
-        <li class="suggestion-item" (mousedown)="selectLocation(result)">
-          <span class="suggestion-name">{{ result.display_name.split(',')[0] }}</span>
-          <span class="suggestion-sub">{{ result.display_name.split(',').slice(1, 3).join(',') }}</span>
-        </li>
-        }
-      </ul>
+        <ul class="suggestions">
+          @for (result of suggestions(); track result.place_id) {
+            <li class="suggestion-item" (mousedown)="selectLocation(result)">
+              <span class="suggestion-name">{{ result.display_name.split(',')[0] }}</span>
+              <span class="suggestion-sub">{{ result.display_name.split(',').slice(1, 3).join(',') }}</span>
+            </li>
+          }
+        </ul>
       }
     </div>
 
     <div id="map" class="leaflet-map"></div>
-    <div class="bottom-sheet" [class.expanded]="bottomSheetOpen()">
-      <div class="bottom-sheet-handle" (click)="bottomSheetOpen.set(!bottomSheetOpen())">
-        <div class="handle-bar"></div>
-      </div>
-      @if (bottomSheetOpen()){
-        @if (selectedDestination()) {
-        <div class="destination-detail">
-          <button class="back-btn" (click)="selectedDestination.set(null)">← Back</button>
-          <span class="detail-type">{{ selectedDestination()!.type }}</span>
-          <h2 class="detail-name">{{ selectedDestination()!.title }}</h2>
-          <p class="detail-desc">{{ selectedDestination()!.description }}</p>
-        </div>
-        } @else {
-        <ul class="sidebar-list">
-          @for (result of destinations(); track result.id) {
-          <li class="destination-item" (click)="selectedDestination.set(result)">
-            <span class="destination-type">{{ result.type }}</span>
-            <span class="destination-name">{{ result.title }}</span>
-            <span class="destination-desc">{{ result.description }}</span>
-          </li>
-          }
-        </ul>
-        }
-      }
-    </div>
   </div>
+
 </div>

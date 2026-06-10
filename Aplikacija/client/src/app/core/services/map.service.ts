@@ -19,6 +19,7 @@ L.Marker.prototype.options.icon = iconDefault;
 @Injectable({ providedIn: 'root' })
 export class MapService {
   private map: L.Map | null = null;
+  private markers: L.Marker[] = [];
 
   init(elementId: string): L.Map {
     if (this.map) {
@@ -43,8 +44,31 @@ export class MapService {
     return this.map;
   }
 
+  setMarkers(
+    items: { id: number; lat: number; lng: number; title: string }[],
+    onClick: (id: number) => void,
+  ): void {
+    this.clearMarkers();
+    items.forEach((item) => {
+      const marker = L.marker([item.lat, item.lng])
+        .bindTooltip(item.title, { direction: 'top' })
+        .on('click', () => onClick(item.id));
+      marker.addTo(this.map!);
+      this.markers.push(marker);
+    });
+  }
+
+  clearMarkers(): void {
+    this.markers.forEach((m) => m.remove());
+    this.markers = [];
+  }
+
   flyTo(lat: number, lng: number, zoom = 13): void {
     this.map?.flyTo([lat, lng], zoom, { duration: 1.2 });
+  }
+
+  zoomTo(zoom: number): void {
+    this.map?.setZoom(zoom, { animate: true });
   }
 
   getMap(): L.Map | null {
