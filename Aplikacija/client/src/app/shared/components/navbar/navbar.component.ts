@@ -13,6 +13,9 @@ import { AuthService } from '../../../core/services/auth.service';
       </a>
       <div class="nav-links">
         @if (auth.currentUser()) {
+          @if (auth.currentUser()!.role === 'admin') {
+            <a class="admin-link" routerLink="/admin" routerLinkActive="active">Admin</a>
+          }
           <button class="profile-btn" type="button" routerLink="/profile">
             <svg
               class="avatar-icon"

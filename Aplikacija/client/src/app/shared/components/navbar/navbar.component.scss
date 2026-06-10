@@ -33,37 +33,49 @@
   align-items: center;
 }
 
-.nav-links a {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  padding: 6px 14px;
-  border-radius: var(--radius);
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.profile-btn {
+// Shared base for all interactive items in the nav
+.nav-links a,
+.profile-btn,
+.icon-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: none;
+  height: 36px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius);
-  padding: 4px 10px 4px 4px;
+  background: none;
   color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 
-  &:hover {
+  &:hover,
+  &.active {
     background: rgba(255, 255, 255, 0.12);
     color: white;
     border-color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.nav-links a {
+  padding: 0 14px;
+}
+
+.profile-btn {
+  gap: 8px;
+  padding: 0 10px 0 4px;
+}
+
+.icon-btn {
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+  flex-shrink: 0;
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
@@ -86,32 +98,6 @@
   position: relative;
 }
 
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: none;
-  color: rgba(255, 255, 255, 0.75);
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0;
-  flex-shrink: 0;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: white;
-    border-color: rgba(255, 255, 255, 0.5);
-  }
-}
 
 .logout-popup {
   position: absolute;

@@ -223,7 +223,7 @@
       <div class="map-dim-overlay" (click)="toggleExpanded()"></div>
     }
 
-    <div class="search-overlay">
+    <div class="search-overlay" [class.search-overlay--hidden]="panelExpanded()">
       <div class="search-box">
         <span class="search-icon">🔍</span>
         <input
