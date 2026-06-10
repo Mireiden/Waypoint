@@ -31,4 +31,8 @@ const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   }
 };
 
+export function assertAuth(req: Request): asserts req is Request & { user: AuthUser } {
+  if (!req.user) throw new AppError("Unauthorized", 401);
+}
+
 export default authMiddleware;

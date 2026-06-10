@@ -1,0 +1,22 @@
+meta {
+  name: patch-me
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{baseUrl}}/api/me
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Jovan jovanovic"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
