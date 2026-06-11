@@ -8,6 +8,9 @@ export const findAll = async () => {
     omit: {
       passwordHash: true,
     },
+    include: {
+      _count: { select: { destinations: true, reviews: true, reports: true } },
+    },
   });
 };
 
