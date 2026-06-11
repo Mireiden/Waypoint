@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
+import { BadRequestError } from "../errors/index.js";
 import { assertAuth } from "../middlewares/auth.middleware.js";
 import { updateProfileSchema } from "../schemas/user.schema.js";
 import * as userService from "../services/user.service.js";
@@ -12,10 +13,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
 export const getUserById = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid user ID" });
-    return;
-  }
+  if (isNaN(id)) throw new BadRequestError("Invalid user ID");
 
   const users = await userService.findById(id);
   res.json(users);
@@ -23,10 +21,8 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid user ID" });
-    return;
-  }
+  if (isNaN(id)) throw new BadRequestError("Invalid user ID");
+
   const parsed = updateProfileSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: treeifyError(parsed.error) });
@@ -38,10 +34,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid user ID" });
-    return;
-  }
+  if (isNaN(id)) throw new BadRequestError("Invalid user ID");
 
   await userService.deleteUser(id);
   res.status(204).send();
