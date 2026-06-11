@@ -2,12 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { inject, Injectable } from '@angular/core';
 
-export interface AdminStats {
-  users: number;
-  destinations: number;
-  reviews: number;
-  pendingReports: number;
-}
+// export interface AdminStats {
+//   users: number;
+//   destinations: number;
+//   reviews: number;
+//   pendingReports: number;
+// }
 
 export interface AdminUser {
   id: number;
@@ -53,11 +53,11 @@ export interface AdminReport {
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/admin`;
+  private readonly base = `${environment.apiUrl}`;
 
-  getStats() {
-    return this.http.get<AdminStats>(`${this.base}/stats`, { withCredentials: true });
-  }
+  // getStats() {
+  //   return this.http.get<AdminStats>(`${this.base}/stats`, { withCredentials: true });
+  // }
 
   getReports(status?: 'pending' | 'approved' | 'declined') {
     const url = status ? `${this.base}/reports?status=${status}` : `${this.base}/reports`;

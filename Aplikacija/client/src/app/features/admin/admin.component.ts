@@ -6,7 +6,7 @@ import {
   AdminReport,
   AdminReview,
   AdminService,
-  AdminStats,
+  // AdminStats,
   AdminUser,
 } from '../../core/services/admin.service';
 
@@ -21,7 +21,7 @@ type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'reviews';
 export class AdminComponent implements OnInit {
   activeTab = signal<AdminTab>('overview');
 
-  stats = signal<AdminStats | null>(null);
+  // stats = signal<AdminStats | null>(null);
   reports = signal<AdminReport[]>([]);
   users = signal<AdminUser[]>([]);
   destinations = signal<AdminDestination[]>([]);
@@ -33,19 +33,19 @@ export class AdminComponent implements OnInit {
   private readonly adminService = inject(AdminService);
 
   ngOnInit() {
-    this.loadStats();
+    // this.loadStats();
   }
 
-  loadStats() {
-    this.loading.set(true);
-    this.adminService.getStats().subscribe({
-      next: (data) => {
-        this.stats.set(data);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-  }
+  // loadStats() {
+  //   this.loading.set(true);
+  //   this.adminService.getStats().subscribe({
+  //     next: (data) => {
+  //       this.stats.set(data);
+  //       this.loading.set(false);
+  //     },
+  //     error: () => this.loading.set(false),
+  //   });
+  // }
 
   loadReports() {
     this.loading.set(true);
@@ -102,25 +102,25 @@ export class AdminComponent implements OnInit {
 
   approveReport(id: number) {
     this.adminService.approveReport(id).subscribe({
-      next: () => this.reports.update(list => list.filter(r => r.id !== id)),
+      next: () => this.reports.update((list) => list.filter((r) => r.id !== id)),
     });
   }
 
   declineReport(id: number) {
     this.adminService.declineReport(id).subscribe({
-      next: () => this.reports.update(list => list.filter(r => r.id !== id)),
+      next: () => this.reports.update((list) => list.filter((r) => r.id !== id)),
     });
   }
 
   deleteDestination(id: number) {
     this.adminService.deleteDestination(id).subscribe({
-      next: () => this.destinations.update(list => list.filter(d => d.id !== id)),
+      next: () => this.destinations.update((list) => list.filter((d) => d.id !== id)),
     });
   }
 
   deleteReview(id: number) {
     this.adminService.deleteReview(id).subscribe({
-      next: () => this.reviews.update(list => list.filter(r => r.id !== id)),
+      next: () => this.reviews.update((list) => list.filter((r) => r.id !== id)),
     });
   }
 }

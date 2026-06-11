@@ -4,7 +4,7 @@
        SIDEBAR NAV
   ══════════════════════════════════════════════ -->
   @if (sidebarOpen()) {
-    <div class="nav-backdrop" (click)="sidebarOpen.set(false)"></div>
+  <div class="nav-backdrop" (click)="sidebarOpen.set(false)"></div>
   }
 
   <aside class="admin-nav" [class.open]="sidebarOpen()">
@@ -44,17 +44,17 @@
     </div>
 
     @if (loading()) {
-      <div class="loading-bar"></div>
+    <div class="loading-bar"></div>
     }
 
     @switch (activeTab()) {
 
-      <!-- ─── Overview ──────────────────────────── -->
-      @case ('overview') {
-        <div class="section-header">
-          <h1 class="section-title">Overview</h1>
-        </div>
-        @if (stats(); as s) {
+    <!-- ─── Overview ──────────────────────────── -->
+    @case ('overview') {
+    <div class="section-header">
+      <h1 class="section-title">Overview</h1>
+    </div>
+    <!-- @if (stats(); as s) {
           <div class="stats-grid">
             <div class="stat-card">
               <span class="stat-value">{{ s.users }}</span>
@@ -73,177 +73,177 @@
               <span class="stat-label">Pending Reports</span>
             </div>
           </div>
-        }
-      }
+        } -->
+    }
 
-      <!-- ─── Reports ───────────────────────────── -->
-      @case ('reports') {
-        <div class="section-header">
-          <h1 class="section-title">Reports</h1>
-          <span class="count-badge">{{ reports().length }}</span>
-        </div>
-        @if (reports().length === 0 && !loading()) {
-          <div class="empty-state">No reports found</div>
-        } @else {
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Reporter</th>
-                  <th>Reason</th>
-                  <th>Target</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (report of reports(); track report.id) {
-                  <tr>
-                    <td>{{ report.user.name }}</td>
-                    <td class="muted">{{ report.reason ?? '—' }}</td>
-                    <td>
-                      @if (report.destination) {
-                        <span class="target-badge target-badge--dest">{{ report.destination.title }}</span>
-                      } @else if (report.review) {
-                        <span class="target-badge target-badge--review">Review #{{ report.review.id }}</span>
-                      }
-                    </td>
-                    <td class="muted">{{ report.createdAt | date:'mediumDate' }}</td>
-                    <td>
-                      <span class="status-badge status-badge--{{ report.status }}">{{ report.status }}</span>
-                    </td>
-                    <td>
-                      @if (report.status === 'pending') {
-                        <div class="action-btns">
-                          <button class="btn btn--approve" (click)="approveReport(report.id)">Approve</button>
-                          <button class="btn btn--decline" (click)="declineReport(report.id)">Decline</button>
-                        </div>
-                      }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      }
-
-      <!-- ─── Users ─────────────────────────────── -->
-      @case ('users') {
-        <div class="section-header">
-          <h1 class="section-title">Users</h1>
-          <span class="count-badge">{{ users().length }}</span>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Destinations</th>
-                <th>Reviews</th>
-                <th>Reports</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (user of users(); track user.id) {
-                <tr>
-                  <td>{{ user.name }}</td>
-                  <td class="muted">{{ user.email }}</td>
-                  <td>
-                    <span class="role-badge" [class.role-badge--admin]="user.role === 'admin'">{{ user.role }}</span>
-                  </td>
-                  <td class="muted">{{ user._count.destinations }}</td>
-                  <td class="muted">{{ user._count.reviews }}</td>
-                  <td class="muted">{{ user._count.reports }}</td>
-                  <td class="muted">{{ user.createdAt | date:'mediumDate' }}</td>
-                </tr>
+    <!-- ─── Reports ───────────────────────────── -->
+    @case ('reports') {
+    <div class="section-header">
+      <h1 class="section-title">Reports</h1>
+      <span class="count-badge">{{ reports().length }}</span>
+    </div>
+    @if (reports().length === 0 && !loading()) {
+    <div class="empty-state">No reports found</div>
+    } @else {
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Reporter</th>
+            <th>Reason</th>
+            <th>Target</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (report of reports(); track report.id) {
+          <tr>
+            <td>{{ report.user.name }}</td>
+            <td class="muted">{{ report.reason ?? '—' }}</td>
+            <td>
+              @if (report.destination) {
+              <span class="target-badge target-badge--dest">{{ report.destination.title }}</span>
+              } @else if (report.review) {
+              <span class="target-badge target-badge--review">Review #{{ report.review.id }}</span>
               }
-            </tbody>
-          </table>
-        </div>
-      }
-
-      <!-- ─── Destinations ──────────────────────── -->
-      @case ('destinations') {
-        <div class="section-header">
-          <h1 class="section-title">Destinations</h1>
-          <span class="count-badge">{{ destinations().length }}</span>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>City</th>
-                <th>Owner</th>
-                <th>Reviews</th>
-                <th>Reports</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (dest of destinations(); track dest.id) {
-                <tr>
-                  <td>{{ dest.title }}</td>
-                  <td class="muted">{{ dest.type }}</td>
-                  <td class="muted">{{ dest.category?.name ?? '—' }}</td>
-                  <td class="muted">{{ dest.city ?? '—' }}</td>
-                  <td class="muted">{{ dest.user?.name ?? '—' }}</td>
-                  <td class="muted">{{ dest._count.reviews }}</td>
-                  <td class="muted">{{ dest._count.reports }}</td>
-                  <td>
-                    <button class="btn btn--delete" (click)="deleteDestination(dest.id)">Delete</button>
-                  </td>
-                </tr>
+            </td>
+            <td class="muted">{{ report.createdAt | date:'mediumDate' }}</td>
+            <td>
+              <span class="status-badge status-badge--{{ report.status }}">{{ report.status }}</span>
+            </td>
+            <td>
+              @if (report.status === 'pending') {
+              <div class="action-btns">
+                <button class="btn btn--approve" (click)="approveReport(report.id)">Approve</button>
+                <button class="btn btn--decline" (click)="declineReport(report.id)">Decline</button>
+              </div>
               }
-            </tbody>
-          </table>
-        </div>
-      }
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+    }
 
-      <!-- ─── Reviews ───────────────────────────── -->
-      @case ('reviews') {
-        <div class="section-header">
-          <h1 class="section-title">Reviews</h1>
-          <span class="count-badge">{{ reviews().length }}</span>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Author</th>
-                <th>Destination</th>
-                <th>Rating</th>
-                <th>Comment</th>
-                <th>Reports</th>
-                <th>Date</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (review of reviews(); track review.id) {
-                <tr>
-                  <td>{{ review.user.name }}</td>
-                  <td class="muted">{{ review.destination.title }}</td>
-                  <td>{{ review.rating }}/5</td>
-                  <td class="muted truncate">{{ review.comment ?? '—' }}</td>
-                  <td class="muted">{{ review._count.reports }}</td>
-                  <td class="muted">{{ review.createdAt | date:'mediumDate' }}</td>
-                  <td>
-                    <button class="btn btn--delete" (click)="deleteReview(review.id)">Delete</button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+    <!-- ─── Users ─────────────────────────────── -->
+    @case ('users') {
+    <div class="section-header">
+      <h1 class="section-title">Users</h1>
+      <span class="count-badge">{{ users().length }}</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Destinations</th>
+            <th>Reviews</th>
+            <th>Reports</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+          <tr>
+            <td>{{ user.name }}</td>
+            <td class="muted">{{ user.email }}</td>
+            <td>
+              <span class="role-badge" [class.role-badge--admin]="user.role === 'admin'">{{ user.role }}</span>
+            </td>
+            <td class="muted">{{ user._count.destinations }}</td>
+            <td class="muted">{{ user._count.reviews }}</td>
+            <td class="muted">{{ user._count.reports }}</td>
+            <td class="muted">{{ user.createdAt | date:'mediumDate' }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- ─── Destinations ──────────────────────── -->
+    @case ('destinations') {
+    <div class="section-header">
+      <h1 class="section-title">Destinations</h1>
+      <span class="count-badge">{{ destinations().length }}</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>City</th>
+            <th>Owner</th>
+            <th>Reviews</th>
+            <th>Reports</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (dest of destinations(); track dest.id) {
+          <tr>
+            <td>{{ dest.title }}</td>
+            <td class="muted">{{ dest.type }}</td>
+            <td class="muted">{{ dest.category?.name ?? '—' }}</td>
+            <td class="muted">{{ dest.city ?? '—' }}</td>
+            <td class="muted">{{ dest.user?.name ?? '—' }}</td>
+            <td class="muted">{{ dest._count.reviews }}</td>
+            <td class="muted">{{ dest._count.reports }}</td>
+            <td>
+              <button class="btn btn--delete" (click)="deleteDestination(dest.id)">Delete</button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- ─── Reviews ───────────────────────────── -->
+    @case ('reviews') {
+    <div class="section-header">
+      <h1 class="section-title">Reviews</h1>
+      <span class="count-badge">{{ reviews().length }}</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Author</th>
+            <th>Destination</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Reports</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (review of reviews(); track review.id) {
+          <tr>
+            <td>{{ review.user.name }}</td>
+            <td class="muted">{{ review.destination.title }}</td>
+            <td>{{ review.rating }}/5</td>
+            <td class="muted truncate">{{ review.comment ?? '—' }}</td>
+            <td class="muted">{{ review._count.reports }}</td>
+            <td class="muted">{{ review.createdAt | date:'mediumDate' }}</td>
+            <td>
+              <button class="btn btn--delete" (click)="deleteReview(review.id)">Delete</button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
 
     }
   </main>
