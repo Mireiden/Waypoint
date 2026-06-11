@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import type { AuthUser } from "../types/express.js";
 
 import config from "../config/config.js";
-import { AppError } from "../errors/appError.js";
+import { UnauthorizedError } from "../errors/index.js";
 
 const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -16,7 +16,7 @@ const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   } else if (req.cookies.jwt) {
     token = String(req.cookies.jwt);
   }
-  if (!token) throw new AppError("Unauthorized, no token provided", 401);
+  if (!token) throw new UnauthorizedError("Unauthorized, no token provided");
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret, {
@@ -27,12 +27,12 @@ const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
 
     next();
   } catch {
-    throw new AppError("Invalid or expired token.", 401);
+    throw new UnauthorizedError("Invalid or expired token.");
   }
 };
 
 export function assertAuth(req: Request): asserts req is Request & { user: AuthUser } {
-  if (!req.user) throw new AppError("Unauthorized", 401);
+  if (!req.user) throw new UnauthorizedError();
 }
 
 export default authMiddleware;

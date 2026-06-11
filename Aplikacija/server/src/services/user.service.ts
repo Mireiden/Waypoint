@@ -1,6 +1,6 @@
 import type { UpdateProfileInput } from "../schemas/user.schema.js";
 
-import { AppError } from "../errors/appError.js";
+import { NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 
 export const findAll = async () => {
@@ -21,7 +21,7 @@ export const findById = async (id: number) => {
     },
     where: { id },
   });
-  if (!user) throw new AppError("User not found", 404);
+  if (!user) throw new NotFoundError("User not found");
   return user;
 };
 
@@ -29,7 +29,7 @@ export const findByEmail = async (email: string) => {
   const user = await prisma.user.findUnique({
     where: { email },
   });
-  if (!user) throw new AppError("User not found", 404);
+  if (!user) throw new NotFoundError("User not found");
   return user;
 };
 
