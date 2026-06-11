@@ -1,15 +1,16 @@
 meta {
   name: get-all
   type: http
-  seq: NaN
+  seq: 1
 }
 
 get {
-  url: {{baseUrl}}/api/users
+  url: {{baseUrl}}/users
   body: none
   auth: inherit
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

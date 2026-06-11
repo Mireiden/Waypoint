@@ -1,0 +1,28 @@
+meta {
+  name: update
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{baseUrl}}/categories/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 6
+}
+
+body:json {
+  {
+    "name":"Test category 2",
+    "description":"Description blablabla",
+    "icon": null
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
