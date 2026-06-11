@@ -1,14 +1,11 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  AdminDestination,
-  AdminReport,
-  AdminReview,
-  AdminService,
-  // AdminStats,
-  AdminUser,
-} from '../../core/services/admin.service';
+import { UserWithCount } from '../../models/user.model';
+import { Report } from '../../models/report.model';
+import { ReviewWithCount } from '../../models/review.model';
+import { AdminDestination } from '../../models/destination.model';
+import { AdminService } from '../../core/services/admin.service';
 
 type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'reviews';
 
@@ -22,10 +19,10 @@ export class AdminComponent implements OnInit {
   activeTab = signal<AdminTab>('overview');
 
   // stats = signal<AdminStats | null>(null);
-  reports = signal<AdminReport[]>([]);
-  users = signal<AdminUser[]>([]);
+  reports = signal<Report[]>([]);
+  users = signal<UserWithCount[]>([]);
   destinations = signal<AdminDestination[]>([]);
-  reviews = signal<AdminReview[]>([]);
+  reviews = signal<ReviewWithCount[]>([]);
 
   loading = signal(false);
   sidebarOpen = signal(false);

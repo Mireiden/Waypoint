@@ -6,3 +6,7 @@ export interface User {
   role: 'user' | 'admin';
   createdAt: string;
 }
+
+export interface UserWithCount extends User {
+  _count: { destinations: number; reviews: number; reports: number };
+}

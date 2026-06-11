@@ -1,54 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { inject, Injectable } from '@angular/core';
-
-// export interface AdminStats {
-//   users: number;
-//   destinations: number;
-//   reviews: number;
-//   pendingReports: number;
-// }
-
-export interface AdminUser {
-  id: number;
-  name: string;
-  email: string;
-  role: 'user' | 'admin';
-  createdAt: string;
-  _count: { destinations: number; reviews: number; reports: number };
-}
-
-export interface AdminDestination {
-  id: number;
-  title: string;
-  type: 'point' | 'route';
-  city: string | null;
-  createdAt: string;
-  user: { id: number; name: string; email: string } | null;
-  category: { id: number; name: string } | null;
-  _count: { reviews: number; reports: number };
-}
-
-export interface AdminReview {
-  id: number;
-  rating: number;
-  comment: string | null;
-  createdAt: string;
-  user: { id: number; name: string; email: string };
-  destination: { id: number; title: string; city: string | null };
-  _count: { reports: number };
-}
-
-export interface AdminReport {
-  id: number;
-  reason: string | null;
-  note: string | null;
-  status: 'pending' | 'approved' | 'declined';
-  createdAt: string;
-  user: { id: number; name: string; email: string };
-  destination: { id: number; title: string; type: string; city: string | null } | null;
-  review: { id: number; comment: string | null; rating: number } | null;
-}
+import { AdminDestination } from '../../models/destination.model';
+import { ReviewWithCount } from '../../models/review.model';
+import { User, UserWithCount } from '../../models/user.model';
+import { Report } from '../../models/report.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -61,11 +17,11 @@ export class AdminService {
 
   getReports(status?: 'pending' | 'approved' | 'declined') {
     const url = status ? `${this.base}/reports?status=${status}` : `${this.base}/reports`;
-    return this.http.get<AdminReport[]>(url, { withCredentials: true });
+    return this.http.get<Report[]>(url, { withCredentials: true });
   }
 
   approveReport(id: number) {
-    return this.http.patch(
+    return this.http.patch<Report>(
       `${this.base}/reports/${id}`,
       { action: 'approve' },
       {
@@ -95,11 +51,11 @@ export class AdminService {
   }
 
   getUsers() {
-    return this.http.get<AdminUser[]>(`${this.base}/users`, { withCredentials: true });
+    return this.http.get<UserWithCount[]>(`${this.base}/users`, { withCredentials: true });
   }
 
   getReviews() {
-    return this.http.get<AdminReview[]>(`${this.base}/reviews`, { withCredentials: true });
+    return this.http.get<ReviewWithCount[]>(`${this.base}/reviews`, { withCredentials: true });
   }
 
   deleteReview(id: number) {

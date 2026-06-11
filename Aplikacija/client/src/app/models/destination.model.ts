@@ -1,9 +1,4 @@
-export interface MockReview {
-  author: string;
-  rating: number;
-  comment: string;
-  date: string;
-}
+import { MockReview } from './review.model';
 
 export interface Destination {
   id: number;
@@ -23,4 +18,15 @@ export interface Destination {
   distance?: string;
   waypoints?: { title: string; lat: number; lng: number }[];
   reviews: MockReview[];
+}
+
+export interface AdminDestination {
+  id: number;
+  title: string;
+  type: 'point' | 'route';
+  city: string | null;
+  createdAt: string;
+  user: { id: number; name: string; email: string } | null;
+  category: { id: number; name: string } | null;
+  _count: { reviews: number; reports: number };
 }
