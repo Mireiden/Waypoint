@@ -16,9 +16,6 @@
 !.vscode/mcp.json
 .history/*
 
-# System files
-.DS_Store
-Thumbs.db
 
 # Miscellaneous
 .sass-cache/
