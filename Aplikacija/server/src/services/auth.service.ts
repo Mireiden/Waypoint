@@ -8,9 +8,7 @@ import { ConflictError, UnauthorizedError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 
 export const register = async (data: RegisterInput) => {
-  const { name, password } = data;
-  const email: string = data.email.trim().toLowerCase();
-
+  const { name, email, password } = data;
   const existing = await prisma.user.findUnique({
     where: { email },
   });
@@ -37,8 +35,7 @@ export const register = async (data: RegisterInput) => {
 };
 
 export const login = async (data: LoginInput) => {
-  const email: string = data.email.trim().toLowerCase();
-  const { password } = data;
+  const { email, password } = data;
 
   const user = await prisma.user.findUnique({
     where: { email },
