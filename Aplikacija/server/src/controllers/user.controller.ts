@@ -1,6 +1,8 @@
 import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
+import { ValidationError } from "../errors/validationError.js";
+import { changePasswordSchema } from "../schemas/auth.schema.js";
 import { updateProfileSchema } from "../schemas/user.schema.js";
 import * as userService from "../services/user.service.js";
 import { assertAuth } from "../utils/assertAuth.js";
@@ -48,10 +50,7 @@ export const getMe = async (req: Request, res: Response) => {
 export const updateMe = async (req: Request, res: Response) => {
   assertAuth(req);
   const parsed = updateProfileSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: treeifyError(parsed.error) });
-    return;
-  }
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
   const updated = await userService.updateProfile(req.user.id, parsed.data);
   res.json(updated);
 };
@@ -60,4 +59,14 @@ export const deleteMe = async (req: Request, res: Response) => {
   assertAuth(req);
   await userService.deleteUser(req.user.id);
   res.clearCookie("jwt").status(204).send();
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  assertAuth(req);
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
+
+  await userService.changePassword(req.user.id, parsed.data);
+
+  res.status(204).send();
 };

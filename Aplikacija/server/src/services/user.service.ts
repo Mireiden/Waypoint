@@ -1,7 +1,10 @@
+import bcrypt from "bcrypt";
+
 import type { UpdateProfileInput } from "../schemas/user.schema.js";
 
-import { NotFoundError } from "../errors/index.js";
+import { BadRequestError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
+import { type ChangePasswordInput } from "../schemas/auth.schema.js";
 import { removeUndefined } from "../utils/removeUndefined.js";
 
 export const findAll = async () => {
@@ -47,6 +50,26 @@ export const updateProfile = async (id: number, data: UpdateProfileInput) => {
     data: removeUndefined(data),
     omit: {
       passwordHash: true,
+    },
+  });
+};
+
+export const changePassword = async (id: number, data: ChangePasswordInput) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { passwordHash: true },
+  });
+  if (!user) throw new NotFoundError("User not found");
+
+  const isValid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+  if (!isValid) throw new BadRequestError("Current password is incorrect.");
+
+  const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
+
+  await prisma.user.update({
+    where: { id },
+    data: {
+      passwordHash: newPasswordHash,
     },
   });
 };

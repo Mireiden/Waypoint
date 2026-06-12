@@ -8,5 +8,6 @@ const router: Router = Router();
 router.get("/", authMiddleware, userController.getMe);
 router.patch("/", authMiddleware, userController.updateMe);
 router.delete("/", authMiddleware, userController.deleteMe);
+router.patch("/password", authMiddleware, userController.changePassword);
 
 export default router;
