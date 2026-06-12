@@ -2,6 +2,7 @@ import type { UpdateProfileInput } from "../schemas/user.schema.js";
 
 import { NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
+import { removeUndefined } from "../utils/removeUndefined.js";
 
 export const findAll = async () => {
   return prisma.user.findMany({
@@ -14,20 +15,27 @@ export const findAll = async () => {
   });
 };
 
-export const findById = async (id: number) => {
+export const findPublicProfile = async (id: number) => {
   const user = await prisma.user.findUnique({
-    omit: {
-      passwordHash: true,
-    },
     where: { id },
+    select: {
+      id: true,
+      name: true,
+      avatarUrl: true,
+      createdAt: true,
+    },
   });
   if (!user) throw new NotFoundError("User not found");
+
   return user;
 };
 
-export const findByEmail = async (email: string) => {
+export const findById = async (id: number) => {
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { id },
+    omit: {
+      passwordHash: true,
+    },
   });
   if (!user) throw new NotFoundError("User not found");
   return user;
@@ -36,7 +44,7 @@ export const findByEmail = async (email: string) => {
 export const updateProfile = async (id: number, data: UpdateProfileInput) => {
   return prisma.user.update({
     where: { id },
-    data: Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)),
+    data: removeUndefined(data),
     omit: {
       passwordHash: true,
     },

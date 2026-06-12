@@ -1,10 +1,10 @@
 import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
-import { BadRequestError } from "../errors/index.js";
-import { assertAuth } from "../middlewares/auth.middleware.js";
 import { updateProfileSchema } from "../schemas/user.schema.js";
 import * as userService from "../services/user.service.js";
+import { assertAuth } from "../utils/assertAuth.js";
+import { parseIdParam } from "../utils/parseIdParam.js";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await userService.findAll();
@@ -12,16 +12,16 @@ export const getAllUsers = async (req: Request, res: Response) => {
 };
 
 export const getUserById = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) throw new BadRequestError("Invalid user ID");
+  const id = parseIdParam(req.params.id, "user id");
+  const isAdmin = req.user?.role === "admin";
 
-  const users = await userService.findById(id);
-  res.json(users);
+  const user = isAdmin ? await userService.findById(id) : await userService.findPublicProfile(id);
+
+  res.json(user);
 };
 
 export const updateUser = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) throw new BadRequestError("Invalid user ID");
+  const id = parseIdParam(req.params.id, "user id");
 
   const parsed = updateProfileSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -33,8 +33,7 @@ export const updateUser = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) throw new BadRequestError("Invalid user ID");
+  const id = parseIdParam(req.params.id, "user id");
 
   await userService.deleteUser(id);
   res.status(204).send();
