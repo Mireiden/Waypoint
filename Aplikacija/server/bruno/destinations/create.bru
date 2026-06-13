@@ -1,0 +1,28 @@
+meta {
+  name: create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/destinations
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title": "Test POINT2",
+    "geometry":{
+      "type":"Point",
+      "coordinates": [11, 12]
+    },
+    "categoryId":2
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+​
