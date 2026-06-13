@@ -12,12 +12,23 @@ post {
 
 body:json {
   {
-    "title": "Test POINT2",
-    "geometry":{
-      "type":"Point",
-      "coordinates": [11, 12]
+    "title": "Test destination",
+    "description": "Description of some destination lalalalalal",
+    "type": "route",
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [[
+        10,
+        20
+      ],
+      [
+        30,
+        40
+      ]]
     },
-    "categoryId":2
+    "city": "Nis",
+    "country": "Serbia",
+    "categoryId": 5
   }
 }
 
@@ -25,4 +36,3 @@ settings {
   encodeUrl: true
   timeout: 0
 }
-​

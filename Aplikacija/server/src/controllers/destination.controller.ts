@@ -1,10 +1,25 @@
 import { type Request, type Response } from "express";
+import { treeifyError } from "zod";
 
+import { ValidationError } from "../errors/validationError.js";
+import { createDestinationSchema } from "../schemas/destination.schema.js";
 import * as destinationService from "../services/destination.service.js";
+import { assertAuth } from "../utils/assertAuth.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
 
 export const getById = async (req: Request, res: Response) => {
   const id = parseIdParam(req.params.id);
   const dest = await destinationService.findById(id);
+  res.json(dest);
+};
+
+export const createDestination = async (req: Request, res: Response) => {
+  assertAuth(req);
+
+  const parsed = createDestinationSchema.safeParse(req.body);
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
+
+  const dest = await destinationService.createDestination(req.user.id, parsed.data);
+
   res.json(dest);
 };
