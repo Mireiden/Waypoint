@@ -9,6 +9,7 @@ dotenv.config();
 
 const envSchema = z.object({
   DATABASE_URL: z.url(),
+  DIRECT_URL: z.url(),
 
   FRONTEND_URL: z.url(),
 
@@ -29,6 +30,7 @@ const config = {
 
   db: {
     url: env.DATABASE_URL,
+    directUrl: env.DIRECT_URL,
   },
 
   jwt: {
