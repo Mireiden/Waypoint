@@ -5,8 +5,6 @@ import { lineStringGeometrySchema, pointGeometrySchema } from "./geometry.schema
 const baseFields = {
   title: z.string().min(1).max(255),
   description: z.string().optional(),
-  city: z.string().max(100).optional(),
-  country: z.string().max(100).optional(),
   categoryId: z.int().positive(),
 };
 

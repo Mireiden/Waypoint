@@ -17,6 +17,8 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("7d"),
   JWT_SECRET: z.string().min(32),
 
+  NOMINATIM_URL: z.url().default("https://nominatim.openstreetmap.org/reverse"),
+
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(3000),
 });
@@ -31,6 +33,10 @@ const config = {
   db: {
     url: env.DATABASE_URL,
     directUrl: env.DIRECT_URL,
+  },
+
+  geocoding: {
+    nominatimUrl: env.NOMINATIM_URL,
   },
 
   jwt: {

@@ -23,3 +23,12 @@ export const createDestination = async (req: Request, res: Response) => {
 
   res.json(dest);
 };
+
+export const deleteDestination = async (req: Request, res: Response) => {
+  assertAuth(req);
+  const id = parseIdParam(req.params.id, "destination id");
+
+  await destinationService.deleteDestination(id, req.user);
+
+  res.status(204).send();
+};
