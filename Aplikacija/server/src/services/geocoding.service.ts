@@ -10,8 +10,9 @@ export const reverseGeocode = async (lng: number, lat: number) => {
     format: "jsonv2",
     lat: String(lat),
     lon: String(lng),
-    zoom: "10",
+    zoom: "13",
     layer: "address",
+    "accept-language": "en",
   }).toString();
 
   try {
@@ -26,7 +27,7 @@ export const reverseGeocode = async (lng: number, lat: number) => {
 
     const a = parsed.data.address;
     return {
-      city: a?.village ?? a?.town ?? a?.city ?? a?.municipality ?? null,
+      city: a?.city ?? a?.town ?? a?.municipality ?? a?.village ?? null,
       country: a?.country ?? null,
     };
   } catch {
