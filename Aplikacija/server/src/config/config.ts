@@ -8,6 +8,11 @@ type ExpiresIn = Exclude<SignOptions["expiresIn"], undefined>;
 dotenv.config();
 
 const envSchema = z.object({
+  CLOUDINARY_CLOUD_NAME: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
+  CLOUDINARY_API_SECRET: z.string(),
+  CLOUDINARY_URL: z.url(),
+
   DATABASE_URL: z.url(),
   DIRECT_URL: z.url(),
 
@@ -26,6 +31,13 @@ const envSchema = z.object({
 const env = envSchema.parse(process.env);
 
 const config = {
+  cloudinary: {
+    cloudName: env.CLOUDINARY_CLOUD_NAME,
+    apiKey: env.CLOUDINARY_API_KEY,
+    apiSecret: env.CLOUDINARY_API_SECRET,
+    url: env.CLOUDINARY_URL,
+  },
+
   cors: {
     frontendUrl: env.FRONTEND_URL,
   },
