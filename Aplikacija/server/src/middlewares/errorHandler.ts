@@ -22,7 +22,12 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
       res.status(404).json({ error: "Resource not found" });
       return;
     }
-    res.status(400).json({ error: "Database error" });
+    res
+      .status(400)
+      .json({
+        error: "Database error",
+        ...(config.server.env !== "production" && { code: err.code, meta: err.meta }),
+      });
     return;
   }
 
