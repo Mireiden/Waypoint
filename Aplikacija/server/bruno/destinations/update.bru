@@ -1,0 +1,28 @@
+meta {
+  name: update
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{baseUrl}}/destinations/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 18
+}
+
+body:json {
+  {
+    "title":"Edited title",
+    "description":"Edited description",
+    "categoryId": 1
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

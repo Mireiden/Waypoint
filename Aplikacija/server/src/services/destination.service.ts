@@ -1,10 +1,14 @@
 import type { AuthUser } from "../schemas/auth.schema.js";
-import type { CreateDestinationInput } from "../schemas/destination.schema.js";
+import type {
+  CreateDestinationInput,
+  UpdateDestinationInput,
+} from "../schemas/destination.schema.js";
 
 import { createDestination as createDestinationSql } from "../../generated/prisma/sql/createDestination.js";
 import { getDestinationById } from "../../generated/prisma/sql/getDestinationById.js";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
+import { removeUndefined } from "../utils/removeUndefined.js";
 import { reverseGeocode } from "./geocoding.service.js";
 
 export const findById = async (id: number) => {
@@ -38,6 +42,24 @@ export const createDestination = async (userId: number, data: CreateDestinationI
     ),
   );
   return dest;
+};
+
+export const updateDestination = async (
+  id: number,
+  actor: AuthUser,
+  data: UpdateDestinationInput,
+) => {
+  const dest = await prisma.destination.findUnique({ where: { id }, select: { userId: true } });
+  if (!dest) throw new NotFoundError();
+  if (actor.role !== "admin" && dest.userId !== actor.id) throw new ForbiddenError();
+
+  if (data.categoryId !== undefined) {
+    const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
+    if (!category) throw new BadRequestError("Invalid categoryId");
+  }
+
+  await prisma.destination.update({ where: { id }, data: removeUndefined(data) });
+  return findById(id);
 };
 
 export const deleteDestination = async (id: number, actor: AuthUser) => {

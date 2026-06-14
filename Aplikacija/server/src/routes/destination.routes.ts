@@ -7,6 +7,7 @@ const router: Router = Router();
 
 router.post("/", authMiddleware, destinationController.createDestination);
 router.get("/:id", destinationController.getById);
+router.patch("/:id", authMiddleware, destinationController.updateDestination);
 router.delete("/:id", authMiddleware, destinationController.deleteDestination);
 
 export default router;

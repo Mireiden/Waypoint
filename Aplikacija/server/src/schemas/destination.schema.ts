@@ -25,6 +25,13 @@ export const createDestinationSchema = z.discriminatedUnion("type", [
   createRouteSchema,
 ]);
 
+export const updateDestinationSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  description: z.string().nullable().optional(),
+  categoryId: z.int().positive().optional(),
+});
+
 export type CreateDestinationInput = z.infer<typeof createDestinationSchema>;
 export type CreatePointInput = z.infer<typeof createPointSchema>;
 export type CreateRouteInput = z.infer<typeof createRouteSchema>;
+export type UpdateDestinationInput = z.infer<typeof updateDestinationSchema>;

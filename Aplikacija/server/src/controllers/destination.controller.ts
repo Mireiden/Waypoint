@@ -2,7 +2,7 @@ import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
 import { ValidationError } from "../errors/validationError.js";
-import { createDestinationSchema } from "../schemas/destination.schema.js";
+import { createDestinationSchema, updateDestinationSchema } from "../schemas/destination.schema.js";
 import * as destinationService from "../services/destination.service.js";
 import { assertAuth } from "../utils/assertAuth.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
@@ -22,6 +22,19 @@ export const createDestination = async (req: Request, res: Response) => {
   const dest = await destinationService.createDestination(req.user.id, parsed.data);
 
   res.json(dest);
+};
+
+export const updateDestination = async (req: Request, res: Response) => {
+  assertAuth(req);
+
+  const id = parseIdParam(req.params.id, "destination id");
+
+  const parsed = updateDestinationSchema.safeParse(req.body);
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
+
+  const updated = await destinationService.updateDestination(id, req.user, parsed.data);
+
+  res.json(updated);
 };
 
 export const deleteDestination = async (req: Request, res: Response) => {
