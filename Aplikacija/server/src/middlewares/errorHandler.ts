@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
+import { MulterError } from "multer";
+
 import { Prisma } from "../../generated/prisma/client.js";
 import config from "../config/config.js";
 import { AppError } from "../errors/appError.js";
@@ -22,17 +24,20 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
       res.status(404).json({ error: "Resource not found" });
       return;
     }
-    res
-      .status(400)
-      .json({
-        error: "Database error",
-        ...(config.server.env !== "production" && { code: err.code, meta: err.meta }),
-      });
+    res.status(400).json({
+      error: "Database error",
+      ...(config.server.env !== "production" && { code: err.code, meta: err.meta }),
+    });
     return;
   }
 
   if (err instanceof Prisma.PrismaClientValidationError) {
     res.status(400).json({ error: "Invalid data" });
+    return;
+  }
+
+  if (err instanceof MulterError) {
+    res.status(400).json({ message: err.message, details: err.stack });
     return;
   }
 
