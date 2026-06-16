@@ -117,7 +117,6 @@ async function main() {
       country: "Serbia",
       description:
         "A well-preserved 18th-century Ottoman fortress in the heart of Nis, with a riverside promenade along the ramparts and an open-air summer stage inside the walls.",
-      images: [],
       title: "Nis Fortress",
       type: "point",
       userId: miroslav.id,
@@ -137,7 +136,6 @@ async function main() {
       country: "Serbia",
       description:
         "The oldest kafana in the Nisava district, open for over 50 years. Famous for incredibly fast service, cheap traditional Serbian food, and free salads and pogaca bread with every order. Always packed — reserve ahead.",
-      images: [],
       title: "Kafana Marjan",
       type: "point",
       userId: petar.id,
@@ -158,7 +156,6 @@ async function main() {
       country: "Serbia",
       description:
         "A calm, accessible stretch of the Nisava riverbank in Duvaniste, popular with local anglers. Good for carp and chub, especially in early morning.",
-      images: [],
       title: "Nisava Fishing Bank - Duvaniste",
       type: "point",
       userId: strahinja.id,
@@ -178,7 +175,6 @@ async function main() {
       country: "Serbia",
       description:
         "A shaded fishing spot beneath an old road bridge on the Nisava, between Duvaniste and Brzi Brod. Quieter than the main banks and less frequented by passers-by.",
-      images: [],
       title: "Under the Old Bridge - Nisava",
       type: "point",
       userId: strahinja.id,
@@ -198,7 +194,6 @@ async function main() {
       country: "Serbia",
       description:
         "A well-known fishing spot at the Brzi Brod stretch of the Nisava, about 6km east of the city center. Known for catfish and carp. Easy access from the road.",
-      images: [],
       title: "Nisava Fishing Bank - Brzi Brod",
       type: "point",
       userId: petar.id,
@@ -219,7 +214,6 @@ async function main() {
       country: "Serbia",
       description:
         "A macabre but historically significant tower built by the Ottomans in 1809 using the skulls of Serbian rebels after the Battle of Cegar. One of the most unique monuments in the Balkans, now enclosed in a chapel.",
-      images: [],
       title: "Skull Tower (Cele Kula)",
       type: "point",
       userId: strahinja.id,
@@ -240,7 +234,6 @@ async function main() {
       country: "Serbia",
       description:
         "A peaceful forest walk through Bubanj hill, home to one of the largest WWII memorials in Serbia. Well-marked trails wind through oak and pine forest with views over the city. Popular with locals for morning walks.",
-      images: [],
       title: "Bubanj Forest Walk",
       type: "point",
       userId: petar.id,
@@ -263,7 +256,6 @@ async function main() {
       country: "Serbia",
       description:
         "A riverside fishing route following the Nisava from the Duvaniste bank eastward to Brzi Brod. Three proven spots along the way, all within easy walking or cycling distance of each other.",
-      images: [],
       title: "Nisava Fishing Route - Duvaniste to Brzi Brod",
       type: "route",
       userId: miroslav.id,
@@ -303,7 +295,6 @@ async function main() {
         comment:
           "Beautiful place for an evening walk. The lights on the ramparts at night are stunning.",
         destinationId: nisFortress.id,
-        images: [],
         rating: 5,
         userId: petar.id,
       },
@@ -311,7 +302,6 @@ async function main() {
         comment:
           "Stopped here on the way back from Aleksinac. Food came in under 10 minutes, the free salads alone are worth the visit. Unreal value.",
         destinationId: kafanaMarjan.id,
-        images: [],
         rating: 5,
         userId: miroslav.id,
       },
@@ -319,7 +309,6 @@ async function main() {
         comment:
           "Been coming here for years. Always packed, always good. The roast pork in clay pot is a must.",
         destinationId: kafanaMarjan.id,
-        images: [],
         rating: 5,
         userId: strahinja.id,
       },
@@ -327,7 +316,6 @@ async function main() {
         comment:
           "Good spot, easy to get to. Caught two decent carp early in the morning. Bring your own shade.",
         destinationId: duvanisteBank.id,
-        images: [],
         rating: 4,
         userId: petar.id,
       },
@@ -335,7 +323,6 @@ async function main() {
         comment:
           "Solid spot at Brzi Brod. More secluded than the city banks and worth the short drive.",
         destinationId: brziBrodBank.id,
-        images: [],
         rating: 4,
         userId: strahinja.id,
       },
@@ -343,7 +330,6 @@ async function main() {
         comment:
           "Did the whole route on a Saturday morning with a friend. Tried all three spots — the bridge one is the best kept secret.",
         destinationId: nisavaFishingRoute.id,
-        images: [],
         rating: 5,
         userId: miroslav.id,
       },
@@ -351,7 +337,6 @@ async function main() {
         comment:
           "Genuinely one of the most unusual monuments in Europe. Dark history but incredibly well presented.",
         destinationId: skullTower.id,
-        images: [],
         rating: 5,
         userId: miroslav.id,
       },
@@ -359,7 +344,6 @@ async function main() {
         comment:
           "Great morning walk through the forest. The WWII memorial is massive and worth seeing. Quiet and well maintained.",
         destinationId: bubanjWalk.id,
-        images: [],
         rating: 4,
         userId: petar.id,
       },

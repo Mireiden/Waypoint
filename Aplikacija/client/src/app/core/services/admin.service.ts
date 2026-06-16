@@ -41,7 +41,7 @@ export class AdminService {
   }
 
   getDestinations() {
-    return this.http.get<AdminDestination[]>(`${this.base}/destinations`, {
+    return this.http.get<AdminDestination[]>(`${this.base}/destinations/admin`, {
       withCredentials: true,
     });
   }

@@ -311,6 +311,17 @@
   font-weight: 600;
 }
 
+.card-description {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .tag-sep {
   color: var(--border);
   font-size: 0.72rem;
@@ -491,6 +502,12 @@
   border-color: var(--border);
 }
 
+.cat-badge {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: var(--primary-light);
+}
+
 .detail-rating-row {
   display: flex;
   align-items: center;
@@ -545,6 +562,30 @@
   font-size: 0.85rem;
   line-height: 1.65;
   color: var(--text-muted);
+}
+
+// Media gallery
+
+.media-section {
+  border-top: 1px solid var(--border);
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.media-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--surface-alt);
+  display: block;
 }
 
 // Reviews

@@ -6,6 +6,7 @@ import type {
 
 import { createDestination as createDestinationSql } from "../../generated/prisma/sql/createDestination.js";
 import { getDestinationById } from "../../generated/prisma/sql/getDestinationById.js";
+import { getDestinations } from "../../generated/prisma/sql/getDestinations.js";
 import { BadRequestError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 import { assertOwnerOrAdmin } from "../utils/assertOwnerOrAdmin.js";
@@ -13,11 +14,49 @@ import { removeUndefined } from "../utils/removeUndefined.js";
 import { reverseGeocode } from "./geocoding.service.js";
 import * as mediaService from "./media.service.js";
 
+export const findReviews = async (id: number) => {
+  return await prisma.review.findMany({
+    where: { destinationId: id },
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+      user: { select: { id: true, name: true } },
+      media: { select: { id: true, url: true, type: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+export const findAllAdmin = async () => {
+  return await prisma.destination.findMany({
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      city: true,
+      createdAt: true,
+      user: { select: { id: true, name: true, email: true } },
+      category: { select: { id: true, name: true } },
+      _count: { select: { reviews: true, reports: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+export const findAll = async () => {
+  return await prisma.$queryRawTyped(getDestinations());
+};
+
 export const findById = async (id: number) => {
   const [dest] = await prisma.$queryRawTyped(getDestinationById(id));
   if (!dest) throw new NotFoundError();
-  const media = await mediaService.findByDestinationId(id);
-  return { ...dest, media };
+  const [media, reviews] = await Promise.all([
+    mediaService.findByDestinationId(id),
+    findReviews(id),
+  ]);
+  return { ...dest, media, reviews };
 };
 
 export const createDestination = async (userId: number, data: CreateDestinationInput) => {

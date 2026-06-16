@@ -50,35 +50,21 @@
           } @else {
             @for (dest of filteredDestinations(); track dest.id) {
               <button class="dest-card" (click)="selectDestination(dest)">
-                <div
-                  class="card-icon"
-                  [style.background]="dest.categoryColor + '18'"
-                  [style.border-color]="dest.categoryColor + '40'"
-                >{{ dest.categoryIcon }}</div>
                 <div class="card-body">
                   <h3 class="card-title">{{ dest.title }}</h3>
                   <div class="card-tags">
-                    <span class="tag cat-tag" [style.color]="dest.categoryColor">{{ dest.category }}</span>
-                    <span class="tag-sep">·</span>
+                    @if (dest.category) {
+                      <span class="tag cat-tag">{{ categoryIcon(dest.category.icon) }} {{ dest.category.name }}</span>
+                      <span class="tag-sep">·</span>
+                    }
                     <span class="tag">{{ dest.type === 'route' ? 'Route' : 'Point' }}</span>
+                    @if (dest.city) {
+                      <span class="tag-sep">·</span>
+                      <span class="tag">{{ dest.city }}</span>
+                    }
                   </div>
-                  <div class="card-meta">
-                    <div class="card-rating">
-                      <span class="stars">
-                        @for (filled of stars(dest.rating); track $index) {
-                          <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
-                        }
-                      </span>
-                      <span class="rating-val">{{ dest.rating }}</span>
-                      <span class="review-count">({{ dest.reviewCount }})</span>
-                    </div>
-                    <span class="card-city">{{ dest.city }}</span>
-                  </div>
-                  @if (dest.distance || dest.duration) {
-                    <div class="card-pills">
-                      @if (dest.distance) { <span class="pill">📏 {{ dest.distance }}</span> }
-                      @if (dest.duration) { <span class="pill">⏱ {{ dest.duration }}</span> }
-                    </div>
+                  @if (dest.description) {
+                    <p class="card-description">{{ dest.description }}</p>
                   }
                 </div>
               </button>
@@ -98,105 +84,87 @@
 
             <div class="detail-content">
 
-              <!-- Hero -->
-              <div
-                class="detail-hero"
-                [style.background]="'linear-gradient(145deg, ' + dest.categoryColor + ', ' + dest.categoryColor + '88)'"
-              >
-                <span class="detail-hero-icon">{{ dest.categoryIcon }}</span>
-              </div>
-
               <!-- Body -->
               <div class="detail-body">
                 <h2 class="detail-title">{{ dest.title }}</h2>
 
                 <div class="detail-badges">
-                  <span
-                    class="badge cat-badge"
-                    [style.color]="dest.categoryColor"
-                    [style.background]="dest.categoryColor + '18'"
-                    [style.border-color]="dest.categoryColor + '40'"
-                  >{{ dest.categoryIcon }} {{ dest.category }}</span>
+                  @if (dest.category) {
+                    <span class="badge cat-badge">{{ categoryIcon(dest.category.icon) }} {{ dest.category.name }}</span>
+                  }
                   <span class="badge type-badge">{{ dest.type === 'route' ? '🗺 Route' : '📍 Point' }}</span>
                 </div>
 
-                <div class="detail-rating-row">
-                  <span class="stars detail-stars">
-                    @for (filled of stars(dest.rating); track $index) {
-                      <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
-                    }
-                  </span>
-                  <strong class="detail-rating-val">{{ dest.rating }}</strong>
-                  <span class="detail-review-count">{{ dest.reviewCount }} reviews</span>
-                </div>
-
-                @if (dest.distance || dest.duration) {
-                  <div class="route-stats">
-                    @if (dest.distance) {
-                      <div class="stat-pill"><span>📏</span><span>{{ dest.distance }}</span></div>
-                    }
-                    @if (dest.duration) {
-                      <div class="stat-pill"><span>⏱</span><span>{{ dest.duration }}</span></div>
-                    }
+                @if (dest.reviewCount > 0) {
+                  <div class="detail-rating-row">
+                    <span class="stars detail-stars">
+                      @for (filled of stars(dest.avgRating); track $index) {
+                        <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                      }
+                    </span>
+                    <strong class="detail-rating-val">{{ dest.avgRating }}</strong>
+                    <span class="detail-review-count">{{ dest.reviewCount }} {{ dest.reviewCount === 1 ? 'review' : 'reviews' }}</span>
                   </div>
                 }
 
-                <div class="detail-location">
-                  <span>📍</span>
-                  <span>{{ dest.city }}, {{ dest.country }}</span>
-                </div>
+                @if (dest.city || dest.country) {
+                  <div class="detail-location">
+                    <span>📍</span>
+                    <span>{{ locationLabel(dest) }}</span>
+                  </div>
+                }
 
-                <p class="detail-description">{{ dest.description }}</p>
+                @if (dest.description) {
+                  <p class="detail-description">{{ dest.description }}</p>
+                }
               </div>
 
-              <!-- Waypoints (routes only) -->
-              @if (dest.waypoints?.length) {
-                <div class="waypoints-section">
-                  <h3 class="waypoints-title">
-                    <span>Waypoints</span>
-                    <span class="reviews-count-badge">{{ dest.waypoints!.length }}</span>
-                  </h3>
-                  <ol class="waypoints-list">
-                    @for (wp of dest.waypoints!; track $index; let last = $last) {
-                      <li class="waypoint-item">
-                        <div class="wp-marker">
-                          <span class="wp-dot">{{ $index + 1 }}</span>
-                          @if (!last) { <div class="wp-connector"></div> }
-                        </div>
-                        <span class="wp-title">{{ wp.title }}</span>
-                      </li>
+              <!-- Media -->
+              @if (dest.media.length > 0) {
+                <div class="media-section">
+                  <h3 class="reviews-title">Photos & Videos</h3>
+                  <div class="media-grid">
+                    @for (item of dest.media; track item.id) {
+                      @if (item.type === 'image') {
+                        <img class="media-thumb" [src]="item.url" [alt]="dest.title" />
+                      } @else {
+                        <video class="media-thumb" [src]="item.url" controls></video>
+                      }
                     }
-                  </ol>
+                  </div>
                 </div>
               }
 
               <!-- Reviews -->
-              <div class="reviews-section">
-                <h3 class="reviews-title">
-                  <span>Reviews</span>
-                  <span class="reviews-count-badge">{{ dest.reviews.length }}</span>
-                </h3>
-
-                @for (review of dest.reviews; track $index) {
-                  <div class="review-card">
-                    <div class="review-header">
-                      <div class="review-left">
-                        <span class="review-avatar">{{ review.author[0] }}</span>
-                        <span class="review-author">{{ review.author }}</span>
+              @if (dest.reviews.length > 0) {
+                <div class="reviews-section">
+                  <h3 class="reviews-title">
+                    Reviews
+                    <span class="reviews-count-badge">{{ dest.reviews.length }}</span>
+                  </h3>
+                  @for (review of dest.reviews; track review.id) {
+                    <div class="review-card">
+                      <div class="review-header">
+                        <div class="review-left">
+                          <span class="review-avatar">{{ review.user.name[0] }}</span>
+                          <span class="review-author">{{ review.user.name }}</span>
+                        </div>
+                        <div class="review-right">
+                          <span class="stars stars-sm">
+                            @for (filled of stars(review.rating); track $index) {
+                              <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                            }
+                          </span>
+                          <span class="review-date">{{ review.createdAt | date:'MMM y' }}</span>
+                        </div>
                       </div>
-                      <div class="review-right">
-                        <span class="stars stars-sm">
-                          @for (filled of stars(review.rating); track $index) {
-                            <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
-                          }
-                        </span>
-                        <span class="review-date">{{ review.date }}</span>
-                      </div>
+                      @if (review.comment) {
+                        <p class="review-comment">{{ review.comment }}</p>
+                      }
                     </div>
-                    <p class="review-comment">{{ review.comment }}</p>
-                  </div>
-                }
-              </div>
+                  }
+                </div>
+              }
 
             </div>
           </div>

@@ -7,6 +7,22 @@ import * as destinationService from "../services/destination.service.js";
 import { assertAuth } from "../utils/assertAuth.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
 
+export const getDestinations = async (_req: Request, res: Response) => {
+  const destinations = await destinationService.findAll();
+  res.json(destinations);
+};
+
+export const getAdminDestinations = async (_req: Request, res: Response) => {
+  const destinations = await destinationService.findAllAdmin();
+  res.json(destinations);
+};
+
+export const getReviews = async (req: Request, res: Response) => {
+  const id = parseIdParam(req.params.id, "destination id");
+  const reviews = await destinationService.findReviews(id);
+  res.json(reviews);
+};
+
 export const getById = async (req: Request, res: Response) => {
   const id = parseIdParam(req.params.id);
   const dest = await destinationService.findById(id);

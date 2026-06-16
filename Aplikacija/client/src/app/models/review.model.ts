@@ -1,9 +1,4 @@
-export interface MockReview {
-  author: string;
-  rating: number;
-  comment: string;
-  date: string;
-}
+export { DestinationReview } from './destination.model';
 
 export interface Review {
   id: number;
