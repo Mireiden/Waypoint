@@ -4,6 +4,7 @@ import authRoutes from "./auth.routes.js";
 import categoryRoutes from "./category.routes.js";
 import destinationRoutes from "./destination.routes.js";
 import meRoutes from "./me.routes.js";
+import mediaRoutes from "./media.routes.js";
 import userRoutes from "./user.routes.js";
 
 const router: Router = Router();
@@ -13,5 +14,6 @@ router.use("/me", meRoutes);
 router.use("/users", userRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/destinations", destinationRoutes);
+router.use("/media", mediaRoutes);
 
 export default router;
