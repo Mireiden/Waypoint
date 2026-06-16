@@ -37,7 +37,10 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
   }
 
   if (err instanceof MulterError) {
-    res.status(400).json({ message: err.message, details: err.stack });
+    res.status(400).json({
+      error: err.message,
+      ...(config.server.env !== "production" && { code: err.code }),
+    });
     return;
   }
 

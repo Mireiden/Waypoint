@@ -1,0 +1,20 @@
+meta {
+  name: remove-media
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/destinations/:id/media
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
