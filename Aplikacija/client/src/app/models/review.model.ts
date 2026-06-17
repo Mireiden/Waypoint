@@ -1,4 +1,4 @@
-export { DestinationReview } from './destination.model';
+export type { DestinationReview } from './destination.model';
 
 export interface Review {
   id: number;

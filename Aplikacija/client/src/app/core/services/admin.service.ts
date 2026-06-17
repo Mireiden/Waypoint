@@ -54,6 +54,10 @@ export class AdminService {
     return this.http.get<UserWithCount[]>(`${this.base}/users`, { withCredentials: true });
   }
 
+  deleteUser(id: number) {
+    return this.http.delete(`${this.base}/users/${id}`, { withCredentials: true });
+  }
+
   getReviews() {
     return this.http.get<ReviewWithCount[]>(`${this.base}/reviews`, { withCredentials: true });
   }

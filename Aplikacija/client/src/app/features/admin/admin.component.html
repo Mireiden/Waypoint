@@ -146,6 +146,7 @@
             <th>Reviews</th>
             <th>Reports</th>
             <th>Joined</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -160,6 +161,11 @@
             <td class="muted">{{ user._count.reviews }}</td>
             <td class="muted">{{ user._count.reports }}</td>
             <td class="muted">{{ user.createdAt | date:'mediumDate' }}</td>
+            <td>
+              @if (user.id !== auth.currentUser()?.id) {
+              <button class="btn btn--delete" (click)="deleteUser(user.id)">Delete</button>
+              }
+            </td>
           </tr>
           }
         </tbody>

@@ -108,6 +108,39 @@ import { UserService } from '../../core/services/user.service';
                   <p class="form-success">Profile updated!</p>
                 }
               </form>
+
+              <div class="pw-section">
+                <button class="btn-pw-toggle" type="button" (click)="pwOpen.set(!pwOpen())">
+                  {{ pwOpen() ? 'Cancel' : 'Change Password' }}
+                </button>
+                @if (pwOpen()) {
+                  <form class="edit-form pw-form" (ngSubmit)="onChangePassword()">
+                    <div class="edit-fields">
+                      <div class="field">
+                        <label for="pw-current">Current password</label>
+                        <input id="pw-current" type="password" [(ngModel)]="pwCurrent" name="pwCurrent" required />
+                      </div>
+                      <div class="field">
+                        <label for="pw-new">New password</label>
+                        <input id="pw-new" type="password" [(ngModel)]="pwNew" name="pwNew" minlength="8" required />
+                      </div>
+                      <div class="field">
+                        <label for="pw-confirm">Confirm new password</label>
+                        <input id="pw-confirm" type="password" [(ngModel)]="pwConfirm" name="pwConfirm" required />
+                      </div>
+                      <button type="submit" class="btn-save" [disabled]="isPwSaving()">
+                        {{ isPwSaving() ? 'Saving…' : 'Update Password' }}
+                      </button>
+                    </div>
+                    @if (pwError()) {
+                      <p class="form-error">{{ pwError() }}</p>
+                    }
+                    @if (pwSuccess()) {
+                      <p class="form-success">Password updated!</p>
+                    }
+                  </form>
+                }
+              </div>
             </div>
           }
 
@@ -167,6 +200,14 @@ export class ProfileComponent {
   saveError = signal<string | null>(null);
   saveSuccess = signal(false);
 
+  pwOpen = signal(false);
+  isPwSaving = signal(false);
+  pwError = signal<string | null>(null);
+  pwSuccess = signal(false);
+  pwCurrent = '';
+  pwNew = '';
+  pwConfirm = '';
+
   nameInput = this.auth.currentUser()?.name ?? '';
   avatarInput = this.auth.currentUser()?.avatarUrl ?? '';
 
@@ -178,6 +219,35 @@ export class ProfileComponent {
 
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+  }
+
+  onChangePassword(): void {
+    this.pwError.set(null);
+    this.pwSuccess.set(false);
+
+    if (this.pwNew !== this.pwConfirm) {
+      this.pwError.set('New passwords do not match.');
+      return;
+    }
+
+    this.isPwSaving.set(true);
+    this.userService.changePassword({ currentPassword: this.pwCurrent, newPassword: this.pwNew }).subscribe({
+      next: () => {
+        this.isPwSaving.set(false);
+        this.pwSuccess.set(true);
+        this.pwCurrent = '';
+        this.pwNew = '';
+        this.pwConfirm = '';
+        setTimeout(() => {
+          this.pwSuccess.set(false);
+          this.pwOpen.set(false);
+        }, 1500);
+      },
+      error: (err) => {
+        this.isPwSaving.set(false);
+        this.pwError.set(err?.error?.error ?? 'Could not update password. Try again.');
+      },
+    });
   }
 
   onSave(): void {

@@ -252,6 +252,34 @@
   margin: 10px 0 0;
 }
 
+/* ── Password change ─────────────────────── */
+.pw-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-pw-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+}
+
+.pw-form {
+  margin-top: 16px;
+}
+
 /* ── Tabs ─────────────────────────────────── */
 .tab-bar {
   display: flex;

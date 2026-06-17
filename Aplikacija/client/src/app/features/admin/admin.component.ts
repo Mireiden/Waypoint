@@ -6,6 +6,7 @@ import { Report } from '../../models/report.model';
 import { ReviewWithCount } from '../../models/review.model';
 import { AdminDestination } from '../../models/destination.model';
 import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
 
 type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'reviews';
 
@@ -28,6 +29,7 @@ export class AdminComponent implements OnInit {
   sidebarOpen = signal(false);
 
   private readonly adminService = inject(AdminService);
+  readonly auth = inject(AuthService);
 
   ngOnInit() {
     // this.loadStats();
@@ -118,6 +120,12 @@ export class AdminComponent implements OnInit {
   deleteReview(id: number) {
     this.adminService.deleteReview(id).subscribe({
       next: () => this.reviews.update((list) => list.filter((r) => r.id !== id)),
+    });
+  }
+
+  deleteUser(id: number) {
+    this.adminService.deleteUser(id).subscribe({
+      next: () => this.users.update((list) => list.filter((u) => u.id !== id)),
     });
   }
 }

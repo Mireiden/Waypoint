@@ -24,4 +24,8 @@ export class UserService {
   deleteProfile() {
     return this.http.delete<User>(`${this.base}/me`, { withCredentials: true });
   }
+
+  changePassword(payload: { currentPassword: string; newPassword: string }) {
+    return this.http.patch<void>(`${this.base}/me/password`, payload, { withCredentials: true });
+  }
 }
