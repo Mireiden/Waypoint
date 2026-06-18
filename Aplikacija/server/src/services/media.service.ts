@@ -12,6 +12,21 @@ import { assertOwnerOrAdmin } from "../utils/assertOwnerOrAdmin.js";
 const resolveMediaType = (mimetype: string): MediaType =>
   mimetype.startsWith("video/") ? "video" : "image";
 
+// pure cloudinary upload - returns media to persist
+export const uploadFiles = async (files: Express.Multer.File[]) => {
+  return await Promise.all(
+    files.map(async (file) => {
+      const type = resolveMediaType(file.mimetype);
+      const { url, publicId } = await cloudinaryService.uploadBuffer(file.buffer, type);
+      return { url, publicId, type };
+    }),
+  );
+};
+
+export const destroyUploaded = async (uploaded: { publicId: string; type: MediaType }[]) => {
+  await Promise.all(uploaded.map((m) => cloudinaryService.destroy(m.publicId, m.type)));
+};
+
 export const addToDestination = async (
   destId: number,
   actor: AuthUser,
@@ -29,7 +44,6 @@ export const addToDestination = async (
     _count: true,
     _max: { position: true },
   });
-
   const existingCount = agg._count;
   const start = (agg._max.position ?? -1) + 1;
 
@@ -39,28 +53,19 @@ export const addToDestination = async (
     );
   }
 
-  const data = await Promise.all(
-    files.map(async (file, i) => {
-      const type = resolveMediaType(file.mimetype);
-      const { url, publicId } = await cloudinaryService.uploadBuffer(file.buffer, type);
-      return {
-        url,
-        publicId,
-        type,
-        position: start + i,
-        destinationId: destId,
-      };
-    }),
-  );
-  return await prisma.media.createManyAndReturn({
-    data,
-    select: {
-      id: true,
-      url: true,
-      type: true,
-      position: true,
-    },
-  });
+  const uploaded = await uploadFiles(files);
+  const data = uploaded.map((m, i) => ({ ...m, position: start + i, destinationId: destId }));
+
+  try {
+    return await prisma.media.createManyAndReturn({
+      data,
+      select: { id: true, url: true, type: true, position: true },
+    });
+  } catch (err) {
+    // clean up orphaned cloudinary uploads if db persist fails
+    await destroyUploaded(uploaded);
+    throw err;
+  }
 };
 
 export const deleteMedia = async (id: number, actor: AuthUser) => {
@@ -97,7 +102,7 @@ export const deleteAllFromDestination = async (destId: number, actor: AuthUser) 
     },
   });
 
-  await Promise.all(media.map((m) => cloudinaryService.destroy(m.publicId, m.type)));
+  await destroyUploaded(media);
   await prisma.media.deleteMany({ where: { destinationId: destId } });
 };
 
