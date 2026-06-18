@@ -53,7 +53,7 @@ export const findById = async (id: number) => {
   const [dest] = await prisma.$queryRawTyped(getDestinationById(id));
   if (!dest) throw new NotFoundError();
 
-  const [media] = await mediaService.findByDestinationId(id);
+  const media = await mediaService.findByDestinationId(id);
   return { ...dest, media };
 };
 
