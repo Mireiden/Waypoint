@@ -40,15 +40,38 @@
           <button class="filter-tab" [class.active]="activeFilter() === 'point'" (click)="setFilter('point')">Points</button>
         </div>
 
+        <!-- Category + sort -->
+        <div class="filter-selects">
+          <select
+            class="filter-select"
+            [ngModel]="selectedCategory()"
+            (ngModelChange)="setCategory($event)"
+          >
+            <option [ngValue]="null">All categories</option>
+            @for (cat of categories(); track cat.id) {
+              <option [ngValue]="cat.id">{{ categoryIcon(cat.icon) }} {{ cat.name }}</option>
+            }
+          </select>
+          <select
+            class="filter-select"
+            [ngModel]="sortBy()"
+            (ngModelChange)="setSort($event)"
+          >
+            <option value="recent">Newest</option>
+            <option value="rating">Top rated</option>
+            <option value="popular">Most reviewed</option>
+          </select>
+        </div>
+
         <!-- Destination list -->
         <div class="dest-list">
-          @if (filteredDestinations().length === 0) {
+          @if (destinations().length === 0) {
             <div class="empty-state">
               <span class="empty-icon">🗺</span>
               <p>No destinations found</p>
             </div>
           } @else {
-            @for (dest of filteredDestinations(); track dest.id) {
+            @for (dest of destinations(); track dest.id) {
               <button class="dest-card" (click)="selectDestination(dest)">
                 <div class="card-body">
                   <h3 class="card-title">{{ dest.title }}</h3>
@@ -63,6 +86,17 @@
                       <span class="tag">{{ dest.city }}</span>
                     }
                   </div>
+                  @if (dest.reviewCount > 0) {
+                    <div class="card-rating">
+                      <span class="stars">
+                        @for (filled of stars(dest.avgRating); track $index) {
+                          <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                        }
+                      </span>
+                      <span class="rating-val">{{ dest.avgRating }}</span>
+                      <span class="review-count">({{ dest.reviewCount }})</span>
+                    </div>
+                  }
                   @if (dest.description) {
                     <p class="card-description">{{ dest.description }}</p>
                   }
@@ -136,13 +170,13 @@
               }
 
               <!-- Reviews -->
-              @if (dest.reviews.length > 0) {
+              @if (selectedReviews().length > 0) {
                 <div class="reviews-section">
                   <h3 class="reviews-title">
                     Reviews
-                    <span class="reviews-count-badge">{{ dest.reviews.length }}</span>
+                    <span class="reviews-count-badge">{{ selectedReviews().length }}</span>
                   </h3>
-                  @for (review of dest.reviews; track review.id) {
+                  @for (review of selectedReviews(); track review.id) {
                     <div class="review-card">
                       <div class="review-header">
                         <div class="review-left">

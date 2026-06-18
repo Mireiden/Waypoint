@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
 
-const DEFAULT_CENTER: L.LatLngTuple = [44.8176, 20.4569]; // Belgrade
+const DEFAULT_CENTER: L.LatLngTuple = [43.3217, 21.8959];
 const DEFAULT_ZOOM = 13;
 
-// Fix Leaflet's broken default marker icon paths when bundled
 const iconDefault = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -73,6 +72,16 @@ export class MapService {
 
   getMap(): L.Map | null {
     return this.map;
+  }
+
+  getBoundsBbox(): string | null {
+    if (!this.map) return null;
+    const b = this.map.getBounds();
+    return `${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`;
+  }
+
+  onMoveEnd(cb: () => void): void {
+    this.map?.on('moveend', cb);
   }
 
   destroy(): void {

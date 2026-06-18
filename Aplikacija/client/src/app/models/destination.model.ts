@@ -35,6 +35,8 @@ export interface DestinationSummary {
   country: string | null;
   geometry: DestinationGeometry;
   category: DestinationCategory | null;
+  avgRating: number;
+  reviewCount: number;
 }
 
 export interface DestinationReview {
@@ -48,8 +50,6 @@ export interface DestinationReview {
 
 export interface Destination extends DestinationSummary {
   media: Media[];
-  avgRating: number;
-  reviewCount: number;
   reviews: DestinationReview[];
 }
 
@@ -81,6 +81,17 @@ export interface CreateRoutePayload {
 }
 
 export type CreateDestinationPayload = CreatePointPayload | CreateRoutePayload;
+
+export type DestinationSort = 'recent' | 'rating' | 'popular';
+
+export interface DestinationQueryParams {
+  type?: DestinationType;
+  category?: number;
+  q?: string;
+  bbox?: string; // "minLng,minLat,maxLng,maxLat"
+  sort?: DestinationSort;
+  limit?: number;
+}
 
 export interface UpdateDestinationPayload {
   title?: string;

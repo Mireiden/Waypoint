@@ -3,7 +3,6 @@ import {
   OnDestroy,
   inject,
   signal,
-  computed,
   afterNextRender,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +13,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MapService } from '../../core/services/map.service';
 import { ApiService, NominatimResult } from '../../core/services/api.service';
 import { DestinationService } from '../../core/services/destination.service';
-import { Destination, DestinationSummary } from '../../models/destination.model';
+import { CategoryService } from '../../core/services/category.service';
+import { ReviewService } from '../../core/services/review.service';
+import {
+  Destination,
+  DestinationReview,
+  DestinationSort,
+  DestinationSummary,
+} from '../../models/destination.model';
+import { Category } from '../../models/category.model';
 
 
 @Component({
@@ -27,6 +34,8 @@ export class MapComponent implements OnDestroy {
   private readonly mapService = inject(MapService);
   private readonly apiService = inject(ApiService);
   private readonly destinationService = inject(DestinationService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly reviewService = inject(ReviewService);
 
   // Search state
   searchQuery = signal('');
@@ -40,22 +49,39 @@ export class MapComponent implements OnDestroy {
   panelExpanded = signal(false);
   panelView = signal<'list' | 'detail'>('list');
   selectedDest = signal<Destination | null>(null);
+  selectedReviews = signal<DestinationReview[]>([]);
+
+  // Destination filters — drive the findMany query on the backend
   activeFilter = signal<'all' | 'point' | 'route'>('all');
+  selectedCategory = signal<number | null>(null);
+  sortBy = signal<DestinationSort>('recent');
+  categories = signal<Category[]>([]);
 
   readonly destinations = signal<DestinationSummary[]>([]);
 
-  readonly filteredDestinations = computed(() => {
-    const filter = this.activeFilter();
-    const all = this.destinations();
-    return filter === 'all' ? all : all.filter((d) => d.type === filter);
-  });
+  private readonly reload$ = new Subject<void>();
 
   constructor() {
     afterNextRender(() => {
       if (window.innerWidth <= 768) this.panelCollapsed.set(true);
       this.mapService.init('map');
+      this.mapService.onMoveEnd(() => this.reload$.next());
 
-      this.destinationService.getAll().subscribe({
+      this.categoryService.getAll().subscribe({
+        next: (cats) => this.categories.set(cats),
+        error: (err) => console.error('Failed to load categories:', err),
+      });
+
+      this.reload$.next();
+    });
+
+    this.reload$
+      .pipe(
+        debounceTime(300),
+        switchMap(() => this.destinationService.getAll(this.buildQuery())),
+        takeUntilDestroyed(),
+      )
+      .subscribe({
         next: (dests) => {
           this.destinations.set(dests);
           this.mapService.setMarkers(
@@ -68,7 +94,6 @@ export class MapComponent implements OnDestroy {
         },
         error: (err) => console.error('Failed to load destinations:', err),
       });
-    });
 
     this.search$
       .pipe(
@@ -111,6 +136,27 @@ export class MapComponent implements OnDestroy {
 
   setFilter(filter: 'all' | 'point' | 'route'): void {
     this.activeFilter.set(filter);
+    this.reload$.next();
+  }
+
+  setCategory(categoryId: number | null): void {
+    this.selectedCategory.set(categoryId);
+    this.reload$.next();
+  }
+
+  setSort(sort: DestinationSort): void {
+    this.sortBy.set(sort);
+    this.reload$.next();
+  }
+
+  private buildQuery() {
+    const filter = this.activeFilter();
+    return {
+      type: filter === 'all' ? undefined : filter,
+      category: this.selectedCategory() ?? undefined,
+      sort: this.sortBy(),
+      bbox: this.mapService.getBoundsBbox() ?? undefined,
+    };
   }
 
   selectDestination(summary: DestinationSummary): void {
@@ -122,6 +168,11 @@ export class MapComponent implements OnDestroy {
     this.destinationService.getById(summary.id).subscribe((dest) => {
       this.selectedDest.set(dest);
     });
+
+    this.reviewService.getByDestinationId(summary.id).subscribe({
+      next: (reviews) => this.selectedReviews.set(reviews),
+      error: (err) => console.error('Failed to load reviews:', err),
+    });
   }
 
   selectById(id: number): void {
@@ -132,6 +183,7 @@ export class MapComponent implements OnDestroy {
   backToList(): void {
     this.panelView.set('list');
     this.selectedDest.set(null);
+    this.selectedReviews.set([]);
     this.mapService.zoomTo(13);
   }
 

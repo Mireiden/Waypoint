@@ -195,6 +195,38 @@
   }
 }
 
+.filter-selects {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 10px;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-select {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.73rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-mid);
+  }
+}
+
 .dest-list {
   flex: 1;
   overflow-y: auto;

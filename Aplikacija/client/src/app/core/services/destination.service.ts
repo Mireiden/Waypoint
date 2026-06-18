@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
 import type {
   CreateDestinationPayload,
   Destination,
+  DestinationQueryParams,
   DestinationSummary,
   Media,
   UpdateDestinationPayload,
@@ -16,8 +17,14 @@ export class DestinationService {
   private readonly base = `${environment.apiUrl}/destinations`;
   private readonly mediaBase = `${environment.apiUrl}/media`;
 
-  getAll() {
-    return this.http.get<DestinationSummary[]>(this.base, { withCredentials: true });
+  getAll(query?: DestinationQueryParams) {
+    let params = new HttpParams();
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value !== undefined && value !== null) params = params.set(key, value);
+      }
+    }
+    return this.http.get<DestinationSummary[]>(this.base, { params, withCredentials: true });
   }
 
   getById(id: number) {
