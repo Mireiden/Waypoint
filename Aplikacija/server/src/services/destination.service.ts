@@ -15,21 +15,6 @@ import { removeUndefined } from "../utils/removeUndefined.js";
 import { reverseGeocode } from "./geocoding.service.js";
 import * as mediaService from "./media.service.js";
 
-export const findReviews = async (id: number) => {
-  return await prisma.review.findMany({
-    where: { destinationId: id },
-    select: {
-      id: true,
-      rating: true,
-      comment: true,
-      createdAt: true,
-      user: { select: { id: true, name: true } },
-      media: { select: { id: true, url: true, type: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-};
-
 export const findAllAdmin = async () => {
   return await prisma.destination.findMany({
     select: {
@@ -67,11 +52,9 @@ export const findMany = async (query: FindManyQuery) => {
 export const findById = async (id: number) => {
   const [dest] = await prisma.$queryRawTyped(getDestinationById(id));
   if (!dest) throw new NotFoundError();
-  const [media, reviews] = await Promise.all([
-    mediaService.findByDestinationId(id),
-    findReviews(id),
-  ]);
-  return { ...dest, media, reviews };
+
+  const [media] = await mediaService.findByDestinationId(id);
+  return { ...dest, media };
 };
 
 export const createDestination = async (userId: number, data: CreateDestinationInput) => {

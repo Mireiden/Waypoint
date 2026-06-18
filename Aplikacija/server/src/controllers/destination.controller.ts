@@ -24,12 +24,6 @@ export const getAdminDestinations = async (_req: Request, res: Response) => {
   res.json(destinations);
 };
 
-export const getReviews = async (req: Request, res: Response) => {
-  const id = parseIdParam(req.params.id, "destination id");
-  const reviews = await destinationService.findReviews(id);
-  res.json(reviews);
-};
-
 export const getById = async (req: Request, res: Response) => {
   const id = parseIdParam(req.params.id);
   const dest = await destinationService.findById(id);
