@@ -2,8 +2,8 @@ import type { Request, Response } from "express";
 
 import * as mediaService from "../services/media.service.js";
 import { assertAuth } from "../utils/assertAuth.js";
+import { requireFiles } from "../utils/files.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
-import { requireFiles } from "../utils/requireFiles.js";
 
 export const uploadDestinationMedia = async (req: Request, res: Response) => {
   assertAuth(req);
