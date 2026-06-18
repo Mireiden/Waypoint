@@ -1,0 +1,25 @@
+meta {
+  name: get
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/destinations?type=point
+  body: none
+  auth: inherit
+}
+
+params:query {
+  type: point
+  ~category: 27
+  ~q: Fish
+  ~bbox: 
+  ~sort: 
+  ~limit: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

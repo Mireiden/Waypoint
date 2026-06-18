@@ -2,13 +2,20 @@ import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
 import { ValidationError } from "../errors/validationError.js";
-import { createDestinationSchema, updateDestinationSchema } from "../schemas/destination.schema.js";
+import {
+  createDestinationSchema,
+  findManyQuerySchema,
+  updateDestinationSchema,
+} from "../schemas/destination.schema.js";
 import * as destinationService from "../services/destination.service.js";
 import { assertAuth } from "../utils/assertAuth.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
 
-export const getDestinations = async (_req: Request, res: Response) => {
-  const destinations = await destinationService.findAll();
+export const getDestinations = async (req: Request, res: Response) => {
+  const parsed = findManyQuerySchema.safeParse(req.query);
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
+
+  const destinations = await destinationService.findMany(parsed.data);
   res.json(destinations);
 };
 
