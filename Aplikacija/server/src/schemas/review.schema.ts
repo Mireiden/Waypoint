@@ -11,5 +11,11 @@ export const createReviewSchema = z.object({
   comment: z.string().nullable().optional(),
 });
 
+export const updateReviewSchema = z.object({
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  comment: z.string().nullable().optional(),
+});
+
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;
 export type ListReviewsQuery = z.infer<typeof listReviewsQuerySchema>;
+export type UpdateReviewInput = z.infer<typeof updateReviewSchema>;

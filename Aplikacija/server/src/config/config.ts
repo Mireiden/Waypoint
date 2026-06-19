@@ -27,6 +27,7 @@ const envSchema = z.object({
   UPLOAD_MAX_FILES: z.coerce.number().default(10),
   UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().default(10),
   UPLOAD_MAX_MEDIA_PER_DESTINATION: z.coerce.number().default(10),
+  UPLOAD_MAX_MEDIA_PER_REVIEW: z.coerce.number().default(10),
 
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(3000),
@@ -70,6 +71,7 @@ const config = {
     maxFiles: env.UPLOAD_MAX_FILES,
     maxFileSizeBytes: env.UPLOAD_MAX_FILE_SIZE_MB * 1024 * 1024,
     maxMediaPerDestination: env.UPLOAD_MAX_MEDIA_PER_DESTINATION,
+    maxMediaPerReview: env.UPLOAD_MAX_MEDIA_PER_REVIEW,
   },
 };
 

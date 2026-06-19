@@ -1,8 +1,14 @@
-import type { CreateReviewInput, ListReviewsQuery } from "../schemas/review.schema.js";
+import type { AuthUser } from "../schemas/auth.schema.js";
+import type {
+  CreateReviewInput,
+  ListReviewsQuery,
+  UpdateReviewInput,
+} from "../schemas/review.schema.js";
 
 import { Prisma } from "../../generated/prisma/client.js";
 import { NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
+import { assertOwnerOrAdmin } from "../utils/assertOwnerOrAdmin.js";
 import { removeUndefined } from "../utils/removeUndefined.js";
 import * as mediaService from "./media.service.js";
 
@@ -13,7 +19,17 @@ const reviewOrderBy: Record<ListReviewsQuery["sort"], Prisma.ReviewOrderByWithRe
 };
 
 export const findById = async (id: number) => {
-  const review = await prisma.review.findUnique({ where: { id } });
+  const review = await prisma.review.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+      user: { select: { id: true, name: true } },
+      media: { select: { id: true, url: true, type: true } },
+    },
+  });
   if (!review) throw new NotFoundError();
   return review;
 };
@@ -74,4 +90,38 @@ export const createReview = async (
     await mediaService.destroyUploaded(uploaded);
     throw err;
   }
+};
+
+export const updateReview = async (id: number, actor: AuthUser, data: UpdateReviewInput) => {
+  const review = await prisma.review.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+  if (!review) throw new NotFoundError();
+  assertOwnerOrAdmin(actor, review.userId);
+
+  return await prisma.review.update({
+    where: { id },
+    data: removeUndefined(data),
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+      user: { select: { id: true, name: true } },
+      media: { select: { id: true, url: true, type: true, position: true } },
+    },
+  });
+};
+
+export const deleteReview = async (id: number, actor: AuthUser) => {
+  const review = await prisma.review.findUnique({
+    where: { id },
+    select: { userId: true, media: { select: { publicId: true, type: true } } },
+  });
+  if (!review) throw new NotFoundError();
+  assertOwnerOrAdmin(actor, review.userId);
+
+  await prisma.review.delete({ where: { id } });
+  await mediaService.destroyUploaded(review.media);
 };

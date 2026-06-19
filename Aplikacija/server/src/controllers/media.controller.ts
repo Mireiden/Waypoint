@@ -14,6 +14,15 @@ export const uploadDestinationMedia = async (req: Request, res: Response) => {
   res.status(201).json(media);
 };
 
+export const uploadReviewMedia = async (req: Request, res: Response) => {
+  assertAuth(req);
+  const id = parseIdParam(req.params.id, "review id");
+  const files = requireFiles(req);
+
+  const media = await mediaService.addToReview(id, req.user, files);
+  res.status(201).json(media);
+};
+
 export const deleteMedia = async (req: Request, res: Response) => {
   assertAuth(req);
   const id = parseIdParam(req.params.id, "media id");

@@ -27,34 +27,24 @@ export const destroyUploaded = async (uploaded: { publicId: string; type: MediaT
   await Promise.all(uploaded.map((m) => cloudinaryService.destroy(m.publicId, m.type)));
 };
 
-export const addToDestination = async (
-  destId: number,
-  actor: AuthUser,
+const attachMedia = async (
+  where: { destinationId: number } | { reviewId: number },
+  max: number,
   files: Express.Multer.File[],
 ) => {
-  const dest = await prisma.destination.findUnique({
-    where: { id: destId },
-    select: { userId: true },
-  });
-  if (!dest) throw new NotFoundError("Invalid destination ID");
-  assertOwnerOrAdmin(actor, dest.userId);
-
   const agg = await prisma.media.aggregate({
-    where: { destinationId: destId },
+    where,
     _count: true,
     _max: { position: true },
   });
-  const existingCount = agg._count;
   const start = (agg._max.position ?? -1) + 1;
 
-  if (existingCount + files.length > config.upload.maxMediaPerDestination) {
-    throw new BadRequestError(
-      `A destination can have at most ${String(config.upload.maxMediaPerDestination)} media`,
-    );
+  if (agg._count + files.length > max) {
+    throw new BadRequestError(`Can have at most ${String(max)} media`);
   }
 
   const uploaded = await uploadFiles(files);
-  const data = uploaded.map((m, i) => ({ ...m, position: start + i, destinationId: destId }));
+  const data = uploaded.map((m, i) => ({ ...m, position: start + i, ...where }));
 
   try {
     return await prisma.media.createManyAndReturn({
@@ -66,6 +56,34 @@ export const addToDestination = async (
     await destroyUploaded(uploaded);
     throw err;
   }
+};
+
+export const addToDestination = async (
+  destId: number,
+  actor: AuthUser,
+  files: Express.Multer.File[],
+) => {
+  const dest = await prisma.destination.findUnique({
+    where: { id: destId },
+    select: { userId: true },
+  });
+  if (!dest) throw new NotFoundError("Invalid destination ID");
+  assertOwnerOrAdmin(actor, dest.userId);
+  return attachMedia({ destinationId: destId }, config.upload.maxMediaPerDestination, files);
+};
+
+export const addToReview = async (
+  reviewId: number,
+  actor: AuthUser,
+  files: Express.Multer.File[],
+) => {
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+    select: { userId: true },
+  });
+  if (!review) throw new NotFoundError("Invalid review ID");
+  assertOwnerOrAdmin(actor, review.userId);
+  return attachMedia({ reviewId }, config.upload.maxMediaPerReview, files);
 };
 
 export const deleteMedia = async (id: number, actor: AuthUser) => {
