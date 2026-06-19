@@ -5,10 +5,13 @@ import { UserWithCount } from '../../models/user.model';
 import { Report } from '../../models/report.model';
 import { ReviewWithCount } from '../../models/review.model';
 import { AdminDestination } from '../../models/destination.model';
+import { CategoryWithCount } from '../../models/category.model';
 import { AdminService } from '../../core/services/admin.service';
+import { CategoryService } from '../../core/services/category.service';
 import { AuthService } from '../../core/services/auth.service';
+import { CATEGORY_ICON_KEYS, categoryIcon } from '../../shared/category-icons';
 
-type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'reviews';
+type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'reviews' | 'categories';
 
 @Component({
   selector: 'app-admin',
@@ -24,11 +27,27 @@ export class AdminComponent implements OnInit {
   users = signal<UserWithCount[]>([]);
   destinations = signal<AdminDestination[]>([]);
   reviews = signal<ReviewWithCount[]>([]);
+  categories = signal<CategoryWithCount[]>([]);
+
+  // New-category form
+  newCategoryName = signal('');
+  newCategoryIcon = signal<string>(CATEGORY_ICON_KEYS[0]);
+  savingCategory = signal(false);
+  categoryError = signal<string | null>(null);
+
+  // Inline edit state
+  editingId = signal<number | null>(null);
+  editName = signal('');
+  editIcon = signal<string>(CATEGORY_ICON_KEYS[0]);
 
   loading = signal(false);
   sidebarOpen = signal(false);
 
+  readonly iconKeys = CATEGORY_ICON_KEYS;
+  readonly categoryIcon = categoryIcon;
+
   private readonly adminService = inject(AdminService);
+  private readonly categoryService = inject(CategoryService);
   readonly auth = inject(AuthService);
 
   ngOnInit() {
@@ -90,6 +109,17 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  loadCategories() {
+    this.loading.set(true);
+    this.categoryService.getAll().subscribe({
+      next: (data) => {
+        this.categories.set(data);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
   setTab(tab: AdminTab) {
     this.activeTab.set(tab);
     this.sidebarOpen.set(false);
@@ -97,6 +127,7 @@ export class AdminComponent implements OnInit {
     if (tab === 'users' && this.users().length === 0) this.loadUsers();
     if (tab === 'destinations' && this.destinations().length === 0) this.loadDestinations();
     if (tab === 'reviews' && this.reviews().length === 0) this.loadReviews();
+    if (tab === 'categories' && this.categories().length === 0) this.loadCategories();
   }
 
   approveReport(id: number) {
@@ -127,5 +158,64 @@ export class AdminComponent implements OnInit {
     this.adminService.deleteUser(id).subscribe({
       next: () => this.users.update((list) => list.filter((u) => u.id !== id)),
     });
+  }
+
+  createCategory() {
+    const name = this.newCategoryName().trim();
+    if (!name || this.savingCategory()) return;
+
+    this.savingCategory.set(true);
+    this.categoryError.set(null);
+    this.categoryService.create({ name, icon: this.newCategoryIcon() }).subscribe({
+      next: (cat) => {
+        this.categories.update((list) => [...list, { ...cat, _count: { destinations: 0 } }]);
+        this.newCategoryName.set('');
+        this.newCategoryIcon.set(this.iconKeys[0]);
+        this.savingCategory.set(false);
+      },
+      error: (err) => {
+        this.categoryError.set(this.errorMessage(err, 'Failed to add category'));
+        this.savingCategory.set(false);
+      },
+    });
+  }
+
+  startEdit(cat: CategoryWithCount) {
+    this.editingId.set(cat.id);
+    this.editName.set(cat.name);
+    this.editIcon.set(cat.icon ?? this.iconKeys[0]);
+    this.categoryError.set(null);
+  }
+
+  cancelEdit() {
+    this.editingId.set(null);
+  }
+
+  saveEdit(id: number) {
+    const name = this.editName().trim();
+    if (!name) return;
+
+    this.categoryService.update(id, { name, icon: this.editIcon() }).subscribe({
+      next: (cat) => {
+        this.categories.update((list) =>
+          list.map((c) => (c.id === id ? { ...c, name: cat.name, icon: cat.icon } : c)),
+        );
+        this.editingId.set(null);
+      },
+      error: (err) => this.categoryError.set(this.errorMessage(err, 'Failed to update category')),
+    });
+  }
+
+  deleteCategory(id: number) {
+    this.categoryError.set(null);
+    this.categoryService.remove(id).subscribe({
+      next: () => this.categories.update((list) => list.filter((c) => c.id !== id)),
+      error: (err) => this.categoryError.set(this.errorMessage(err, 'Failed to delete category')),
+    });
+  }
+
+  private errorMessage(err: unknown, fallback: string): string {
+    const apiError = (err as { error?: { error?: string } })?.error?.error;
+    return typeof apiError === 'string' ? apiError : fallback;
   }
 }

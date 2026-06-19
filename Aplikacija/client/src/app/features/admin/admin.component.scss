@@ -309,6 +309,58 @@ nav {
     color: #991b1b;
     border-color: #fca5a5;
   }
+
+  &--add {
+    background: var(--primary);
+    color: #fff;
+    padding: 8px 20px;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  &--edit {
+    background: var(--surface-alt);
+    color: var(--text);
+    border-color: var(--border);
+  }
+}
+
+// ── Category form ──────────────────────────────────
+
+.category-form {
+  display: flex;
+  gap: 10px;
+  padding: 16px 28px 0;
+  flex-wrap: wrap;
+}
+
+.form-input {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-alt);
+  color: var(--text);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+}
+
+.form-error {
+  margin: 12px 28px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  font-size: 0.82rem;
+  font-weight: 500;
 }
 
 // ── Empty state ────────────────────────────────────

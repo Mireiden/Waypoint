@@ -22,6 +22,7 @@ import {
   DestinationSummary,
 } from '../../models/destination.model';
 import { Category } from '../../models/category.model';
+import { categoryIcon } from '../../shared/category-icons';
 
 
 @Component({
@@ -195,14 +196,7 @@ export class MapComponent implements OnDestroy {
     return [dest.city, dest.country].filter(Boolean).join(', ');
   }
 
-  private readonly iconMap: Record<string, string> = {
-    gem: '💎', mountain: '⛰', utensils: '🍽', zap: '⚡', fish: '🎣',
-    tree: '🌲', camera: '📷', coffee: '☕', map: '🗺', star: '⭐',
-  };
-
-  categoryIcon(icon: string | null): string {
-    return icon ? (this.iconMap[icon] ?? '📍') : '📍';
-  }
+  readonly categoryIcon = categoryIcon;
 
   private centerCoords(dest: DestinationSummary): [number, number] {
     if (dest.geometry.type === 'Point') return dest.geometry.coordinates;
