@@ -127,6 +127,7 @@ model Review {
   media       Media[]
   reports     Report[]
 
+  @@unique([userId, destinationId])
   @@index([destinationId], map: "idx_reviews_destination")
   @@map("reviews")
 }
