@@ -15,8 +15,11 @@ import { ApiService, NominatimResult } from '../../core/services/api.service';
 import { DestinationService } from '../../core/services/destination.service';
 import { CategoryService } from '../../core/services/category.service';
 import { ReviewService } from '../../core/services/review.service';
+import { AuthService } from '../../core/services/auth.service';
 import {
+  CreateDestinationPayload,
   Destination,
+  DestinationGeometry,
   DestinationReview,
   DestinationSort,
   DestinationSummary,
@@ -37,6 +40,7 @@ export class MapComponent implements OnDestroy {
   private readonly destinationService = inject(DestinationService);
   private readonly categoryService = inject(CategoryService);
   private readonly reviewService = inject(ReviewService);
+  readonly auth = inject(AuthService);
 
   // Search state
   searchQuery = signal('');
@@ -48,9 +52,19 @@ export class MapComponent implements OnDestroy {
   // Panel state
   panelCollapsed = signal(false);
   panelExpanded = signal(false);
-  panelView = signal<'list' | 'detail'>('list');
+  panelView = signal<'list' | 'detail' | 'create'>('list');
   selectedDest = signal<Destination | null>(null);
   selectedReviews = signal<DestinationReview[]>([]);
+
+  // Create-destination state
+  createType = signal<'point' | 'route' | null>(null);
+  drawnGeometry = signal<DestinationGeometry | null>(null);
+  newTitle = '';
+  newDescription = '';
+  newCategoryId: number | null = null;
+  newFiles: File[] = [];
+  publishing = signal(false);
+  createError = signal<string | null>(null);
 
   // Destination filters — drive the findMany query on the backend
   activeFilter = signal<'all' | 'point' | 'route'>('all');
@@ -85,11 +99,24 @@ export class MapComponent implements OnDestroy {
       .subscribe({
         next: (dests) => {
           this.destinations.set(dests);
+          // Points (and the marker for routes) as markers; routes also get a polyline.
           this.mapService.setMarkers(
             dests.map((d) => {
               const [lng, lat] = this.centerCoords(d);
               return { id: d.id, lat, lng, title: d.title };
             }),
+            (id) => this.selectById(id),
+          );
+          this.mapService.setRoutes(
+            dests
+              .filter((d) => d.geometry.type === 'LineString')
+              .map((d) => ({
+                id: d.id,
+                title: d.title,
+                latlngs: (d.geometry as { coordinates: [number, number][] }).coordinates.map(
+                  ([lng, lat]) => [lat, lng] as [number, number],
+                ),
+              })),
             (id) => this.selectById(id),
           );
         },
@@ -186,6 +213,96 @@ export class MapComponent implements OnDestroy {
     this.selectedDest.set(null);
     this.selectedReviews.set([]);
     this.mapService.zoomTo(13);
+  }
+
+  // ─── Create destination ──────────────────────────────
+  startCreate(): void {
+    this.resetCreateForm();
+    this.createType.set(null);
+    this.drawnGeometry.set(null);
+    this.panelView.set('create');
+    if (this.panelCollapsed()) this.panelCollapsed.set(false);
+  }
+
+  chooseCreateType(type: 'point' | 'route'): void {
+    this.createType.set(type);
+    this.drawnGeometry.set(null);
+    this.createError.set(null);
+    this.mapService.enableCreate(type, (geometry) => this.drawnGeometry.set(geometry));
+  }
+
+  redraw(): void {
+    const type = this.createType();
+    if (type) this.chooseCreateType(type);
+  }
+
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.newFiles = input.files ? Array.from(input.files) : [];
+  }
+
+  canPublish(): boolean {
+    return (
+      this.newTitle.trim().length > 0 &&
+      this.newCategoryId !== null &&
+      this.drawnGeometry() !== null &&
+      !this.publishing()
+    );
+  }
+
+  publish(): void {
+    const geometry = this.drawnGeometry();
+    const type = this.createType();
+    if (!geometry || !type || this.newCategoryId === null || !this.newTitle.trim()) return;
+
+    const payload = {
+      type,
+      title: this.newTitle.trim(),
+      description: this.newDescription.trim() || undefined,
+      categoryId: this.newCategoryId,
+      geometry,
+    } as CreateDestinationPayload;
+
+    this.publishing.set(true);
+    this.createError.set(null);
+    this.destinationService.create(payload, this.newFiles).subscribe({
+      next: (dest) => {
+        this.publishing.set(false);
+        this.mapService.disableCreate();
+        this.resetCreateForm();
+        this.createType.set(null);
+        this.drawnGeometry.set(null);
+        this.reload$.next();
+        // Jump straight to the new destination's detail view.
+        this.selectedDest.set(dest);
+        this.selectedReviews.set([]);
+        this.panelView.set('detail');
+        const [lng, lat] = this.centerCoords(dest);
+        this.mapService.flyTo(lat, lng, 15);
+      },
+      error: (err) => {
+        this.publishing.set(false);
+        // The API returns errors as { error: "message" }.
+        this.createError.set(err?.error?.error ?? 'Failed to publish destination.');
+      },
+    });
+  }
+
+  cancelCreate(): void {
+    this.mapService.disableCreate();
+    this.resetCreateForm();
+    this.createType.set(null);
+    this.drawnGeometry.set(null);
+    this.panelView.set('list');
+  }
+
+  private resetCreateForm(): void {
+    this.newTitle = '';
+    this.newDescription = '';
+    this.newCategoryId = null;
+    this.newFiles = [];
+    this.createError.set(null);
+    this.publishing.set(false);
   }
 
   stars(rating: number): boolean[] {

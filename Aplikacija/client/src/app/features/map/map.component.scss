@@ -1015,3 +1015,205 @@
     display: none;
   }
 }
+
+/* ─── Create destination ─────────────────────────── */
+.create-cta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--primary-dark);
+  }
+
+  .create-cta-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+}
+
+.panel-create {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.create-heading {
+  padding: 14px 16px 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.create-type-row {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px 4px;
+}
+
+.type-choice {
+  flex: 1;
+  padding: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+
+  &.active {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+  }
+
+  &:hover:not(.active) {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+}
+
+.draw-status {
+  margin: 10px 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  border: 1px dashed var(--border);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  &.done {
+    border-style: solid;
+    border-color: var(--primary);
+    color: var(--primary-dark);
+    background: var(--primary-light);
+  }
+}
+
+.redraw-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--primary);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:hover {
+    background: var(--primary);
+    color: white;
+  }
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 6px 16px 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+
+  .req {
+    color: var(--danger);
+  }
+}
+
+.field-input {
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-mid);
+  }
+}
+
+textarea.field-input {
+  resize: vertical;
+}
+
+.file-input {
+  padding: 6px;
+  font-size: 0.78rem;
+}
+
+.file-count {
+  font-size: 0.72rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.create-error {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+
+.publish-btn {
+  margin-top: 4px;
+  padding: 11px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-dark);
+  }
+
+  &:disabled {
+    background: var(--border);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+}

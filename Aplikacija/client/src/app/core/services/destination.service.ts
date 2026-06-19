@@ -31,8 +31,17 @@ export class DestinationService {
     return this.http.get<Destination>(`${this.base}/${id}`, { withCredentials: true });
   }
 
-  create(payload: CreateDestinationPayload) {
-    return this.http.post<Destination>(this.base, payload, { withCredentials: true });
+  create(payload: CreateDestinationPayload, files: File[] = []) {
+    // The backend create route is multipart (upload.array("files")) and expects
+    // `geometry` as a JSON string; the server parses it back via its jsonString() preprocessor.
+    const form = new FormData();
+    form.append('type', payload.type);
+    form.append('title', payload.title);
+    if (payload.description) form.append('description', payload.description);
+    form.append('categoryId', String(payload.categoryId));
+    form.append('geometry', JSON.stringify(payload.geometry));
+    files.forEach((f) => form.append('files', f));
+    return this.http.post<Destination>(this.base, form, { withCredentials: true });
   }
 
   update(id: number, payload: UpdateDestinationPayload) {

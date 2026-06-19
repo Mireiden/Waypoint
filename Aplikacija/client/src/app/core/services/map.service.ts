@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
+import '@geoman-io/leaflet-geoman-free';
+
+import type { DestinationGeometry } from '../../models/destination.model';
 
 const DEFAULT_CENTER: L.LatLngTuple = [43.3217, 21.8959];
 const DEFAULT_ZOOM = 13;
+const ROUTE_COLOR = '#2e7d52';
 
 const iconDefault = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -19,6 +23,11 @@ L.Marker.prototype.options.icon = iconDefault;
 export class MapService {
   private map: L.Map | null = null;
   private markers: L.Marker[] = [];
+  private routeLayers: L.Polyline[] = [];
+
+  // Create-mode state
+  private drawnLayer: L.Layer | null = null;
+  private createCb: ((geometry: DestinationGeometry) => void) | null = null;
 
   init(elementId: string): L.Map {
     if (this.map) {
@@ -40,6 +49,15 @@ export class MapService {
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
+    // Geoman fires pm:create when a shape is finished while drawing is enabled.
+    this.map.on('pm:create', (e: { layer: L.Layer }) => {
+      this.drawnLayer = e.layer;
+      const feature = (e.layer as L.Polyline | L.Marker).toGeoJSON();
+      const geometry = feature.geometry as DestinationGeometry;
+      this.map?.pm.disableDraw();
+      this.createCb?.(geometry);
+    });
+
     return this.map;
   }
 
@@ -60,6 +78,53 @@ export class MapService {
   clearMarkers(): void {
     this.markers.forEach((m) => m.remove());
     this.markers = [];
+  }
+
+  /** Draw route destinations as polylines. `latlngs` are [lat, lng] pairs (Leaflet order). */
+  setRoutes(
+    items: { id: number; latlngs: L.LatLngTuple[]; title: string }[],
+    onClick: (id: number) => void,
+  ): void {
+    this.clearRoutes();
+    items.forEach((item) => {
+      const line = L.polyline(item.latlngs, { color: ROUTE_COLOR, weight: 4, opacity: 0.85 })
+        .bindTooltip(item.title, { direction: 'top', sticky: true })
+        .on('click', () => onClick(item.id));
+      line.addTo(this.map!);
+      this.routeLayers.push(line);
+    });
+  }
+
+  clearRoutes(): void {
+    this.routeLayers.forEach((l) => l.remove());
+    this.routeLayers = [];
+  }
+
+  /** Enable Geoman drawing for a point (marker) or route (line). */
+  enableCreate(type: 'point' | 'route', onCreated: (geometry: DestinationGeometry) => void): void {
+    if (!this.map) return;
+    this.clearDrawn();
+    this.createCb = onCreated;
+    this.map.pm.enableDraw(type === 'point' ? 'Marker' : 'Line', {
+      continueDrawing: false,
+      snappable: true,
+    });
+  }
+
+  /** Stop drawing and discard the in-progress shape (used on cancel). */
+  disableCreate(): void {
+    if (!this.map) return;
+    this.map.pm.disableDraw();
+    this.clearDrawn();
+    this.createCb = null;
+  }
+
+  /** Remove the temporary drawn shape from the map. */
+  clearDrawn(): void {
+    if (this.drawnLayer) {
+      this.drawnLayer.remove();
+      this.drawnLayer = null;
+    }
   }
 
   flyTo(lat: number, lng: number, zoom = 13): void {
@@ -87,6 +152,10 @@ export class MapService {
   destroy(): void {
     this.map?.remove();
     this.map = null;
+    this.markers = [];
+    this.routeLayers = [];
+    this.drawnLayer = null;
+    this.createCb = null;
   }
 
   invalidateSize(): void {

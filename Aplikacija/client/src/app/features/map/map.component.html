@@ -33,6 +33,12 @@
 
       @if (panelView() === 'list') {
 
+        @if (auth.currentUser()) {
+          <button class="create-cta" (click)="startCreate()">
+            <span class="create-cta-icon">＋</span> Create destination
+          </button>
+        }
+
         <!-- Filter tabs -->
         <div class="filter-tabs">
           <button class="filter-tab" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">All</button>
@@ -203,6 +209,86 @@
             </div>
           </div>
         }
+      }
+
+      @if (panelView() === 'create') {
+        <div class="panel-create">
+          <button class="detail-back" (click)="cancelCreate()">
+            <span class="back-arrow">←</span>
+            Cancel
+          </button>
+
+          <h2 class="create-heading">New destination</h2>
+
+          <!-- Step 1: choose type -->
+          <div class="create-type-row">
+            <button
+              class="type-choice"
+              [class.active]="createType() === 'point'"
+              (click)="chooseCreateType('point')"
+            >📍 Point</button>
+            <button
+              class="type-choice"
+              [class.active]="createType() === 'route'"
+              (click)="chooseCreateType('route')"
+            >🗺 Route</button>
+          </div>
+
+          <!-- Step 2: drawing hint / status -->
+          @if (createType()) {
+            <div class="draw-status" [class.done]="drawnGeometry()">
+              @if (!drawnGeometry()) {
+                @if (createType() === 'point') {
+                  <span>Click on the map to drop the point.</span>
+                } @else {
+                  <span>Click on the map to add points; double-click to finish the route (min. 2 points).</span>
+                }
+              } @else {
+                <span>✓ {{ createType() === 'point' ? 'Point placed' : 'Route drawn' }}.</span>
+                <button class="redraw-btn" (click)="redraw()">Redraw</button>
+              }
+            </div>
+          }
+
+          <!-- Step 3: metadata form -->
+          <div class="create-form">
+            <label class="field">
+              <span class="field-label">Title <span class="req">*</span></span>
+              <input type="text" class="field-input" [(ngModel)]="newTitle" placeholder="e.g. Kalemegdan walk" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Category <span class="req">*</span></span>
+              <select class="field-input" [(ngModel)]="newCategoryId">
+                <option [ngValue]="null" disabled>Choose a category…</option>
+                @for (cat of categories(); track cat.id) {
+                  <option [ngValue]="cat.id">{{ categoryIcon(cat.icon) }} {{ cat.name }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field-label">Description</span>
+              <textarea class="field-input" rows="3" [(ngModel)]="newDescription" placeholder="Tell people about this place…"></textarea>
+            </label>
+
+            <label class="field">
+              <span class="field-label">Photos</span>
+              <input type="file" class="field-input file-input" multiple accept="image/*,video/*" (change)="onFilesSelected($event)" />
+              @if (newFiles.length) {
+                <span class="file-count">{{ newFiles.length }} file(s) selected</span>
+              }
+            </label>
+
+            @if (createError()) {
+              <p class="create-error">{{ createError() }}</p>
+            }
+
+            <button class="publish-btn" [disabled]="!canPublish()" (click)="publish()">
+              {{ publishing() ? 'Publishing…' : 'Publish' }}
+            </button>
+          </div>
+        </div>
       }
     }
 
