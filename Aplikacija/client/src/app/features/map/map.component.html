@@ -244,8 +244,24 @@
                   <span>Click on the map to add points; double-click to finish the route (min. 2 points).</span>
                 }
               } @else {
-                <span>✓ {{ createType() === 'point' ? 'Point placed' : 'Route drawn' }}.</span>
-                <button class="redraw-btn" (click)="redraw()">Redraw</button>
+                <span>✓ {{ createType() === 'point' ? 'Point placed' : (isLoopClosed() ? 'Loop closed' : 'Route drawn') }}.</span>
+                <div class="draw-actions">
+                  @if (createType() === 'route' && canUndo()) {
+                    <button class="redraw-btn" (click)="undoLastPoint()">Undo point</button>
+                  }
+                  @if (canCloseLoop()) {
+                    <button class="redraw-btn" (click)="closeLoop()">Close loop</button>
+                  }
+                  @if (createType() === 'route') {
+                    <button class="redraw-btn" [class.active]="editing()" (click)="toggleEdit()">
+                      {{ editing() ? 'Done editing' : 'Edit' }}
+                    </button>
+                  }
+                  <button class="redraw-btn" (click)="redraw()">Redraw</button>
+                </div>
+                @if (editing()) {
+                  <small class="edit-hint">Drag points to move, tap a point to delete, use the middle handles to add.</small>
+                }
               }
             </div>
           }

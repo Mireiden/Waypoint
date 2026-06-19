@@ -65,6 +65,7 @@ export class MapComponent implements OnDestroy {
   newFiles: File[] = [];
   publishing = signal(false);
   createError = signal<string | null>(null);
+  editing = signal(false);
 
   // Destination filters — drive the findMany query on the backend
   activeFilter = signal<'all' | 'point' | 'route'>('all');
@@ -225,6 +226,8 @@ export class MapComponent implements OnDestroy {
   }
 
   chooseCreateType(type: 'point' | 'route'): void {
+    this.mapService.disableEditDrawn();
+    this.editing.set(false);
     this.createType.set(type);
     this.drawnGeometry.set(null);
     this.createError.set(null);
@@ -236,16 +239,56 @@ export class MapComponent implements OnDestroy {
     if (type) this.chooseCreateType(type);
   }
 
+  isLoopClosed(): boolean {
+    const g = this.drawnGeometry();
+    if (!g || g.type !== 'LineString' || g.coordinates.length < 2) return false;
+    const [first, last] = [g.coordinates[0], g.coordinates[g.coordinates.length - 1]];
+    return first[0] === last[0] && first[1] === last[1];
+  }
+
+  canCloseLoop(): boolean {
+    const g = this.drawnGeometry();
+    return !!g && g.type === 'LineString' && g.coordinates.length >= 3 && !this.isLoopClosed();
+  }
+
+  closeLoop(): void {
+    const geometry = this.mapService.closeDrawnLoop();
+    if (geometry) this.drawnGeometry.set(geometry);
+  }
+
+  canUndo(): boolean {
+    const g = this.drawnGeometry();
+    return !!g && g.type === 'LineString' && g.coordinates.length > 2;
+  }
+
+  undoLastPoint(): void {
+    const geometry = this.mapService.undoLastDrawnPoint();
+    if (geometry) this.drawnGeometry.set(geometry);
+  }
+
+  toggleEdit(): void {
+    if (this.editing()) {
+      this.mapService.disableEditDrawn();
+      this.editing.set(false);
+    } else {
+      this.mapService.enableEditDrawn((geometry) => this.drawnGeometry.set(geometry));
+      this.editing.set(true);
+    }
+  }
+
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.newFiles = input.files ? Array.from(input.files) : [];
   }
 
   canPublish(): boolean {
+    const g = this.drawnGeometry();
+    const geometryValid =
+      !!g && (g.type !== 'LineString' || g.coordinates.length >= 2);
     return (
       this.newTitle.trim().length > 0 &&
       this.newCategoryId !== null &&
-      this.drawnGeometry() !== null &&
+      geometryValid &&
       !this.publishing()
     );
   }
@@ -268,6 +311,8 @@ export class MapComponent implements OnDestroy {
     this.destinationService.create(payload, this.newFiles).subscribe({
       next: (dest) => {
         this.publishing.set(false);
+        this.mapService.disableEditDrawn();
+        this.editing.set(false);
         this.mapService.disableCreate();
         this.resetCreateForm();
         this.createType.set(null);
@@ -289,6 +334,8 @@ export class MapComponent implements OnDestroy {
   }
 
   cancelCreate(): void {
+    this.mapService.disableEditDrawn();
+    this.editing.set(false);
     this.mapService.disableCreate();
     this.resetCreateForm();
     this.createType.set(null);

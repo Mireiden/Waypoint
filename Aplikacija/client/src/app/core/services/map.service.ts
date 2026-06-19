@@ -28,6 +28,14 @@ export class MapService {
   // Create-mode state
   private drawnLayer: L.Layer | null = null;
   private createCb: ((geometry: DestinationGeometry) => void) | null = null;
+  private editCb: ((geometry: DestinationGeometry) => void) | null = null;
+
+  // Re-read the drawn shape's geometry after any edit (drag / add / remove vertex).
+  private readonly handleEdit = (): void => {
+    if (!this.drawnLayer) return;
+    const feature = (this.drawnLayer as L.Polyline | L.Marker).toGeoJSON();
+    this.editCb?.(feature.geometry as DestinationGeometry);
+  };
 
   init(elementId: string): L.Map {
     if (this.map) {
@@ -127,6 +135,64 @@ export class MapService {
     }
   }
 
+  /**
+   * Close the drawn route into a loop by appending the first vertex to the end.
+   * Returns the updated geometry, or null if it can't be closed (not a polyline,
+   * fewer than 3 points, or already closed).
+   */
+  closeDrawnLoop(): DestinationGeometry | null {
+    if (!(this.drawnLayer instanceof L.Polyline)) return null;
+    const latlngs = this.drawnLayer.getLatLngs() as L.LatLng[];
+    if (latlngs.length < 3) return null;
+
+    const first = latlngs[0];
+    const last = latlngs[latlngs.length - 1];
+    if (first.lat !== last.lat || first.lng !== last.lng) {
+      this.drawnLayer.setLatLngs([...latlngs, first]);
+    }
+    const feature = this.drawnLayer.toGeoJSON();
+    return feature.geometry as DestinationGeometry;
+  }
+
+  /**
+   * Remove the last vertex of the drawn route. Returns the updated geometry,
+   * or null if it can't (not a polyline, or already at the 2-point minimum).
+   */
+  undoLastDrawnPoint(): DestinationGeometry | null {
+    if (!(this.drawnLayer instanceof L.Polyline)) return null;
+    const latlngs = this.drawnLayer.getLatLngs() as L.LatLng[];
+    if (latlngs.length <= 2) return null; // keep a valid LineString (min 2)
+    latlngs.pop();
+    this.drawnLayer.setLatLngs(latlngs);
+    return this.drawnLayer.toGeoJSON().geometry as DestinationGeometry;
+  }
+
+  /**
+   * Enable Geoman edit mode on the drawn shape: drag vertices, add via middle
+   * handles, and tap a vertex to delete it (removeVertexOn: 'click' so it works
+   * on touch, where there is no right-click). `onChange` fires after each edit.
+   */
+  enableEditDrawn(onChange: (geometry: DestinationGeometry) => void): void {
+    const layer = this.drawnLayer as (L.Polyline | L.Marker) & { pm?: L.PM.PMLayer };
+    if (!layer?.pm) return;
+    this.editCb = onChange;
+    this.map?.pm.setGlobalOptions({ removeVertexOn: 'click' });
+    layer.pm.enable({ removeVertexOn: 'click' });
+    layer.on('pm:edit', this.handleEdit);
+    layer.on('pm:vertexremoved', this.handleEdit);
+    layer.on('pm:markerdragend', this.handleEdit);
+  }
+
+  disableEditDrawn(): void {
+    const layer = this.drawnLayer as (L.Polyline | L.Marker) & { pm?: L.PM.PMLayer };
+    if (!layer?.pm) return;
+    layer.pm.disable();
+    layer.off('pm:edit', this.handleEdit);
+    layer.off('pm:vertexremoved', this.handleEdit);
+    layer.off('pm:markerdragend', this.handleEdit);
+    this.editCb = null;
+  }
+
   flyTo(lat: number, lng: number, zoom = 13): void {
     this.map?.flyTo([lat, lng], zoom, { duration: 1.2 });
   }
@@ -156,6 +222,7 @@ export class MapService {
     this.routeLayers = [];
     this.drawnLayer = null;
     this.createCb = null;
+    this.editCb = null;
   }
 
   invalidateSize(): void {
