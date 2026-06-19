@@ -57,7 +57,11 @@ export const findById = async (id: number) => {
   return { ...dest, media };
 };
 
-export const createDestination = async (userId: number, data: CreateDestinationInput) => {
+export const createDestination = async (
+  userId: number,
+  data: CreateDestinationInput,
+  files: Express.Multer.File[],
+) => {
   const { title, description, type, geometry, categoryId } = data;
 
   const category = await prisma.category.findUnique({ where: { id: categoryId } });
@@ -69,19 +73,37 @@ export const createDestination = async (userId: number, data: CreateDestinationI
 
   const { city, country } = await reverseGeocode(lng, lat);
 
-  const [dest] = await prisma.$queryRawTyped(
-    createDestinationSql(
-      title,
-      description ?? null,
-      type,
-      geometry,
-      city ?? null,
-      country ?? null,
-      userId,
-      categoryId,
-    ),
-  );
-  return dest;
+  const uploaded = await mediaService.uploadFiles(files);
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const [dest] = await tx.$queryRawTyped(
+        createDestinationSql(
+          title,
+          description ?? null,
+          type,
+          geometry,
+          city ?? null,
+          country ?? null,
+          userId,
+          categoryId,
+        ),
+      );
+      if (!dest) throw new Error("Failed to create destination");
+
+      const media = uploaded.length
+        ? await tx.media.createManyAndReturn({
+            data: uploaded.map((m, i) => ({ ...m, position: i, destinationId: dest.id })),
+            select: { id: true, url: true, type: true, position: true },
+          })
+        : [];
+
+      return { ...dest, media };
+    });
+  } catch (err) {
+    await mediaService.destroyUploaded(uploaded);
+    throw err;
+  }
 };
 
 export const updateDestination = async (

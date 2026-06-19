@@ -9,6 +9,7 @@ import {
 } from "../schemas/destination.schema.js";
 import * as destinationService from "../services/destination.service.js";
 import { assertAuth } from "../utils/assertAuth.js";
+import { getFiles } from "../utils/files.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
 
 export const getDestinations = async (req: Request, res: Response) => {
@@ -36,9 +37,10 @@ export const createDestination = async (req: Request, res: Response) => {
   const parsed = createDestinationSchema.safeParse(req.body);
   if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
 
-  const dest = await destinationService.createDestination(req.user.id, parsed.data);
+  const files = getFiles(req);
+  const dest = await destinationService.createDestination(req.user.id, parsed.data, files);
 
-  res.json(dest);
+  res.status(201).json(dest);
 };
 
 export const updateDestination = async (req: Request, res: Response) => {

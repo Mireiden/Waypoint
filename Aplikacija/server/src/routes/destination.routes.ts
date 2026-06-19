@@ -11,7 +11,12 @@ import upload from "../middlewares/upload.middleware.js";
 const router: Router = Router();
 
 router.get("/", destinationController.getDestinations);
-router.post("/", authMiddleware, destinationController.createDestination);
+router.post(
+  "/",
+  authMiddleware,
+  upload.array("files", config.upload.maxFiles),
+  destinationController.createDestination,
+);
 
 router.get("/admin", authMiddleware, adminMiddleware, destinationController.getAdminDestinations);
 
@@ -20,6 +25,7 @@ router.patch("/:id", authMiddleware, destinationController.updateDestination);
 router.delete("/:id", authMiddleware, destinationController.deleteDestination);
 
 router.get("/:id/reviews", reviewsController.getByDestinationId);
+
 router.post(
   "/:id/reviews",
   authMiddleware,

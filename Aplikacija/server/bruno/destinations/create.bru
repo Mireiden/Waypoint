@@ -6,7 +6,7 @@ meta {
 
 post {
   url: {{baseUrl}}/destinations
-  body: json
+  body: multipartForm
   auth: inherit
 }
 
@@ -30,6 +30,15 @@ body:json {
     "country": "Serbia",
     "categoryId": 5
   }
+}
+
+body:multipart-form {
+  title: Speedtest
+  type: point
+  categoryId: 30
+  geometry: {"type":"Point","coordinates":[21.9,43.32]}
+  files: @file(D:\dev\si.26.60.way\Aplikacija\server\bruno\assets\pexels-hatice-baran-153179658-23601389.jpg)
+  description: Konacno proradila multipart forma
 }
 
 settings {
