@@ -1,7 +1,7 @@
 import type { AuthUser } from "../schemas/auth.schema.js";
 import type {
   CreateDestinationInput,
-  FindManyQuery,
+  ListDestinationsQuery,
   UpdateDestinationInput,
 } from "../schemas/destination.schema.js";
 
@@ -31,7 +31,7 @@ export const findAllAdmin = async () => {
   });
 };
 
-export const findMany = async (query: FindManyQuery) => {
+export const findMany = async (query: ListDestinationsQuery) => {
   const { type, sort, limit, category, q, bbox } = query;
 
   return await prisma.$queryRawTyped(

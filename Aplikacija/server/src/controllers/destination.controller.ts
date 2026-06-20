@@ -4,7 +4,7 @@ import { treeifyError } from "zod";
 import { ValidationError } from "../errors/validationError.js";
 import {
   createDestinationSchema,
-  findManyQuerySchema,
+  listDestinationsQuerySchema,
   updateDestinationSchema,
 } from "../schemas/destination.schema.js";
 import * as destinationService from "../services/destination.service.js";
@@ -13,7 +13,7 @@ import { getFiles } from "../utils/files.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
 
 export const getDestinations = async (req: Request, res: Response) => {
-  const parsed = findManyQuerySchema.safeParse(req.query);
+  const parsed = listDestinationsQuerySchema.safeParse(req.query);
   if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
 
   const destinations = await destinationService.findMany(parsed.data);
