@@ -7,6 +7,7 @@ import {
   afterNextRender,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -31,7 +32,7 @@ import { categoryIcon } from '../../shared/category-icons';
 
 @Component({
   selector: 'app-map',
-  imports: [FormsModule, CommonModule, DatePipe],
+  imports: [FormsModule, RouterLink, CommonModule, DatePipe],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
@@ -61,6 +62,23 @@ export class MapComponent implements OnDestroy {
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'admin');
   // Which review is showing an inline "delete?" confirmation.
   confirmingReviewId = signal<number | null>(null);
+
+  // ─── Write / edit a review ───────────────────────────
+  showReviewForm = signal(false);
+  editingReviewId = signal<number | null>(null);
+  reviewRating = signal(0);
+  reviewComment = signal('');
+  reviewFiles: File[] = [];
+  reviewSubmitting = signal(false);
+  reviewError = signal<string | null>(null);
+
+  // The current user's own review for the selected destination, if any.
+  readonly myReview = computed(() => {
+    const uid = this.auth.currentUser()?.id;
+    return uid ? (this.selectedReviews().find((r) => r.user.id === uid) ?? null) : null;
+  });
+  // Logged in and hasn't reviewed this destination yet.
+  readonly canWriteReview = computed(() => !!this.auth.currentUser() && !this.myReview());
 
   // Create-destination state
   createType = signal<'point' | 'route' | null>(null);
@@ -212,6 +230,7 @@ export class MapComponent implements OnDestroy {
     });
 
     this.confirmingReviewId.set(null);
+    this.cancelReviewForm();
     this.reviewService.getByDestinationId(summary.id).subscribe({
       next: (reviews) => this.selectedReviews.set(reviews),
       error: (err) => console.error('Failed to load reviews:', err),
@@ -228,26 +247,108 @@ export class MapComponent implements OnDestroy {
     this.selectedDest.set(null);
     this.selectedReviews.set([]);
     this.confirmingReviewId.set(null);
+    this.cancelReviewForm();
     this.mapService.zoomTo(13);
+  }
+
+  isOwnReview(review: DestinationReview): boolean {
+    return review.user.id === this.auth.currentUser()?.id;
   }
 
   deleteReview(reviewId: number): void {
     this.reviewService.deleteReview(reviewId).subscribe({
       next: () => {
         this.confirmingReviewId.set(null);
+        if (this.editingReviewId() === reviewId) this.cancelReviewForm();
         this.selectedReviews.update((list) => list.filter((r) => r.id !== reviewId));
-        // Keep the detail header's rating summary in sync with what's left.
-        const dest = this.selectedDest();
-        if (!dest) return;
-        const remaining = this.selectedReviews();
-        const reviewCount = remaining.length;
-        const avgRating = reviewCount
-          ? Math.round((remaining.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10) / 10
-          : 0;
-        this.selectedDest.set({ ...dest, reviewCount, avgRating });
+        this.recomputeRatingSummary();
       },
       error: (err) => console.error('Failed to delete review:', err),
     });
+  }
+
+  openReviewForm(review?: DestinationReview): void {
+    if (review) {
+      this.editingReviewId.set(review.id);
+      this.reviewRating.set(review.rating);
+      this.reviewComment.set(review.comment ?? '');
+    } else {
+      this.editingReviewId.set(null);
+      this.reviewRating.set(0);
+      this.reviewComment.set('');
+    }
+    this.reviewFiles = [];
+    this.reviewError.set(null);
+    this.showReviewForm.set(true);
+  }
+
+  cancelReviewForm(): void {
+    this.showReviewForm.set(false);
+    this.editingReviewId.set(null);
+    this.reviewError.set(null);
+    this.reviewFiles = [];
+  }
+
+  onReviewFiles(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.reviewFiles = input.files ? Array.from(input.files) : [];
+  }
+
+  submitReview(): void {
+    const rating = this.reviewRating();
+    const dest = this.selectedDest();
+    if (rating < 1 || this.reviewSubmitting() || !dest) return;
+
+    const comment = this.reviewComment().trim() || null;
+    const editId = this.editingReviewId();
+    this.reviewSubmitting.set(true);
+    this.reviewError.set(null);
+
+    if (editId !== null) {
+      this.reviewService.updateReview(editId, { rating, comment }).subscribe({
+        next: (updated) => {
+          this.selectedReviews.update((list) =>
+            list.map((r) => (r.id === updated.id ? updated : r)),
+          );
+          this.afterReviewChange();
+        },
+        error: (err) => this.failReview(err),
+      });
+    } else {
+      this.reviewService.createReview(dest.id, { rating, comment }, this.reviewFiles).subscribe({
+        next: (created) => {
+          this.selectedReviews.update((list) => [created, ...list]);
+          this.afterReviewChange();
+        },
+        error: (err) => this.failReview(err),
+      });
+    }
+  }
+
+  private afterReviewChange(): void {
+    this.reviewSubmitting.set(false);
+    this.showReviewForm.set(false);
+    this.editingReviewId.set(null);
+    this.reviewFiles = [];
+    this.recomputeRatingSummary();
+  }
+
+  private failReview(err: unknown): void {
+    this.reviewSubmitting.set(false);
+    const apiError = (err as { error?: { error?: string } })?.error?.error;
+    this.reviewError.set(typeof apiError === 'string' ? apiError : 'Could not save your review. Try again.');
+  }
+
+  /** Keep the detail header's rating row in sync with the current review list. */
+  private recomputeRatingSummary(): void {
+    const dest = this.selectedDest();
+    if (!dest) return;
+    const reviews = this.selectedReviews();
+    const reviewCount = reviews.length;
+    const avgRating = reviewCount
+      ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10) / 10
+      : 0;
+    this.selectedDest.set({ ...dest, reviewCount, avgRating });
   }
 
   // ─── Create destination ──────────────────────────────

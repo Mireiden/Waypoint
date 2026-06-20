@@ -16,6 +16,27 @@ export class ReviewService {
     });
   }
 
+  createReview(
+    destinationId: number,
+    payload: { rating: number; comment: string | null },
+    files: File[] = [],
+  ) {
+    // Backend create route is multipart (upload.array("files")).
+    const form = new FormData();
+    form.append('rating', String(payload.rating));
+    if (payload.comment) form.append('comment', payload.comment);
+    files.forEach((f) => form.append('files', f));
+    return this.http.post<DestinationReview>(`${this.base}/${destinationId}/reviews`, form, {
+      withCredentials: true,
+    });
+  }
+
+  updateReview(reviewId: number, payload: { rating?: number; comment?: string | null }) {
+    return this.http.patch<DestinationReview>(`${this.reviewsBase}/${reviewId}`, payload, {
+      withCredentials: true,
+    });
+  }
+
   deleteReview(reviewId: number) {
     return this.http.delete<void>(`${this.reviewsBase}/${reviewId}`, {
       withCredentials: true,

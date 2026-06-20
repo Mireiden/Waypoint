@@ -176,18 +176,88 @@
               }
 
               <!-- Reviews -->
-              @if (selectedReviews().length > 0) {
-                <div class="reviews-section">
-                  <h3 class="reviews-title">
-                    Reviews
+              <div class="reviews-section">
+                <h3 class="reviews-title">
+                  Reviews
+                  @if (selectedReviews().length > 0) {
                     <span class="reviews-count-badge">{{ selectedReviews().length }}</span>
-                  </h3>
+                  }
+                </h3>
+
+                <!-- Write / edit a review -->
+                @if (showReviewForm()) {
+                  <div class="review-form">
+                    <div class="rf-stars">
+                      @for (n of [1, 2, 3, 4, 5]; track n) {
+                        <button
+                          type="button"
+                          class="rf-star"
+                          [class.on]="reviewRating() >= n"
+                          (click)="reviewRating.set(n)"
+                          [attr.aria-label]="n + ' stars'"
+                        >★</button>
+                      }
+                    </div>
+                    <textarea
+                      class="rf-comment"
+                      rows="3"
+                      placeholder="Share your experience…"
+                      [ngModel]="reviewComment()"
+                      (ngModelChange)="reviewComment.set($event)"
+                    ></textarea>
+                    @if (editingReviewId() === null) {
+                      <div class="rf-upload">
+                        <label class="rf-files">
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*,video/*"
+                            (change)="onReviewFiles($event)"
+                          />
+                          📎 Add photos / videos
+                        </label>
+                        @if (reviewFiles.length > 0) {
+                          <span class="rf-file-count">
+                            {{ reviewFiles.length }} file{{ reviewFiles.length === 1 ? '' : 's' }} selected
+                          </span>
+                        }
+                      </div>
+                    }
+                    @if (reviewError()) {
+                      <p class="rf-error">{{ reviewError() }}</p>
+                    }
+                    <div class="rf-actions">
+                      <button type="button" class="rf-cancel" (click)="cancelReviewForm()">Cancel</button>
+                      <button
+                        type="button"
+                        class="rf-submit"
+                        [disabled]="reviewRating() < 1 || reviewSubmitting()"
+                        (click)="submitReview()"
+                      >
+                        {{ reviewSubmitting() ? 'Saving…' : (editingReviewId() ? 'Update review' : 'Post review') }}
+                      </button>
+                    </div>
+                  </div>
+                } @else if (canWriteReview()) {
+                  <button type="button" class="write-review-btn" (click)="openReviewForm()">
+                    ★ Write a review
+                  </button>
+                } @else if (!auth.currentUser()) {
+                  <p class="review-signin">
+                    <a routerLink="/auth">Sign in</a> to leave a review.
+                  </p>
+                }
+
+                @if (selectedReviews().length > 0) {
                   @for (review of selectedReviews(); track review.id) {
                     <div class="review-card">
                       <div class="review-header">
                         <div class="review-left">
                           <span class="review-avatar">{{ review.user.name[0] }}</span>
                           <span class="review-author">{{ review.user.name }}</span>
+                          @if (isOwnReview(review)) {
+                            <span class="review-you">You</span>
+                          }
                         </div>
                         <div class="review-right">
                           <span class="stars stars-sm">
@@ -196,40 +266,62 @@
                             }
                           </span>
                           <span class="review-date">{{ review.createdAt | date:'MMM y' }}</span>
-                          @if (isAdmin()) {
-                            @if (confirmingReviewId() === review.id) {
-                              <span class="review-confirm">
-                                <span class="review-confirm-label">Delete?</span>
-                                <button
-                                  class="review-confirm-yes"
-                                  type="button"
-                                  (click)="deleteReview(review.id)"
-                                >Yes</button>
-                                <button
-                                  class="review-confirm-no"
-                                  type="button"
-                                  (click)="confirmingReviewId.set(null)"
-                                >No</button>
-                              </span>
-                            } @else {
+                          @if (confirmingReviewId() === review.id) {
+                            <span class="review-confirm">
+                              <span class="review-confirm-label">Delete?</span>
                               <button
-                                class="review-delete"
+                                class="review-confirm-yes"
                                 type="button"
-                                title="Delete review"
-                                aria-label="Delete review"
-                                (click)="confirmingReviewId.set(review.id)"
-                              >✕</button>
-                            }
+                                (click)="deleteReview(review.id)"
+                              >Yes</button>
+                              <button
+                                class="review-confirm-no"
+                                type="button"
+                                (click)="confirmingReviewId.set(null)"
+                              >No</button>
+                            </span>
+                          } @else {
+                            <span class="review-actions">
+                              @if (isOwnReview(review)) {
+                                <button
+                                  class="review-edit"
+                                  type="button"
+                                  (click)="openReviewForm(review)"
+                                >Edit</button>
+                              }
+                              @if (isOwnReview(review) || isAdmin()) {
+                                <button
+                                  class="review-delete"
+                                  type="button"
+                                  title="Delete review"
+                                  aria-label="Delete review"
+                                  (click)="confirmingReviewId.set(review.id)"
+                                >✕</button>
+                              }
+                            </span>
                           }
                         </div>
                       </div>
                       @if (review.comment) {
                         <p class="review-comment">{{ review.comment }}</p>
                       }
+                      @if (review.media.length > 0) {
+                        <div class="review-media">
+                          @for (m of review.media; track m.id) {
+                            @if (m.type === 'image') {
+                              <img [src]="m.url" [alt]="review.user.name + ' photo'" />
+                            } @else {
+                              <video [src]="m.url" controls></video>
+                            }
+                          }
+                        </div>
+                      }
                     </div>
                   }
-                </div>
-              }
+                } @else if (!showReviewForm()) {
+                  <p class="reviews-empty">No reviews yet. Be the first to share your thoughts.</p>
+                }
+              </div>
 
             </div>
           </div>
