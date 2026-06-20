@@ -8,7 +8,7 @@ import { CategoryWithCount } from '../../models/category.model';
 import { AdminService } from '../../core/services/admin.service';
 import { CategoryService } from '../../core/services/category.service';
 import { AuthService } from '../../core/services/auth.service';
-import { CATEGORY_ICON_KEYS, categoryIcon } from '../../shared/category-icons';
+import { CATEGORY_EMOJIS, categoryIcon } from '../../shared/category-icons';
 
 type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'categories';
 
@@ -29,14 +29,18 @@ export class AdminComponent implements OnInit {
 
   // New-category form
   newCategoryName = signal('');
-  newCategoryIcon = signal<string>(CATEGORY_ICON_KEYS[0]);
+  newCategoryIcon = signal<string>(CATEGORY_EMOJIS[0]);
   savingCategory = signal(false);
   categoryError = signal<string | null>(null);
 
   // Inline edit state
   editingId = signal<number | null>(null);
   editName = signal('');
-  editIcon = signal<string>(CATEGORY_ICON_KEYS[0]);
+  editIcon = signal<string>(CATEGORY_EMOJIS[0]);
+
+  // Emoji picker open state (one for the add form, one for the row being edited).
+  addIconPickerOpen = signal(false);
+  editIconPickerOpen = signal(false);
 
   // Inline "are you sure?" state for destructive actions.
   confirmingDestId = signal<number | null>(null);
@@ -48,7 +52,7 @@ export class AdminComponent implements OnInit {
   loading = signal(false);
   sidebarOpen = signal(false);
 
-  readonly iconKeys = CATEGORY_ICON_KEYS;
+  readonly emojiChoices = CATEGORY_EMOJIS;
   readonly categoryIcon = categoryIcon;
 
   private readonly adminService = inject(AdminService);
@@ -179,7 +183,8 @@ export class AdminComponent implements OnInit {
       next: (cat) => {
         this.categories.update((list) => [...list, { ...cat, _count: { destinations: 0 } }]);
         this.newCategoryName.set('');
-        this.newCategoryIcon.set(this.iconKeys[0]);
+        this.newCategoryIcon.set(this.emojiChoices[0]);
+        this.addIconPickerOpen.set(false);
         this.savingCategory.set(false);
       },
       error: (err) => {
@@ -192,12 +197,24 @@ export class AdminComponent implements OnInit {
   startEdit(cat: CategoryWithCount) {
     this.editingId.set(cat.id);
     this.editName.set(cat.name);
-    this.editIcon.set(cat.icon ?? this.iconKeys[0]);
+    this.editIcon.set(cat.icon ?? this.emojiChoices[0]);
+    this.editIconPickerOpen.set(false);
     this.categoryError.set(null);
   }
 
   cancelEdit() {
     this.editingId.set(null);
+    this.editIconPickerOpen.set(false);
+  }
+
+  pickNewIcon(emoji: string) {
+    this.newCategoryIcon.set(emoji);
+    this.addIconPickerOpen.set(false);
+  }
+
+  pickEditIcon(emoji: string) {
+    this.editIcon.set(emoji);
+    this.editIconPickerOpen.set(false);
   }
 
   saveEdit(id: number) {

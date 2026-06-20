@@ -254,15 +254,29 @@
         (ngModelChange)="newCategoryName.set($event)"
         (keyup.enter)="createCategory()"
       />
-      <select
-        class="form-input"
-        [ngModel]="newCategoryIcon()"
-        (ngModelChange)="newCategoryIcon.set($event)"
-      >
-        @for (key of iconKeys; track key) {
-        <option [value]="key">{{ categoryIcon(key) }} {{ key }}</option>
+      <div class="icon-picker">
+        <button
+          type="button"
+          class="icon-picker-trigger"
+          (click)="addIconPickerOpen.set(!addIconPickerOpen())"
+        >
+          <span class="ip-current">{{ categoryIcon(newCategoryIcon()) }}</span>
+          <span class="ip-caret">▾</span>
+        </button>
+        @if (addIconPickerOpen()) {
+        <div class="icon-backdrop" (click)="addIconPickerOpen.set(false)"></div>
+        <div class="icon-grid">
+          @for (emoji of emojiChoices; track emoji) {
+          <button
+            type="button"
+            class="icon-option"
+            [class.selected]="newCategoryIcon() === emoji"
+            (click)="pickNewIcon(emoji)"
+          >{{ emoji }}</button>
+          }
+        </div>
         }
-      </select>
+      </div>
       <button class="btn btn--add" (click)="createCategory()" [disabled]="savingCategory()">
         Add
       </button>
@@ -275,7 +289,7 @@
     @if (categories().length === 0 && !loading()) {
     <div class="empty-state">No categories yet</div>
     } @else {
-    <div class="table-wrap">
+    <div class="table-wrap table-wrap--categories">
       <table class="data-table">
         <thead>
           <tr>
@@ -290,15 +304,29 @@
           @if (editingId() === cat.id) {
           <tr class="row-expanded">
             <td data-label="Icon">
-              <select
-                class="form-input"
-                [ngModel]="editIcon()"
-                (ngModelChange)="editIcon.set($event)"
-              >
-                @for (key of iconKeys; track key) {
-                <option [value]="key">{{ categoryIcon(key) }} {{ key }}</option>
+              <div class="icon-picker">
+                <button
+                  type="button"
+                  class="icon-picker-trigger"
+                  (click)="editIconPickerOpen.set(!editIconPickerOpen())"
+                >
+                  <span class="ip-current">{{ categoryIcon(editIcon()) }}</span>
+                  <span class="ip-caret">▾</span>
+                </button>
+                @if (editIconPickerOpen()) {
+                <div class="icon-backdrop" (click)="editIconPickerOpen.set(false)"></div>
+                <div class="icon-grid">
+                  @for (emoji of emojiChoices; track emoji) {
+                  <button
+                    type="button"
+                    class="icon-option"
+                    [class.selected]="editIcon() === emoji"
+                    (click)="pickEditIcon(emoji)"
+                  >{{ emoji }}</button>
+                  }
+                </div>
                 }
-              </select>
+              </div>
             </td>
             <td data-label="Name">
               <input
