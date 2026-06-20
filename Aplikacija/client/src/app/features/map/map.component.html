@@ -196,6 +196,31 @@
                             }
                           </span>
                           <span class="review-date">{{ review.createdAt | date:'MMM y' }}</span>
+                          @if (isAdmin()) {
+                            @if (confirmingReviewId() === review.id) {
+                              <span class="review-confirm">
+                                <span class="review-confirm-label">Delete?</span>
+                                <button
+                                  class="review-confirm-yes"
+                                  type="button"
+                                  (click)="deleteReview(review.id)"
+                                >Yes</button>
+                                <button
+                                  class="review-confirm-no"
+                                  type="button"
+                                  (click)="confirmingReviewId.set(null)"
+                                >No</button>
+                              </span>
+                            } @else {
+                              <button
+                                class="review-delete"
+                                type="button"
+                                title="Delete review"
+                                aria-label="Delete review"
+                                (click)="confirmingReviewId.set(review.id)"
+                              >✕</button>
+                            }
+                          }
                         </div>
                       </div>
                       @if (review.comment) {

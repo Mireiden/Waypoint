@@ -712,6 +712,64 @@
   white-space: nowrap;
 }
 
+.review-delete {
+  margin-top: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover {
+    color: #fff;
+    background: #e5484d;
+  }
+}
+
+.review-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.review-confirm-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #e5484d;
+}
+
+.review-confirm-yes,
+.review-confirm-no {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.review-confirm-yes {
+  border-color: #e5484d;
+  color: #e5484d;
+
+  &:hover {
+    background: #e5484d;
+    color: #fff;
+  }
+}
+
+.review-confirm-no:hover {
+  background: var(--surface-alt);
+}
+
 .review-comment {
   font-size: 0.8rem;
   line-height: 1.55;

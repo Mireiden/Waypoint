@@ -2,8 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { inject, Injectable } from '@angular/core';
 import { AdminDestination } from '../../models/destination.model';
-import { ReviewWithCount } from '../../models/review.model';
-import { User, UserWithCount } from '../../models/user.model';
+import { UserWithCount } from '../../models/user.model';
 import { Report } from '../../models/report.model';
 
 @Injectable({ providedIn: 'root' })
@@ -56,13 +55,5 @@ export class AdminService {
 
   deleteUser(id: number) {
     return this.http.delete(`${this.base}/users/${id}`, { withCredentials: true });
-  }
-
-  getReviews() {
-    return this.http.get<ReviewWithCount[]>(`${this.base}/reviews`, { withCredentials: true });
-  }
-
-  deleteReview(id: number) {
-    return this.http.delete(`${this.base}/reviews/${id}`, { withCredentials: true });
   }
 }

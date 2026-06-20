@@ -1,8 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import { DestinationService } from '../../core/services/destination.service';
+import { UserDestination } from '../../models/destination.model';
+import { categoryIcon } from '../../shared/category-icons';
 
 @Component({
   selector: 'app-profile',
@@ -38,9 +41,9 @@ import { UserService } from '../../core/services/user.service';
           </span>
 
           <div class="stats-row">
-            <span class="stat"><strong>0</strong> routes</span>
+            <span class="stat"><strong>{{ routes().length }}</strong> routes</span>
             <span class="stat-dot">·</span>
-            <span class="stat"><strong>0</strong> points</span>
+            <span class="stat"><strong>{{ points().length }}</strong> points</span>
             <span class="stat-dot">·</span>
             <span class="stat">Since {{ formatDate(user.createdAt) }}</span>
           </div>
@@ -164,21 +167,64 @@ import { UserService } from '../../core/services/user.service';
 
           <!-- Tab content -->
           <div class="tab-content">
-            @if (activeTab() === 'routes') {
-              <div class="empty-state">
-                <div class="empty-icon">🗺</div>
-                <h3>No routes yet</h3>
-                <p>Create a route on the map and it will appear here.</p>
-                <a class="btn-cta" routerLink="/map">Go to map</a>
+            @if (destinationsLoading()) {
+              <div class="dest-skeleton-grid">
+                @for (i of [1, 2, 3]; track i) {
+                  <div class="dest-skeleton"></div>
+                }
               </div>
-            }
-            @if (activeTab() === 'points') {
-              <div class="empty-state">
-                <div class="empty-icon">📍</div>
-                <h3>No points of interest yet</h3>
-                <p>Pin your favorite hidden spots and they will show up here.</p>
-                <a class="btn-cta" routerLink="/map">Go to map</a>
-              </div>
+            } @else {
+              @let items = activeTab() === 'routes' ? routes() : points();
+              @if (items.length > 0) {
+                <div class="dest-grid">
+                  @for (dest of items; track dest.id) {
+                    <article class="dest-card">
+                      <div class="dest-thumb">
+                        @if (dest.media[0]?.type === 'image') {
+                          <img [src]="dest.media[0].url" [alt]="dest.title" />
+                        } @else if (dest.media[0]?.type === 'video') {
+                          <video [src]="dest.media[0].url" muted></video>
+                        } @else {
+                          <span class="dest-thumb-fallback">
+                            {{ dest.type === 'route' ? '🗺' : '📍' }}
+                          </span>
+                        }
+                      </div>
+                      <div class="dest-body">
+                        <h4 class="dest-title">{{ dest.title }}</h4>
+                        <div class="dest-meta">
+                          @if (dest.category) {
+                            <span class="dest-cat">
+                              {{ categoryIcon(dest.category.icon) }} {{ dest.category.name }}
+                            </span>
+                          }
+                          @if (locationLabel(dest)) {
+                            <span class="dest-loc">📍 {{ locationLabel(dest) }}</span>
+                          }
+                        </div>
+                        <div class="dest-foot">
+                          <span>{{ dest._count.reviews }} {{ dest._count.reviews === 1 ? 'review' : 'reviews' }}</span>
+                          <span class="dest-date">{{ formatDate(dest.createdAt) }}</span>
+                        </div>
+                      </div>
+                    </article>
+                  }
+                </div>
+              } @else if (activeTab() === 'routes') {
+                <div class="empty-state">
+                  <div class="empty-icon">🗺</div>
+                  <h3>No routes yet</h3>
+                  <p>Create a route on the map and it will appear here.</p>
+                  <a class="btn-cta" routerLink="/map">Go to map</a>
+                </div>
+              } @else {
+                <div class="empty-state">
+                  <div class="empty-icon">📍</div>
+                  <h3>No points of interest yet</h3>
+                  <p>Pin your favorite hidden spots and they will show up here.</p>
+                  <a class="btn-cta" routerLink="/map">Go to map</a>
+                </div>
+              }
             }
           </div>
         </div>
@@ -189,10 +235,19 @@ import { UserService } from '../../core/services/user.service';
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly userService = inject(UserService);
+  private readonly destinationService = inject(DestinationService);
   private readonly router = inject(Router);
+
+  readonly categoryIcon = categoryIcon;
 
   editOpen = signal(false);
   activeTab = signal<'routes' | 'points'>('routes');
+
+  // The user's own destinations, fetched from GET /destinations/mine.
+  myDestinations = signal<UserDestination[]>([]);
+  destinationsLoading = signal(true);
+  readonly routes = computed(() => this.myDestinations().filter((d) => d.type === 'route'));
+  readonly points = computed(() => this.myDestinations().filter((d) => d.type === 'point'));
 
   avatarError = signal(false);
   previewError = signal(false);
@@ -214,7 +269,24 @@ export class ProfileComponent {
   constructor() {
     if (!this.auth.currentUser()) {
       this.router.navigate(['/auth']);
+      return;
     }
+    this.loadMyDestinations();
+  }
+
+  private loadMyDestinations(): void {
+    this.destinationsLoading.set(true);
+    this.destinationService.getMine().subscribe({
+      next: (dests) => {
+        this.myDestinations.set(dests);
+        this.destinationsLoading.set(false);
+      },
+      error: () => this.destinationsLoading.set(false),
+    });
+  }
+
+  locationLabel(dest: UserDestination): string {
+    return [dest.city, dest.country].filter(Boolean).join(', ');
   }
 
   formatDate(dateStr: string): string {

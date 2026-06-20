@@ -277,7 +277,20 @@ nav {
 
 .action-btns {
   display: flex;
+  align-items: center;
   gap: 6px;
+}
+
+.confirm-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+// Expand/collapse chevron — only meaningful in the mobile card layout.
+.row-toggle {
+  display: none;
 }
 
 .btn {
@@ -459,8 +472,122 @@ nav {
     gap: 12px;
   }
 
+  // The fixed-height shell scrolls the inner .table-wrap on desktop; on mobile
+  // the rows become stacked cards (overflow: visible), so the main column has to
+  // take over vertical scrolling — otherwise the bottom rows get clipped.
+  .admin-main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .table-wrap {
     padding: 12px 16px;
+    overflow: visible;
+  }
+
+  // Stack each row into a self-contained card so there's no horizontal scroll.
+  .data-table {
+    thead {
+      display: none;
+    }
+
+    tbody tr {
+      display: block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2px 14px;
+      margin-bottom: 12px;
+    }
+
+    tbody tr:hover {
+      background: var(--surface);
+    }
+
+    td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 9px 0;
+      text-align: right;
+    }
+
+    // Label each value with its column name (from data-label).
+    td::before {
+      content: attr(data-label);
+      flex-shrink: 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      text-align: left;
+    }
+
+    // Per-card cell separators (override the base last-row rule).
+    tbody tr td,
+    tbody tr:last-child td {
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr td:last-child {
+      border-bottom: none;
+    }
+
+    // ── Collapsed cards: show only the key cells, no internal dividers ──
+    tbody tr:not(.row-expanded) td:not(.cell-key) {
+      display: none;
+    }
+
+    tbody tr:not(.row-expanded) td {
+      border-bottom: none;
+    }
+
+    // The header cell is the tap target that toggles the card.
+    .cell-head {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cell-head::before {
+      display: none; // the value already reads as the card title
+    }
+
+    .cell-head-text {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: left;
+    }
+
+    .row-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0 0 0 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    tr.row-expanded .row-toggle {
+      transform: rotate(180deg);
+    }
+
+    .truncate {
+      max-width: none;
+      white-space: normal;
+    }
+
+    .cell-actions {
+      justify-content: flex-end;
+    }
   }
 }
 

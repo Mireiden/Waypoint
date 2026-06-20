@@ -20,6 +20,8 @@ router.post(
 
 router.get("/admin", authMiddleware, adminMiddleware, destinationController.getAdminDestinations);
 
+router.get("/mine", authMiddleware, destinationController.getMyDestinations);
+
 router.get("/:id", destinationController.getById);
 router.patch("/:id", authMiddleware, destinationController.updateDestination);
 router.delete("/:id", authMiddleware, destinationController.deleteDestination);

@@ -9,6 +9,7 @@ import type {
   DestinationSummary,
   Media,
   UpdateDestinationPayload,
+  UserDestination,
 } from '../../models/destination.model';
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +30,10 @@ export class DestinationService {
 
   getById(id: number) {
     return this.http.get<Destination>(`${this.base}/${id}`, { withCredentials: true });
+  }
+
+  getMine() {
+    return this.http.get<UserDestination[]>(`${this.base}/mine`, { withCredentials: true });
   }
 
   create(payload: CreateDestinationPayload, files: File[] = []) {

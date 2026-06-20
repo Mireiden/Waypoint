@@ -197,6 +197,16 @@ export class MapService {
     this.map?.flyTo([lat, lng], zoom, { duration: 1.2 });
   }
 
+  /** Frame a route's full extent, leaving padding for the side panel. */
+  fitRoute(latlngs: L.LatLngTuple[]): void {
+    if (!this.map || latlngs.length === 0) return;
+    this.map.flyToBounds(L.latLngBounds(latlngs), {
+      padding: [60, 60],
+      maxZoom: 16,
+      duration: 1.2,
+    });
+  }
+
   zoomTo(zoom: number): void {
     this.map?.setZoom(zoom, { animate: true });
   }

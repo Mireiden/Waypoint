@@ -49,6 +49,29 @@ export const findMany = async (query: FindManyQuery) => {
   );
 };
 
+export const findByUser = async (userId: number) => {
+  return await prisma.destination.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      type: true,
+      city: true,
+      country: true,
+      createdAt: true,
+      category: { select: { id: true, name: true, icon: true } },
+      media: {
+        orderBy: { position: "asc" },
+        take: 1,
+        select: { id: true, url: true, type: true, position: true },
+      },
+      _count: { select: { reviews: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 export const findById = async (id: number) => {
   const [dest] = await prisma.$queryRawTyped(getDestinationById(id));
   if (!dest) throw new NotFoundError();

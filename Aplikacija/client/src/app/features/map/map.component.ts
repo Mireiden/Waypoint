@@ -3,6 +3,7 @@ import {
   OnDestroy,
   inject,
   signal,
+  computed,
   afterNextRender,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -55,6 +56,11 @@ export class MapComponent implements OnDestroy {
   panelView = signal<'list' | 'detail' | 'create'>('list');
   selectedDest = signal<Destination | null>(null);
   selectedReviews = signal<DestinationReview[]>([]);
+
+  // Admins can moderate (delete) any review straight from the detail panel.
+  readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'admin');
+  // Which review is showing an inline "delete?" confirmation.
+  confirmingReviewId = signal<number | null>(null);
 
   // Create-destination state
   createType = signal<'point' | 'route' | null>(null);
@@ -191,13 +197,21 @@ export class MapComponent implements OnDestroy {
   selectDestination(summary: DestinationSummary): void {
     this.panelView.set('detail');
     if (this.panelCollapsed()) this.panelCollapsed.set(false);
-    const [lng, lat] = this.centerCoords(summary);
-    this.mapService.flyTo(lat, lng, 15);
+    if (summary.geometry.type === 'LineString') {
+      const latlngs = summary.geometry.coordinates.map(
+        ([lng, lat]) => [lat, lng] as [number, number],
+      );
+      this.mapService.fitRoute(latlngs);
+    } else {
+      const [lng, lat] = this.centerCoords(summary);
+      this.mapService.flyTo(lat, lng, 17);
+    }
 
     this.destinationService.getById(summary.id).subscribe((dest) => {
       this.selectedDest.set(dest);
     });
 
+    this.confirmingReviewId.set(null);
     this.reviewService.getByDestinationId(summary.id).subscribe({
       next: (reviews) => this.selectedReviews.set(reviews),
       error: (err) => console.error('Failed to load reviews:', err),
@@ -213,7 +227,27 @@ export class MapComponent implements OnDestroy {
     this.panelView.set('list');
     this.selectedDest.set(null);
     this.selectedReviews.set([]);
+    this.confirmingReviewId.set(null);
     this.mapService.zoomTo(13);
+  }
+
+  deleteReview(reviewId: number): void {
+    this.reviewService.deleteReview(reviewId).subscribe({
+      next: () => {
+        this.confirmingReviewId.set(null);
+        this.selectedReviews.update((list) => list.filter((r) => r.id !== reviewId));
+        // Keep the detail header's rating summary in sync with what's left.
+        const dest = this.selectedDest();
+        if (!dest) return;
+        const remaining = this.selectedReviews();
+        const reviewCount = remaining.length;
+        const avgRating = reviewCount
+          ? Math.round((remaining.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10) / 10
+          : 0;
+        this.selectedDest.set({ ...dest, reviewCount, avgRating });
+      },
+      error: (err) => console.error('Failed to delete review:', err),
+    });
   }
 
   // ─── Create destination ──────────────────────────────

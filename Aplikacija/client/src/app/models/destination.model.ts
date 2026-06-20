@@ -53,6 +53,20 @@ export interface Destination extends DestinationSummary {
   reviews: DestinationReview[];
 }
 
+// A user's own destination as listed on their profile (no geometry — list only).
+export interface UserDestination {
+  id: number;
+  title: string;
+  description: string | null;
+  type: DestinationType;
+  city: string | null;
+  country: string | null;
+  createdAt: string;
+  category: DestinationCategory | null;
+  media: Media[];
+  _count: { reviews: number };
+}
+
 export interface AdminDestination {
   id: number;
   title: string;

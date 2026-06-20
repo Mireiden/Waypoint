@@ -25,6 +25,12 @@ export const getAdminDestinations = async (_req: Request, res: Response) => {
   res.json(destinations);
 };
 
+export const getMyDestinations = async (req: Request, res: Response) => {
+  assertAuth(req);
+  const destinations = await destinationService.findByUser(req.user.id);
+  res.json(destinations);
+};
+
 export const getById = async (req: Request, res: Response) => {
   const id = parseIdParam(req.params.id);
   const dest = await destinationService.findById(id);

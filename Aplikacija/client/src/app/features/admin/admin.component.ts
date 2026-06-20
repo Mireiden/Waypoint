@@ -3,7 +3,6 @@ import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserWithCount } from '../../models/user.model';
 import { Report } from '../../models/report.model';
-import { ReviewWithCount } from '../../models/review.model';
 import { AdminDestination } from '../../models/destination.model';
 import { CategoryWithCount } from '../../models/category.model';
 import { AdminService } from '../../core/services/admin.service';
@@ -11,7 +10,7 @@ import { CategoryService } from '../../core/services/category.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CATEGORY_ICON_KEYS, categoryIcon } from '../../shared/category-icons';
 
-type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'reviews' | 'categories';
+type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'categories';
 
 @Component({
   selector: 'app-admin',
@@ -26,7 +25,6 @@ export class AdminComponent implements OnInit {
   reports = signal<Report[]>([]);
   users = signal<UserWithCount[]>([]);
   destinations = signal<AdminDestination[]>([]);
-  reviews = signal<ReviewWithCount[]>([]);
   categories = signal<CategoryWithCount[]>([]);
 
   // New-category form
@@ -39,6 +37,13 @@ export class AdminComponent implements OnInit {
   editingId = signal<number | null>(null);
   editName = signal('');
   editIcon = signal<string>(CATEGORY_ICON_KEYS[0]);
+
+  // Inline "are you sure?" state for destructive actions.
+  confirmingDestId = signal<number | null>(null);
+  confirmingUserId = signal<number | null>(null);
+
+  // Which mobile cards are expanded to show their full detail (mobile-only).
+  expandedRows = signal<Set<number>>(new Set());
 
   loading = signal(false);
   sidebarOpen = signal(false);
@@ -98,17 +103,6 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  loadReviews() {
-    this.loading.set(true);
-    this.adminService.getReviews().subscribe({
-      next: (data) => {
-        this.reviews.set(data);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-  }
-
   loadCategories() {
     this.loading.set(true);
     this.categoryService.getAll().subscribe({
@@ -123,11 +117,26 @@ export class AdminComponent implements OnInit {
   setTab(tab: AdminTab) {
     this.activeTab.set(tab);
     this.sidebarOpen.set(false);
+    this.confirmingDestId.set(null);
+    this.confirmingUserId.set(null);
+    this.expandedRows.set(new Set());
     if (tab === 'reports' && this.reports().length === 0) this.loadReports();
     if (tab === 'users' && this.users().length === 0) this.loadUsers();
     if (tab === 'destinations' && this.destinations().length === 0) this.loadDestinations();
-    if (tab === 'reviews' && this.reviews().length === 0) this.loadReviews();
     if (tab === 'categories' && this.categories().length === 0) this.loadCategories();
+  }
+
+  isExpanded(id: number): boolean {
+    return this.expandedRows().has(id);
+  }
+
+  toggleRow(id: number): void {
+    this.expandedRows.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   approveReport(id: number) {
@@ -144,19 +153,19 @@ export class AdminComponent implements OnInit {
 
   deleteDestination(id: number) {
     this.adminService.deleteDestination(id).subscribe({
-      next: () => this.destinations.update((list) => list.filter((d) => d.id !== id)),
-    });
-  }
-
-  deleteReview(id: number) {
-    this.adminService.deleteReview(id).subscribe({
-      next: () => this.reviews.update((list) => list.filter((r) => r.id !== id)),
+      next: () => {
+        this.destinations.update((list) => list.filter((d) => d.id !== id));
+        this.confirmingDestId.set(null);
+      },
     });
   }
 
   deleteUser(id: number) {
     this.adminService.deleteUser(id).subscribe({
-      next: () => this.users.update((list) => list.filter((u) => u.id !== id)),
+      next: () => {
+        this.users.update((list) => list.filter((u) => u.id !== id));
+        this.confirmingUserId.set(null);
+      },
     });
   }
 
