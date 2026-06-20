@@ -20,8 +20,8 @@ enum DestinationType {
 
 enum ReportStatus {
   pending
-  approved
-  declined
+  resolved
+  dismissed
 }
 
 enum MediaType {
