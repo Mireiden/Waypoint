@@ -8,6 +8,7 @@ import type {
 import { createDestination as createDestinationSql } from "../../generated/prisma/sql/createDestination.js";
 import { getDestinationById } from "../../generated/prisma/sql/getDestinationById.js";
 import { getDestinations } from "../../generated/prisma/sql/getDestinations.js";
+import { getRoutePoints } from "../../generated/prisma/sql/getRoutePoints.js";
 import { BadRequestError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 import { assertOwnerOrAdmin } from "../utils/assertOwnerOrAdmin.js";
@@ -77,7 +78,9 @@ export const findById = async (id: number) => {
   if (!dest) throw new NotFoundError();
 
   const media = await mediaService.findByDestinationId(id);
-  return { ...dest, media };
+  const points = dest.type === "route" ? await prisma.$queryRawTyped(getRoutePoints(dest.id)) : [];
+
+  return { ...dest, media, points };
 };
 
 export const createDestination = async (
@@ -96,6 +99,17 @@ export const createDestination = async (
 
   const { city, country } = await reverseGeocode(lng, lat);
 
+  if (data.type === "route" && data.points?.length) {
+    const ids = data.points;
+    if (new Set(ids).size !== ids.length) throw new BadRequestError("Duplicate point id's");
+
+    const foundPoints = await prisma.destination.findMany({
+      where: { id: { in: ids }, type: "point" },
+      select: { id: true },
+    });
+    if (foundPoints.length !== ids.length) throw new BadRequestError("Invalid point ids");
+  }
+
   const uploaded = await mediaService.uploadFiles(files);
 
   try {
@@ -113,6 +127,12 @@ export const createDestination = async (
         ),
       );
       if (!dest) throw new Error("Failed to create destination");
+
+      if (data.type === "route" && data.points?.length) {
+        await tx.routePoint.createMany({
+          data: data.points.map((pointId) => ({ routeId: dest.id, pointId })),
+        });
+      }
 
       const media = uploaded.length
         ? await tx.media.createManyAndReturn({

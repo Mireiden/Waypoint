@@ -29,6 +29,7 @@ export const createPointSchema = z.object({
 export const createRouteSchema = z.object({
   type: z.literal("route"),
   geometry: jsonString(lineStringGeometrySchema),
+  points: jsonString(z.array(z.coerce.number().int().positive()).max(50)).optional(),
   ...baseFields,
 });
 
