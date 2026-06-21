@@ -5,6 +5,7 @@ import categoryRoutes from "./category.routes.js";
 import destinationRoutes from "./destination.routes.js";
 import meRoutes from "./me.routes.js";
 import mediaRoutes from "./media.routes.js";
+import reportRoutes from "./report.routes.js";
 import reviewRoutes from "./review.routes.js";
 import userRoutes from "./user.routes.js";
 
@@ -16,6 +17,7 @@ router.use("/users", userRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/destinations", destinationRoutes);
 router.use("/media", mediaRoutes);
+router.use("/reports", reportRoutes);
 router.use("/reviews", reviewRoutes);
 
 export default router;
