@@ -16,6 +16,16 @@ import { removeUndefined } from "../utils/removeUndefined.js";
 import { reverseGeocode } from "./geocoding.service.js";
 import * as mediaService from "./media.service.js";
 
+const assertValidPointIds = async (ids: number[]) => {
+  if (!ids.length) return;
+  if (new Set(ids).size !== ids.length) throw new BadRequestError("Duplicate point id's");
+  const found = await prisma.destination.findMany({
+    where: { id: { in: ids }, type: "point" },
+    select: { id: true },
+  });
+  if (found.length !== ids.length) throw new BadRequestError("Invalid point ids");
+};
+
 export const findAllAdmin = async () => {
   return await prisma.destination.findMany({
     select: {
@@ -99,16 +109,7 @@ export const createDestination = async (
 
   const { city, country } = await reverseGeocode(lng, lat);
 
-  if (data.type === "route" && data.points?.length) {
-    const ids = data.points;
-    if (new Set(ids).size !== ids.length) throw new BadRequestError("Duplicate point id's");
-
-    const foundPoints = await prisma.destination.findMany({
-      where: { id: { in: ids }, type: "point" },
-      select: { id: true },
-    });
-    if (foundPoints.length !== ids.length) throw new BadRequestError("Invalid point ids");
-  }
+  if (data.type === "route" && data.points?.length) await assertValidPointIds(data.points);
 
   const uploaded = await mediaService.uploadFiles(files);
 
@@ -174,4 +175,39 @@ export const deleteDestination = async (id: number, actor: AuthUser) => {
   assertOwnerOrAdmin(actor, dest.userId);
 
   await prisma.destination.delete({ where: { id } });
+};
+
+export const addRoutePoint = async (routeId: number, actor: AuthUser, pointId: number) => {
+  const route = await prisma.destination.findUnique({
+    where: { id: routeId },
+    select: { userId: true, type: true },
+  });
+  if (!route) throw new NotFoundError();
+  assertOwnerOrAdmin(actor, route.userId);
+  if (route.type !== "route") throw new BadRequestError("Only routes have points");
+
+  const point = await prisma.destination.findUnique({
+    where: { id: pointId },
+    select: { type: true },
+  });
+  if (point?.type !== "point") throw new BadRequestError("Invalid point id");
+
+  // skipDuplicates makes re-adding an already-linked point a harmless no-op (PK guards it)
+  await prisma.routePoint.createMany({ data: [{ routeId, pointId }], skipDuplicates: true });
+
+  return findById(routeId);
+};
+
+export const removeRoutePoint = async (routeId: number, actor: AuthUser, pointId: number) => {
+  const route = await prisma.destination.findUnique({
+    where: { id: routeId },
+    select: { userId: true },
+  });
+  if (!route) throw new NotFoundError();
+  assertOwnerOrAdmin(actor, route.userId);
+
+  // deleteMany so removing a link that isn't there is a no-op rather than an error
+  await prisma.routePoint.deleteMany({ where: { routeId, pointId } });
+
+  return findById(routeId);
 };

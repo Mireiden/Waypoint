@@ -44,6 +44,10 @@ export const updateDestinationSchema = z.object({
   categoryId: z.coerce.number().int().positive().optional(),
 });
 
+export const addRoutePointSchema = z.object({
+  pointId: z.coerce.number().int().positive(),
+});
+
 const bboxSchema = z.string().transform((val, ctx) => {
   const parts = val.split(",").map(Number);
   if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) {
@@ -63,6 +67,7 @@ export const listDestinationsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(500).default(300),
 });
 
+export type AddRoutePointInput = z.infer<typeof addRoutePointSchema>;
 export type CreateDestinationInput = z.infer<typeof createDestinationSchema>;
 export type CreatePointInput = z.infer<typeof createPointSchema>;
 export type CreateRouteInput = z.infer<typeof createRouteSchema>;

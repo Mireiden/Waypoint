@@ -43,4 +43,7 @@ router.post(
 );
 router.delete("/:id/media", authMiddleware, mediaController.deleteDestinationMedia);
 
+router.post("/:id/points", authMiddleware, destinationController.addRoutePoint);
+router.delete("/:id/points/:pointId", authMiddleware, destinationController.removeRoutePoint);
+
 export default router;

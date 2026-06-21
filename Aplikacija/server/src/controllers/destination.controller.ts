@@ -3,6 +3,7 @@ import { treeifyError } from "zod";
 
 import { ValidationError } from "../errors/validationError.js";
 import {
+  addRoutePointSchema,
   createDestinationSchema,
   listDestinationsQuerySchema,
   updateDestinationSchema,
@@ -69,4 +70,26 @@ export const deleteDestination = async (req: Request, res: Response) => {
   await destinationService.deleteDestination(id, req.user);
 
   res.status(204).send();
+};
+
+export const addRoutePoint = async (req: Request, res: Response) => {
+  assertAuth(req);
+  const id = parseIdParam(req.params.id, "route id");
+
+  const parsed = addRoutePointSchema.safeParse(req.body);
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
+
+  const route = await destinationService.addRoutePoint(id, req.user, parsed.data.pointId);
+
+  res.status(201).json(route);
+};
+
+export const removeRoutePoint = async (req: Request, res: Response) => {
+  assertAuth(req);
+  const id = parseIdParam(req.params.id, "route id");
+  const pointId = parseIdParam(req.params.pointId, "point id");
+
+  const route = await destinationService.removeRoutePoint(id, req.user, pointId);
+
+  res.json(route);
 };
