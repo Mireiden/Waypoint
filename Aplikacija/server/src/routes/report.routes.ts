@@ -9,5 +9,6 @@ const router: Router = Router();
 router.get("/", authMiddleware, adminMiddleware, reportController.getReportedTargets);
 router.post("/", authMiddleware, reportController.createReport);
 router.get("/:type/:id", authMiddleware, adminMiddleware, reportController.getReportsForTarget);
+router.patch("/:type/:id", authMiddleware, adminMiddleware, reportController.setTargetReportsStatus);
 
 export default router;

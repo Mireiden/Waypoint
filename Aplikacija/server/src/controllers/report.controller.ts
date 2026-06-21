@@ -6,6 +6,7 @@ import { ValidationError } from "../errors/validationError.js";
 import {
   createReportSchema,
   listReportsQuerySchema,
+  setReportsStatusSchema,
   targetTypeSchema,
 } from "../schemas/report.schema.js";
 import * as reportService from "../services/report.service.js";
@@ -38,4 +39,21 @@ export const createReport = async (req: Request, res: Response) => {
 
   const report = await reportService.createReport(req.user.id, parsed.data);
   res.status(201).json(report);
+};
+
+export const setTargetReportsStatus = async (req: Request, res: Response) => {
+  const targetId = parseIdParam(req.params.id, "target id");
+
+  const parsedType = targetTypeSchema.safeParse(req.params.type);
+  if (!parsedType.success) throw new ValidationError(treeifyError(parsedType.error));
+
+  const parsedStatus = setReportsStatusSchema.safeParse(req.body);
+  if (!parsedStatus.success) throw new ValidationError(treeifyError(parsedStatus.error));
+
+  const updated = await reportService.setTargetReportsStatus(
+    targetId,
+    parsedType.data,
+    parsedStatus.data.status,
+  );
+  res.json(updated);
 };

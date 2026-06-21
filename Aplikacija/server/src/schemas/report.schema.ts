@@ -13,7 +13,12 @@ export const createReportSchema = z.object({
   targetId: z.coerce.number().int().positive(),
 });
 
+export const setReportsStatusSchema = z.object({
+  status: z.enum(["dismissed", "resolved"]),
+});
+
 export const targetTypeSchema = z.enum(["destination", "review", "user"]);
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;
 export type ListReportsQuery = z.infer<typeof listReportsQuerySchema>;
+export type SetReportsStatusInput = z.infer<typeof setReportsStatusSchema>;

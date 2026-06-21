@@ -1,4 +1,4 @@
-import type { CreateReportInput, ListReportsQuery } from "../schemas/report.schema.js";
+import type { CreateReportInput, ListReportsQuery, SetReportsStatusInput } from "../schemas/report.schema.js";
 
 import { reportedTargets } from "../../generated/prisma/sql/reportedTargets.js";
 import { BadRequestError } from "../errors/badRequestError.js";
@@ -13,6 +13,13 @@ interface ReportedTarget {
 }
 
 type TargetType = "destination" | "review" | "user";
+
+const targetColumn = (targetId: number, targetType: TargetType) =>
+  targetType === "destination"
+    ? { destinationId: targetId }
+    : targetType === "review"
+      ? { reviewId: targetId }
+      : { reportedUserId: targetId };
 
 export const findReportedTargets = async (query: ListReportsQuery): Promise<ReportedTarget[]> => {
   const rows = await prisma.$queryRawTyped(reportedTargets(query.status));
@@ -37,16 +44,9 @@ export const findReportedTargets = async (query: ListReportsQuery): Promise<Repo
   return targets;
 };
 
-export const findReportsForTarget = async (id: number, type: TargetType) => {
-  const where =
-    type === "destination"
-      ? { destinationId: id }
-      : type === "review"
-        ? { reviewId: id }
-        : { reportedUserId: id };
-
+export const findReportsForTarget = async (targetId: number, targetType: TargetType) => {
   return await prisma.report.findMany({
-    where,
+    where: targetColumn(targetId, targetType),
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -63,15 +63,24 @@ export const createReport = async (reporterId: number, data: CreateReportInput) 
   if (targetType === "user" && targetId === reporterId)
     throw new BadRequestError("You can't report yourself");
 
-  const targetColumn =
-    targetType === "destination"
-      ? { destinationId: targetId }
-      : targetType === "review"
-        ? { reviewId: targetId }
-        : { reportedUserId: targetId };
-
   return await prisma.report.create({
-    data: removeUndefined({ note, reason, userId: reporterId, ...targetColumn }),
+    data: removeUndefined({
+      note,
+      reason,
+      userId: reporterId,
+      ...targetColumn(targetId, targetType),
+    }),
     select: { id: true, reason: true, note: true, status: true, createdAt: true },
+  });
+};
+
+export const setTargetReportsStatus = async (
+  targetId: number,
+  targetType: TargetType,
+  status: SetReportsStatusInput["status"],
+) => {
+  return await prisma.report.updateManyAndReturn({
+    where: targetColumn(targetId, targetType),
+    data: { status },
   });
 };
