@@ -1,6 +1,6 @@
 export interface Report {
   id: number;
-  reason: string | null;
+  reason: 'spam' | 'inappropriate' | 'inaccurate' | 'duplicate' | 'other';
   note: string | null;
   status: 'pending' | 'approved' | 'declined';
   createdAt: string;

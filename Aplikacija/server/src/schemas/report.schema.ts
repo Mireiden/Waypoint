@@ -7,7 +7,7 @@ export const listReportsQuerySchema = z.object({
 });
 
 export const createReportSchema = z.object({
-  reason: z.string().min(1).max(255),
+  reason: z.enum(["spam", "inappropriate", "inaccurate", "duplicate", "other"]),
   note: z.string().optional(),
   targetType: z.enum(["destination", "user", "review"]),
   targetId: z.coerce.number().int().positive(),
