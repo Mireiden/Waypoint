@@ -28,6 +28,6 @@ export const destroy = async (publicId: string, resourceType: "image" | "video")
   const res = (await cloudinary.uploader.destroy(publicId, { resource_type: resourceType })) as {
     result: string;
   };
-  console.log("Cloudinary destroy:", publicId, resourceType, res);
+  // console.log("Cloudinary destroy:", publicId, resourceType, res);
   return res;
 };

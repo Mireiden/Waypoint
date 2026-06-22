@@ -13,7 +13,7 @@ export const findAll = async () => {
       passwordHash: true,
     },
     include: {
-      _count: { select: { destinations: true, reviews: true, reports: true } },
+      _count: { select: { destinations: true, reviews: true, reportsAgainst: true } },
     },
   });
 };

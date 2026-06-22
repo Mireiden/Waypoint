@@ -1,4 +1,8 @@
-import type { CreateReportInput, ListReportsQuery, SetReportsStatusInput } from "../schemas/report.schema.js";
+import type {
+  CreateReportInput,
+  ListReportsQuery,
+  SetReportsStatusInput,
+} from "../schemas/report.schema.js";
 
 import { reportedTargets } from "../../generated/prisma/sql/reportedTargets.js";
 import { BadRequestError } from "../errors/badRequestError.js";

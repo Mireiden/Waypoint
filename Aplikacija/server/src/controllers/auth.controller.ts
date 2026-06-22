@@ -3,15 +3,13 @@ import type { Request, Response } from "express";
 import { treeifyError } from "zod";
 
 import config from "../config/config.js";
+import { ValidationError } from "../errors/validationError.js";
 import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 import * as authService from "../services/auth.service.js";
 
 export const login = async (req: Request, res: Response) => {
-  const loginInfo = await loginSchema.safeParseAsync(req.body);
-  if (!loginInfo.success) {
-    res.status(400).send({ error: treeifyError(loginInfo.error) });
-    return;
-  }
+  const loginInfo = loginSchema.safeParse(req.body);
+  if (!loginInfo.success) throw new ValidationError(treeifyError(loginInfo.error));
 
   const { user, token } = await authService.login(loginInfo.data);
   res
@@ -27,10 +25,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const register = async (req: Request, res: Response) => {
   const registerInfo = await registerSchema.safeParseAsync(req.body);
-  if (!registerInfo.success) {
-    res.status(400).send({ error: treeifyError(registerInfo.error) });
-    return;
-  }
+  if (!registerInfo.success) throw new ValidationError(treeifyError(registerInfo.error));
 
   const { user, token } = await authService.register(registerInfo.data);
   res

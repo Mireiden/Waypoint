@@ -2,9 +2,10 @@ import type { Request, Response } from "express";
 
 import { treeifyError } from "zod";
 
-import { BadRequestError, ValidationError } from "../errors/index.js";
+import { ValidationError } from "../errors/index.js";
 import { createCategorySchema, updateCategorySchema } from "../schemas/category.schema.js";
 import * as categoryService from "../services/category.service.js";
+import { parseIdParam } from "../utils/parseIdParam.js";
 
 export const getAll = async (req: Request, res: Response) => {
   const categories = await categoryService.findAll();
@@ -12,8 +13,7 @@ export const getAll = async (req: Request, res: Response) => {
 };
 
 export const getById = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) throw new BadRequestError("Invalid category id");
+  const id = parseIdParam(req.params.id, "category id");
 
   const category = await categoryService.findById(id);
   res.json(category);
@@ -29,8 +29,7 @@ export const createCategory = async (req: Request, res: Response) => {
 };
 
 export const updateCategory = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) throw new BadRequestError("Invalid category id");
+  const id = parseIdParam(req.params.id, "category id");
 
   const parsed = updateCategorySchema.safeParse(req.body);
   if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
@@ -40,8 +39,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 };
 
 export const deleteCategory = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) throw new BadRequestError("Invalid category id");
+  const id = parseIdParam(req.params.id, "category id");
 
   await categoryService.deleteCategory(id);
   res.status(204).send();

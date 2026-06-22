@@ -101,8 +101,8 @@ export const deleteMedia = async (id: number, actor: AuthUser) => {
   const ownerId = media.destination?.userId ?? media.review?.userId;
   assertOwnerOrAdmin(actor, ownerId);
 
-  await cloudinaryService.destroy(media.publicId, media.type);
   await prisma.media.delete({ where: { id } });
+  await cloudinaryService.destroy(media.publicId, media.type);
 };
 
 export const deleteAllFromDestination = async (destId: number, actor: AuthUser) => {
@@ -120,8 +120,8 @@ export const deleteAllFromDestination = async (destId: number, actor: AuthUser) 
     },
   });
 
-  await destroyUploaded(media);
   await prisma.media.deleteMany({ where: { destinationId: destId } });
+  await destroyUploaded(media);
 };
 
 export const findByDestinationId = async (destId: number) => {

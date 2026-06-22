@@ -26,10 +26,7 @@ export const updateUser = async (req: Request, res: Response) => {
   const id = parseIdParam(req.params.id, "user id");
 
   const parsed = updateProfileSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: treeifyError(parsed.error) });
-    return;
-  }
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
   const updated = await userService.updateProfile(id, parsed.data);
   res.json(updated);
 };

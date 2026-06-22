@@ -25,9 +25,7 @@ const optionalAuthMiddleware = (req: Request, res: Response, next: NextFunction)
     });
 
     req.user = authUserSchema.parse(decoded);
-  } catch {
-    // req.user = null;
-  }
+  } catch {}
 
   next();
 };
