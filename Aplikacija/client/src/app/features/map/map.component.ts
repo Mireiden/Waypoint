@@ -25,14 +25,17 @@ import {
   DestinationReview,
   DestinationSort,
   DestinationSummary,
+  PointGeometry,
 } from '../../models/destination.model';
 import { Category } from '../../models/category.model';
+import { ReportTargetType } from '../../models/report.model';
 import { categoryIcon } from '../../shared/category-icons';
+import { ReportDialogComponent } from '../../shared/components/report-dialog/report-dialog.component';
 
 
 @Component({
   selector: 'app-map',
-  imports: [FormsModule, RouterLink, CommonModule, DatePipe],
+  imports: [FormsModule, RouterLink, CommonModule, DatePipe, ReportDialogComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
@@ -62,6 +65,56 @@ export class MapComponent implements OnDestroy {
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'admin');
   // Which review is showing an inline "delete?" confirmation.
   confirmingReviewId = signal<number | null>(null);
+
+  // ─── Report (UC-10) ──────────────────────────────────
+  // When set, the report dialog is shown for this target.
+  reportTarget = signal<{ type: ReportTargetType; id: number; label: string } | null>(null);
+
+  // ─── Route points (owner/admin only) ─────────────────
+  // Ids of the destinations the current user owns — lets us show point-management
+  // controls without the detail payload carrying the owner id.
+  private readonly ownedIds = signal<Set<number>>(new Set());
+  addingPoint = signal(false);
+  pointSearch = signal('');
+  pointCandidates = signal<DestinationSummary[]>([]);
+  pointActionError = signal<string | null>(null);
+  // Only show existing points within this many metres of the route polyline.
+  pointRadius = signal(3000);
+  readonly pointRadiusOptions = [1000, 3000, 5000, 10000, 25000];
+  // When set, a freshly created point will be linked to this route on publish.
+  private readonly addPointRouteId = signal<number | null>(null);
+  readonly creatingForRoute = computed(() => this.addPointRouteId() !== null);
+
+  // Whether the current user owns the selected destination (or is an admin).
+  readonly canModifySelected = computed(() => {
+    const dest = this.selectedDest();
+    return !!dest && (this.isAdmin() || this.ownedIds().has(dest.id));
+  });
+
+  // Whether the current user may edit the selected route's points.
+  readonly canManagePoints = computed(
+    () => this.canModifySelected() && this.selectedDest()?.type === 'route',
+  );
+
+  // Point destinations not already on the route, near the polyline, search-filtered,
+  // sorted nearest-first. Each entry carries its distance to the route (metres).
+  readonly availablePoints = computed(() => {
+    const dest = this.selectedDest();
+    if (!dest || dest.geometry.type !== 'LineString') return [];
+    const coords = dest.geometry.coordinates;
+    const linked = new Set(dest.points?.map((p) => p.id) ?? []);
+    const q = this.pointSearch().trim().toLowerCase();
+    const radius = this.pointRadius();
+
+    return this.pointCandidates()
+      .filter((c) => !linked.has(c.id) && c.geometry.type === 'Point')
+      .map((point) => {
+        const [lng, lat] = (point.geometry as PointGeometry).coordinates;
+        return { point, dist: this.pointToPolylineMeters(lat, lng, coords) };
+      })
+      .filter((e) => e.dist <= radius && (!q || e.point.title.toLowerCase().includes(q)))
+      .sort((a, b) => a.dist - b.dist);
+  });
 
   // ─── Write / edit a review ───────────────────────────
   showReviewForm = signal(false);
@@ -111,6 +164,15 @@ export class MapComponent implements OnDestroy {
         next: (cats) => this.categories.set(cats),
         error: (err) => console.error('Failed to load categories:', err),
       });
+
+      // Track which destinations belong to the signed-in user so we can show
+      // point-management controls on their own routes.
+      if (this.auth.currentUser()) {
+        this.destinationService.getMine().subscribe({
+          next: (mine) => this.ownedIds.set(new Set(mine.map((d) => d.id))),
+          error: (err) => console.error('Failed to load your destinations:', err),
+        });
+      }
 
       this.reload$.next();
     });
@@ -231,6 +293,8 @@ export class MapComponent implements OnDestroy {
 
     this.confirmingReviewId.set(null);
     this.cancelReviewForm();
+    this.closeAddPoint();
+    this.reportTarget.set(null);
     this.reviewService.getByDestinationId(summary.id).subscribe({
       next: (reviews) => this.selectedReviews.set(reviews),
       error: (err) => console.error('Failed to load reviews:', err),
@@ -248,7 +312,131 @@ export class MapComponent implements OnDestroy {
     this.selectedReviews.set([]);
     this.confirmingReviewId.set(null);
     this.cancelReviewForm();
+    this.closeAddPoint();
+    this.reportTarget.set(null);
     this.mapService.zoomTo(13);
+  }
+
+  // ─── Report (UC-10) ──────────────────────────────────
+  openReport(type: ReportTargetType, id: number, label: string): void {
+    this.reportTarget.set({ type, id, label });
+  }
+
+  closeReport(): void {
+    this.reportTarget.set(null);
+  }
+
+  // ─── Route points ────────────────────────────────────
+  openAddPoint(): void {
+    this.pointActionError.set(null);
+    this.pointSearch.set('');
+    this.addingPoint.set(true);
+    // Load candidate point destinations once when the picker first opens.
+    if (this.pointCandidates().length === 0) {
+      this.destinationService.getAll({ type: 'point', limit: 500 }).subscribe({
+        next: (points) => this.pointCandidates.set(points),
+        error: (err) => console.error('Failed to load points:', err),
+      });
+    }
+  }
+
+  closeAddPoint(): void {
+    this.addingPoint.set(false);
+    this.pointSearch.set('');
+    this.pointActionError.set(null);
+  }
+
+  addPointToRoute(pointId: number): void {
+    const route = this.selectedDest();
+    if (!route) return;
+    this.pointActionError.set(null);
+    this.destinationService.addPoint(route.id, pointId).subscribe({
+      next: (updated) => this.selectedDest.set(updated),
+      error: (err) => this.pointActionError.set(this.pointError(err, 'Could not add point.')),
+    });
+  }
+
+  removePointFromRoute(pointId: number): void {
+    const route = this.selectedDest();
+    if (!route) return;
+    this.pointActionError.set(null);
+    this.destinationService.removePoint(route.id, pointId).subscribe({
+      next: (updated) => this.selectedDest.set(updated),
+      error: (err) => this.pointActionError.set(this.pointError(err, 'Could not remove point.')),
+    });
+  }
+
+  // Switch into the create flow to draw a brand-new point that, once published,
+  // gets linked to the route currently open in the detail panel.
+  startCreatePointForRoute(): void {
+    const route = this.selectedDest();
+    if (!route) return;
+    this.closeAddPoint();
+    this.resetCreateForm();
+    this.drawnGeometry.set(null);
+    this.addPointRouteId.set(route.id);
+    this.panelView.set('create');
+    if (this.panelCollapsed()) this.panelCollapsed.set(false);
+    this.chooseCreateType('point');
+  }
+
+  // Return to the route detail after a point was created and linked to it.
+  private finishCreateForRoute(route: Destination): void {
+    this.publishing.set(false);
+    this.reload$.next();
+    this.selectedDest.set(route);
+    this.selectedReviews.set([]);
+    this.panelView.set('detail');
+    if (route.geometry.type === 'LineString') {
+      this.mapService.fitRoute(
+        route.geometry.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
+      );
+    }
+    this.reviewService.getByDestinationId(route.id).subscribe({
+      next: (reviews) => this.selectedReviews.set(reviews),
+      error: () => undefined,
+    });
+  }
+
+  private pointError(err: unknown, fallback: string): string {
+    const apiError = (err as { error?: { error?: string } })?.error?.error;
+    return typeof apiError === 'string' ? apiError : fallback;
+  }
+
+  formatDistance(metres: number): string {
+    return metres < 1000 ? `${Math.round(metres)} m` : `${(metres / 1000).toFixed(1)} km`;
+  }
+
+  // Shortest distance (metres) from a point to a polyline, via a local planar
+  // projection around the point — accurate enough at the city scale we work at.
+  private pointToPolylineMeters(lat: number, lng: number, coords: [number, number][]): number {
+    if (coords.length === 0) return Infinity;
+    const R = 6371000;
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const lat0 = toRad(lat);
+    const project = (la: number, lo: number) => ({
+      x: toRad(lo) * Math.cos(lat0) * R,
+      y: toRad(la) * R,
+    });
+
+    const p = project(lat, lng);
+    if (coords.length === 1) {
+      const a = project(coords[0][1], coords[0][0]);
+      return Math.hypot(p.x - a.x, p.y - a.y);
+    }
+
+    let min = Infinity;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const a = project(coords[i][1], coords[i][0]);
+      const b = project(coords[i + 1][1], coords[i + 1][0]);
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len2 = dx * dx + dy * dy;
+      let t = len2 === 0 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+      t = Math.max(0, Math.min(1, t));
+      min = Math.min(min, Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)));
+    }
+    return min;
   }
 
   isOwnReview(review: DestinationReview): boolean {
@@ -354,6 +542,7 @@ export class MapComponent implements OnDestroy {
   // ─── Create destination ──────────────────────────────
   startCreate(): void {
     this.resetCreateForm();
+    this.addPointRouteId.set(null);
     this.createType.set(null);
     this.drawnGeometry.set(null);
     this.panelView.set('create');
@@ -445,13 +634,30 @@ export class MapComponent implements OnDestroy {
     this.createError.set(null);
     this.destinationService.create(payload, this.newFiles).subscribe({
       next: (dest) => {
-        this.publishing.set(false);
         this.mapService.disableEditDrawn();
         this.editing.set(false);
         this.mapService.disableCreate();
         this.resetCreateForm();
         this.createType.set(null);
         this.drawnGeometry.set(null);
+        this.ownedIds.update((set) => new Set(set).add(dest.id));
+
+        const routeId = this.addPointRouteId();
+        if (routeId !== null) {
+          // This point was created to attach to a route — link it, then return there.
+          this.addPointRouteId.set(null);
+          this.destinationService.addPoint(routeId, dest.id).subscribe({
+            next: (route) => this.finishCreateForRoute(route),
+            error: () =>
+              this.destinationService.getById(routeId).subscribe({
+                next: (route) => this.finishCreateForRoute(route),
+                error: () => this.publishing.set(false),
+              }),
+          });
+          return;
+        }
+
+        this.publishing.set(false);
         this.reload$.next();
         // Jump straight to the new destination's detail view.
         this.selectedDest.set(dest);
@@ -475,7 +681,10 @@ export class MapComponent implements OnDestroy {
     this.resetCreateForm();
     this.createType.set(null);
     this.drawnGeometry.set(null);
-    this.panelView.set('list');
+    // If we were creating a point for a route, go back to that route's detail.
+    const routeId = this.addPointRouteId();
+    this.addPointRouteId.set(null);
+    this.panelView.set(routeId !== null && this.selectedDest()?.id === routeId ? 'detail' : 'list');
   }
 
   private resetCreateForm(): void {

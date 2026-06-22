@@ -57,6 +57,23 @@ export class DestinationService {
     return this.http.delete<void>(`${this.base}/${id}`, { withCredentials: true });
   }
 
+  // Link an existing point destination to a route. Returns the updated route
+  // (including its refreshed `points` list). Owner/admin only — enforced server-side.
+  addPoint(routeId: number, pointId: number) {
+    return this.http.post<Destination>(
+      `${this.base}/${routeId}/points`,
+      { pointId },
+      { withCredentials: true },
+    );
+  }
+
+  // Unlink a point from a route. Returns the updated route.
+  removePoint(routeId: number, pointId: number) {
+    return this.http.delete<Destination>(`${this.base}/${routeId}/points/${pointId}`, {
+      withCredentials: true,
+    });
+  }
+
   uploadMedia(destinationId: number, files: File[]) {
     const form = new FormData();
     files.forEach((f) => form.append('files', f));

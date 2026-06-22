@@ -157,7 +157,111 @@
                 @if (dest.description) {
                   <p class="detail-description">{{ dest.description }}</p>
                 }
+
+                @if (auth.currentUser() && !canModifySelected()) {
+                  <button
+                    type="button"
+                    class="report-link"
+                    (click)="openReport('destination', dest.id, dest.title)"
+                  >⚑ Report this {{ dest.type }}</button>
+                }
               </div>
+
+              <!-- Points along the route -->
+              @if (dest.type === 'route') {
+                <div class="points-section">
+                  <h3 class="reviews-title">
+                    Points along the route
+                    @if (dest.points.length > 0) {
+                      <span class="reviews-count-badge">{{ dest.points.length }}</span>
+                    }
+                  </h3>
+
+                  @if (dest.points.length > 0) {
+                    <ul class="points-list">
+                      @for (point of dest.points; track point.id) {
+                        <li class="point-item">
+                          <button class="point-go" type="button" (click)="selectById(point.id)">
+                            <span class="point-pin">📍</span>
+                            <span class="point-name">{{ point.title }}</span>
+                          </button>
+                          @if (canManagePoints()) {
+                            <button
+                              class="point-remove"
+                              type="button"
+                              title="Remove from route"
+                              aria-label="Remove from route"
+                              (click)="removePointFromRoute(point.id)"
+                            >✕</button>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="reviews-empty">No points linked to this route yet.</p>
+                  }
+
+                  @if (pointActionError()) {
+                    <p class="rf-error">{{ pointActionError() }}</p>
+                  }
+
+                  @if (canManagePoints()) {
+                    @if (addingPoint()) {
+                      <div class="add-point">
+                        <button
+                          class="add-point-create"
+                          type="button"
+                          (click)="startCreatePointForRoute()"
+                        >＋ Create a new point on the map</button>
+
+                        <div class="add-point-or"><span>or pick an existing one</span></div>
+
+                        <div class="add-point-bar">
+                          <input
+                            type="text"
+                            class="add-point-search"
+                            placeholder="Search nearby points…"
+                            [ngModel]="pointSearch()"
+                            (ngModelChange)="pointSearch.set($event)"
+                          />
+                          <select
+                            class="add-point-radius"
+                            [ngModel]="pointRadius()"
+                            (ngModelChange)="pointRadius.set($event)"
+                          >
+                            @for (r of pointRadiusOptions; track r) {
+                              <option [ngValue]="r">≤ {{ formatDistance(r) }}</option>
+                            }
+                          </select>
+                        </div>
+
+                        <div class="add-point-list">
+                          @for (entry of availablePoints(); track entry.point.id) {
+                            <button
+                              class="add-point-option"
+                              type="button"
+                              (click)="addPointToRoute(entry.point.id)"
+                            >
+                              <span class="point-pin">📍</span>
+                              <span class="point-name">{{ entry.point.title }}</span>
+                              <span class="add-point-dist">{{ formatDistance(entry.dist) }}</span>
+                            </button>
+                          } @empty {
+                            <p class="reviews-empty">
+                              No points within {{ formatDistance(pointRadius()) }} of this route.
+                            </p>
+                          }
+                        </div>
+                        <button class="point-add-cancel" type="button" (click)="closeAddPoint()">Done</button>
+                      </div>
+                    } @else {
+                      <button class="add-point-btn" type="button" (click)="openAddPoint()">
+                        ＋ Add a point
+                      </button>
+                    }
+                  }
+                </div>
+              }
 
               <!-- Media -->
               @if (dest.media.length > 0) {
@@ -289,6 +393,15 @@
                                   (click)="openReviewForm(review)"
                                 >Edit</button>
                               }
+                              @if (auth.currentUser() && !isOwnReview(review) && !isAdmin()) {
+                                <button
+                                  class="review-report"
+                                  type="button"
+                                  title="Report review"
+                                  aria-label="Report review"
+                                  (click)="openReport('review', review.id, 'Review by ' + review.user.name)"
+                                >⚑</button>
+                              }
                               @if (isOwnReview(review) || isAdmin()) {
                                 <button
                                   class="review-delete"
@@ -335,21 +448,25 @@
             Cancel
           </button>
 
-          <h2 class="create-heading">New destination</h2>
+          <h2 class="create-heading">
+            {{ creatingForRoute() ? 'New point for this route' : 'New destination' }}
+          </h2>
 
-          <!-- Step 1: choose type -->
-          <div class="create-type-row">
-            <button
-              class="type-choice"
-              [class.active]="createType() === 'point'"
-              (click)="chooseCreateType('point')"
-            >📍 Point</button>
-            <button
-              class="type-choice"
-              [class.active]="createType() === 'route'"
-              (click)="chooseCreateType('route')"
-            >🗺 Route</button>
-          </div>
+          <!-- Step 1: choose type (locked to point when adding to a route) -->
+          @if (!creatingForRoute()) {
+            <div class="create-type-row">
+              <button
+                class="type-choice"
+                [class.active]="createType() === 'point'"
+                (click)="chooseCreateType('point')"
+              >📍 Point</button>
+              <button
+                class="type-choice"
+                [class.active]="createType() === 'route'"
+                (click)="chooseCreateType('route')"
+              >🗺 Route</button>
+            </div>
+          }
 
           <!-- Step 2: drawing hint / status -->
           @if (createType()) {
@@ -418,7 +535,11 @@
             }
 
             <button class="publish-btn" [disabled]="!canPublish()" (click)="publish()">
-              {{ publishing() ? 'Publishing…' : 'Publish' }}
+              @if (publishing()) {
+                {{ creatingForRoute() ? 'Adding…' : 'Publishing…' }}
+              } @else {
+                {{ creatingForRoute() ? 'Create & add to route' : 'Publish' }}
+              }
             </button>
           </div>
         </div>
@@ -474,5 +595,17 @@
 
     <div id="map" class="leaflet-map"></div>
   </div>
+
+  <!-- ══════════════════════════════════════════════
+       REPORT DIALOG (UC-10)
+  ══════════════════════════════════════════════ -->
+  @if (reportTarget(); as rt) {
+    <app-report-dialog
+      [targetType]="rt.type"
+      [targetId]="rt.id"
+      [targetLabel]="rt.label"
+      (close)="closeReport()"
+    />
+  }
 
 </div>

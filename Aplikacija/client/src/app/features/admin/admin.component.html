@@ -80,51 +80,98 @@
     @case ('reports') {
     <div class="section-header">
       <h1 class="section-title">Reports</h1>
-      <span class="count-badge">{{ reports().length }}</span>
+      <span class="count-badge">{{ reportedTargets().length }}</span>
     </div>
-    @if (reports().length === 0 && !loading()) {
-    <div class="empty-state">No reports found</div>
+
+    <div class="report-filters">
+      <div class="report-filter-group">
+        @for (s of ['pending', 'resolved', 'dismissed']; track s) {
+        <button
+          type="button"
+          class="report-chip"
+          [class.active]="reportStatus() === s"
+          (click)="setReportStatus($any(s))"
+        >{{ s | titlecase }}</button>
+        }
+      </div>
+      <div class="report-filter-selects">
+        <select class="form-input" [ngModel]="reportType()" (ngModelChange)="setReportType($event)">
+          <option value="all">All targets</option>
+          <option value="destination">Destinations</option>
+          <option value="review">Reviews</option>
+          <option value="user">Users</option>
+        </select>
+        <select class="form-input" [ngModel]="reportSort()" (ngModelChange)="setReportSort($event)">
+          <option value="mostReports">Most reported</option>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+      </div>
+    </div>
+
+    @if (reportedTargets().length === 0 && !loading()) {
+    <div class="empty-state">No {{ reportStatus() }} reports</div>
     } @else {
     <div class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Reporter</th>
-            <th>Reason</th>
             <th>Target</th>
-            <th>Date</th>
-            <th>Status</th>
+            <th>Reports</th>
+            <th>Latest</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          @for (report of reports(); track report.id) {
-          <tr [class.row-expanded]="isExpanded(report.id)">
-            <td class="cell-key cell-head" data-label="Reporter" (click)="toggleRow(report.id)">
-              <span class="cell-head-text">{{ report.user.name }}</span>
+          @for (target of reportedTargets(); track targetKey(target)) {
+          <tr [class.row-expanded]="openTargetKey() === targetKey(target)">
+            <td class="cell-key cell-head" data-label="Target" (click)="toggleTarget(target)">
+              <span class="target-badge target-badge--{{ target.type }}">{{ target.type | titlecase }}</span>
+              <span class="cell-head-text">#{{ target.id }}</span>
               <button type="button" class="row-toggle" aria-label="Toggle details">⌄</button>
             </td>
-            <td class="muted" data-label="Reason">{{ report.reason ?? '—' }}</td>
-            <td data-label="Target">
-              @if (report.destination) {
-              <span class="target-badge target-badge--dest">{{ report.destination.title }}</span>
-              } @else if (report.review) {
-              <span class="target-badge target-badge--review">Review #{{ report.review.id }}</span>
-              }
-            </td>
-            <td class="muted" data-label="Date">{{ report.createdAt | date:'mediumDate' }}</td>
-            <td class="cell-key" data-label="Status">
-              <span class="status-badge status-badge--{{ report.status }}">{{ report.status }}</span>
-            </td>
+            <td class="muted" data-label="Reports">{{ target.count }}</td>
+            <td class="muted" data-label="Latest">{{ target.latest | date:'medium' }}</td>
             <td class="cell-actions" data-label="Actions">
-              @if (report.status === 'pending') {
               <div class="action-btns">
-                <button class="btn btn--approve" (click)="approveReport(report.id)">Approve</button>
-                <button class="btn btn--decline" (click)="declineReport(report.id)">Decline</button>
+                <button class="btn btn--view" (click)="toggleTarget(target)">
+                  {{ openTargetKey() === targetKey(target) ? 'Hide' : 'View' }}
+                </button>
+                @if (reportStatus() !== 'resolved') {
+                <button class="btn btn--approve" (click)="resolveTarget(target, 'resolved')">Resolve</button>
+                }
+                @if (reportStatus() !== 'dismissed') {
+                <button class="btn btn--decline" (click)="resolveTarget(target, 'dismissed')">Dismiss</button>
+                }
               </div>
+            </td>
+          </tr>
+
+          @if (openTargetKey() === targetKey(target)) {
+          <tr class="report-detail-row row-expanded">
+            <td colspan="4">
+              @if (loadingTargetReports()) {
+              <p class="report-detail-loading">Loading reports…</p>
+              } @else {
+              <ul class="report-detail-list">
+                @for (report of targetReports(); track report.id) {
+                <li class="report-detail-item">
+                  <div class="report-detail-head">
+                    <span class="report-detail-reason">{{ report.reason | titlecase }}</span>
+                    <span class="report-detail-meta">
+                      {{ report.user.name }} · {{ report.createdAt | date:'mediumDate' }}
+                    </span>
+                  </div>
+                  @if (report.note) {
+                  <p class="report-detail-note">{{ report.note }}</p>
+                  }
+                </li>
+                }
+              </ul>
               }
             </td>
           </tr>
+          }
           }
         </tbody>
       </table>

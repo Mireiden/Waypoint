@@ -1,0 +1,181 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.report-dialog {
+  position: relative;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.report-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: #0f172a;
+}
+
+.report-x {
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+
+  &:hover {
+    color: #475569;
+  }
+}
+
+.report-target {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.report-field-label {
+  display: block;
+  margin: 18px 0 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.report-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-reason {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.8rem;
+  padding: 7px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+
+  &.active {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+    font-weight: 600;
+  }
+}
+
+.report-note {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: #94a3b8;
+  }
+}
+
+.report-error {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.report-cancel,
+.report-submit {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.report-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.report-submit {
+  background: #dc2626;
+  color: #fff;
+
+  &:hover {
+    background: #b91c1c;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.report-done {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.report-done-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #059669;
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+}
+
+.report-sub {
+  margin: 6px 0 18px;
+  font-size: 0.85rem;
+  color: #64748b;
+}

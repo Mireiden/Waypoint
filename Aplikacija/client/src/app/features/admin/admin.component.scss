@@ -247,9 +247,9 @@ nav {
   border-radius: 20px;
   text-transform: capitalize;
 
-  &--pending  { background: #fef3c7; color: #92400e; }
-  &--approved { background: #d1fae5; color: #065f46; }
-  &--declined { background: #fee2e2; color: #991b1b; }
+  &--pending   { background: #fef3c7; color: #92400e; }
+  &--resolved  { background: #d1fae5; color: #065f46; }
+  &--dismissed { background: #fee2e2; color: #991b1b; }
 }
 
 .role-badge {
@@ -270,13 +270,15 @@ nav {
 }
 
 .target-badge {
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.72rem;
+  font-weight: 600;
   padding: 2px 8px;
   border-radius: 6px;
+  text-transform: capitalize;
 
-  &--dest   { background: var(--primary-light); color: var(--primary-dark); }
-  &--review { background: #fef3c7; color: #92400e; }
+  &--destination { background: var(--primary-light); color: var(--primary-dark); }
+  &--review      { background: #fef3c7; color: #92400e; }
+  &--user        { background: #ede9fe; color: #5b21b6; }
 }
 
 // ── Action buttons ─────────────────────────────────
@@ -345,6 +347,111 @@ nav {
     color: var(--text);
     border-color: var(--border);
   }
+
+  &--view {
+    background: var(--surface-alt);
+    color: var(--text);
+    border-color: var(--border);
+  }
+}
+
+// ── Reports ────────────────────────────────────────
+
+.report-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 28px 4px;
+}
+
+.report-filter-group {
+  display: inline-flex;
+  gap: 6px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.report-chip {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { color: var(--text); }
+
+  &.active {
+    background: var(--surface);
+    color: var(--primary-dark);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.report-filter-selects {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.report-detail-row td {
+  background: var(--surface-alt);
+  padding: 4px 16px 16px;
+}
+
+.report-detail-loading {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.report-detail-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-detail-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.report-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.report-detail-reason {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.report-detail-meta {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.report-detail-note {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
 // ── Category form ──────────────────────────────────
@@ -617,6 +724,15 @@ nav {
 
     tbody tr:not(.row-expanded) td {
       border-bottom: none;
+    }
+
+    // Report drill-down: render the detail cell as a full-width block, not a
+    // label/value flex row.
+    .report-detail-row td {
+      display: block;
+      padding: 12px;
+
+      &::before { display: none; }
     }
 
     // The header cell is the tap target that toggles the card.

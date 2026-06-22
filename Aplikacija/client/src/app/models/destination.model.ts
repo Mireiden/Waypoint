@@ -48,9 +48,19 @@ export interface DestinationReview {
   media: { id: number; url: string; type: MediaType }[];
 }
 
+// A point destination linked to a route (route_points junction).
+export interface RoutePoint {
+  id: number;
+  title: string;
+  description: string | null;
+  geometry: PointGeometry;
+}
+
 export interface Destination extends DestinationSummary {
   media: Media[];
   reviews: DestinationReview[];
+  // Present for routes; empty for points. Ordered point destinations along the route.
+  points: RoutePoint[];
 }
 
 // A user's own destination as listed on their profile (no geometry — list only).
