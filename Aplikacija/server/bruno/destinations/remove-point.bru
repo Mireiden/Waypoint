@@ -1,0 +1,21 @@
+meta {
+  name: remove-point
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/destinations/:id/points/:pointId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 39
+  pointId: 33
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
