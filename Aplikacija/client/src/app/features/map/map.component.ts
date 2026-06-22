@@ -7,7 +7,7 @@ import {
   afterNextRender,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -45,6 +45,7 @@ export class MapComponent implements OnDestroy {
   private readonly destinationService = inject(DestinationService);
   private readonly categoryService = inject(CategoryService);
   private readonly reviewService = inject(ReviewService);
+  private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
 
   // Search state
@@ -60,6 +61,8 @@ export class MapComponent implements OnDestroy {
   panelView = signal<'list' | 'detail' | 'create'>('list');
   selectedDest = signal<Destination | null>(null);
   selectedReviews = signal<DestinationReview[]>([]);
+  // A review to visually highlight (e.g. when arriving from a report link).
+  highlightedReviewId = signal<number | null>(null);
 
   // Admins can moderate (delete) any review straight from the detail panel.
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'admin');
@@ -172,6 +175,14 @@ export class MapComponent implements OnDestroy {
           next: (mine) => this.ownedIds.set(new Set(mine.map((d) => d.id))),
           error: (err) => console.error('Failed to load your destinations:', err),
         });
+      }
+
+      // Deep link from elsewhere (e.g. admin report moderation): ?dest=&review=
+      const params = this.route.snapshot.queryParamMap;
+      const destId = Number(params.get('dest'));
+      if (destId) {
+        const reviewParam = params.get('review');
+        this.openDestinationById(destId, reviewParam ? Number(reviewParam) : null);
       }
 
       this.reload$.next();
@@ -304,6 +315,50 @@ export class MapComponent implements OnDestroy {
   selectById(id: number): void {
     const summary = this.destinations().find((d) => d.id === id);
     if (summary) this.selectDestination(summary);
+  }
+
+  // Open a destination's detail straight from its id (used for deep links — the
+  // destination may not be in the currently loaded list/bbox).
+  private openDestinationById(id: number, reviewId: number | null = null): void {
+    this.panelView.set('detail');
+    if (this.panelCollapsed()) this.panelCollapsed.set(false);
+    this.reportTarget.set(null);
+    this.closeAddPoint();
+
+    this.destinationService.getById(id).subscribe({
+      next: (dest) => {
+        this.selectedDest.set(dest);
+        if (dest.geometry.type === 'LineString') {
+          this.mapService.fitRoute(
+            dest.geometry.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
+          );
+        } else {
+          const [lng, lat] = (dest.geometry as PointGeometry).coordinates;
+          this.mapService.flyTo(lat, lng, 16);
+        }
+      },
+      error: (err) => console.error('Failed to open destination:', err),
+    });
+
+    this.reviewService.getByDestinationId(id).subscribe({
+      next: (reviews) => {
+        this.selectedReviews.set(reviews);
+        if (reviewId != null) this.highlightReview(reviewId);
+      },
+      error: (err) => console.error('Failed to load reviews:', err),
+    });
+  }
+
+  private highlightReview(reviewId: number): void {
+    this.highlightedReviewId.set(reviewId);
+    // Wait for the review list to render, then scroll it into view.
+    setTimeout(() => {
+      document
+        .getElementById('review-' + reviewId)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+    // Fade the highlight out after a few seconds.
+    setTimeout(() => this.highlightedReviewId.set(null), 4500);
   }
 
   backToList(): void {

@@ -876,10 +876,22 @@
   border-radius: var(--radius);
   padding: 12px;
   margin-bottom: 8px;
+  transition: box-shadow 0.3s, border-color 0.3s;
 
   &:last-child {
     margin-bottom: 0;
   }
+
+  &.highlighted {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light, rgba(34, 139, 34, 0.25));
+    animation: reviewPulse 1.2s ease-in-out 2;
+  }
+}
+
+@keyframes reviewPulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--primary-light, rgba(34, 139, 34, 0.25)); }
+  50% { box-shadow: 0 0 0 6px var(--primary-light, rgba(34, 139, 34, 0.12)); }
 }
 
 .review-header {

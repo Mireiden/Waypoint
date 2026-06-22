@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
 import type { DestinationReview } from '../../models/destination.model';
+import type { ReviewDetail } from '../../models/review.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
@@ -12,6 +13,13 @@ export class ReviewService {
 
   getByDestinationId(destinationId: number) {
     return this.http.get<DestinationReview[]>(`${this.base}/${destinationId}/reviews`, {
+      withCredentials: true,
+    });
+  }
+
+  // Single review, including the destination it belongs to (for moderation links).
+  getById(reviewId: number) {
+    return this.http.get<ReviewDetail>(`${this.reviewsBase}/${reviewId}`, {
       withCredentials: true,
     });
   }

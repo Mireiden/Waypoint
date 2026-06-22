@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { UserWithCount } from '../../models/user.model';
 import {
   ReportedTarget,
@@ -9,10 +10,13 @@ import {
   ReportTargetType,
   TargetReport,
 } from '../../models/report.model';
-import { AdminDestination } from '../../models/destination.model';
+import { AdminDestination, Destination } from '../../models/destination.model';
+import { ReviewDetail } from '../../models/review.model';
 import { CategoryWithCount } from '../../models/category.model';
 import { AdminService } from '../../core/services/admin.service';
 import { ReportService } from '../../core/services/report.service';
+import { DestinationService } from '../../core/services/destination.service';
+import { ReviewService } from '../../core/services/review.service';
 import { CategoryService } from '../../core/services/category.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CATEGORY_EMOJIS, categoryIcon } from '../../shared/category-icons';
@@ -40,6 +44,10 @@ export class AdminComponent implements OnInit {
   openTargetKey = signal<string | null>(null);
   targetReports = signal<TargetReport[]>([]);
   loadingTargetReports = signal(false);
+  // The reported target's actual content (so the admin can see/visit what was reported).
+  targetDestination = signal<Destination | null>(null);
+  targetReview = signal<ReviewDetail | null>(null);
+  loadingTargetContent = signal(false);
 
   users = signal<UserWithCount[]>([]);
   destinations = signal<AdminDestination[]>([]);
@@ -75,7 +83,10 @@ export class AdminComponent implements OnInit {
 
   private readonly adminService = inject(AdminService);
   private readonly reportService = inject(ReportService);
+  private readonly destinationService = inject(DestinationService);
+  private readonly reviewService = inject(ReviewService);
   private readonly categoryService = inject(CategoryService);
+  private readonly router = inject(Router);
   readonly auth = inject(AuthService);
 
   ngOnInit() {
@@ -139,6 +150,10 @@ export class AdminComponent implements OnInit {
     }
     this.openTargetKey.set(key);
     this.targetReports.set([]);
+    this.targetDestination.set(null);
+    this.targetReview.set(null);
+
+    // The individual reports (who reported it and why).
     this.loadingTargetReports.set(true);
     this.reportService.getReportsForTarget(target.type, target.id).subscribe({
       next: (data) => {
@@ -147,6 +162,47 @@ export class AdminComponent implements OnInit {
       },
       error: () => this.loadingTargetReports.set(false),
     });
+
+    // The reported content itself, reusing the existing detail endpoints.
+    this.loadingTargetContent.set(true);
+    if (target.type === 'destination') {
+      this.destinationService.getById(target.id).subscribe({
+        next: (d) => {
+          this.targetDestination.set(d);
+          this.loadingTargetContent.set(false);
+        },
+        error: () => this.loadingTargetContent.set(false),
+      });
+    } else if (target.type === 'review') {
+      this.reviewService.getById(target.id).subscribe({
+        next: (r) => {
+          this.targetReview.set(r);
+          this.loadingTargetContent.set(false);
+        },
+        error: () => this.loadingTargetContent.set(false),
+      });
+    } else {
+      this.loadingTargetContent.set(false); // user targets have no destination to visit
+    }
+  }
+
+  // Open the reported destination on the map. For a review, open its parent
+  // destination and highlight the review via query params.
+  goToDestination(target: ReportedTarget) {
+    if (target.type === 'destination') {
+      this.router.navigate(['/map'], { queryParams: { dest: target.id } });
+    } else if (target.type === 'review') {
+      const review = this.targetReview();
+      if (review?.destination) {
+        this.router.navigate(['/map'], {
+          queryParams: { dest: review.destination.id, review: review.id },
+        });
+      }
+    }
+  }
+
+  stars(rating: number): boolean[] {
+    return Array.from({ length: 5 }, (_, i) => i < Math.round(rating));
   }
 
   resolveTarget(target: ReportedTarget, status: 'resolved' | 'dismissed') {

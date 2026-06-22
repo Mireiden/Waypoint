@@ -150,6 +150,53 @@
           @if (openTargetKey() === targetKey(target)) {
           <tr class="report-detail-row row-expanded">
             <td colspan="4">
+
+              <!-- What was reported -->
+              @if (loadingTargetContent()) {
+              <p class="report-detail-loading">Loading content…</p>
+              } @else if (targetDestination(); as d) {
+              <div class="reported-target">
+                <div class="reported-target-head">
+                  <span class="reported-target-kind">Reported destination</span>
+                  <button class="btn btn--view" (click)="goToDestination(target)">Go to destination →</button>
+                </div>
+                <p class="reported-target-title">{{ d.title }}</p>
+                @if (d.city || d.country) {
+                <p class="reported-target-sub">{{ [d.city, d.country].join(', ') }}</p>
+                }
+                @if (d.description) {
+                <p class="reported-target-text">{{ d.description }}</p>
+                }
+              </div>
+              } @else if (targetReview(); as r) {
+              <div class="reported-target">
+                <div class="reported-target-head">
+                  <span class="reported-target-kind">Reported review</span>
+                  @if (r.destination) {
+                  <button class="btn btn--view" (click)="goToDestination(target)">Go to the review →</button>
+                  }
+                </div>
+                <div class="reported-review-meta">
+                  <span class="reported-review-stars">
+                    @for (filled of stars(r.rating); track $index) {
+                    <span [class.on]="filled">★</span>
+                    }
+                  </span>
+                  <span class="reported-review-author">by {{ r.user.name }}</span>
+                  @if (r.destination) {
+                  <span class="reported-review-on">on {{ r.destination.title }}</span>
+                  }
+                </div>
+                @if (r.comment) {
+                <p class="reported-target-text">“{{ r.comment }}”</p>
+                } @else {
+                <p class="reported-target-sub">(no comment)</p>
+                }
+              </div>
+              }
+
+              <!-- Why it was reported -->
+              <h4 class="report-detail-subtitle">Reports</h4>
               @if (loadingTargetReports()) {
               <p class="report-detail-loading">Loading reports…</p>
               } @else {

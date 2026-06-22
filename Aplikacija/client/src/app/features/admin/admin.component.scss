@@ -454,6 +454,81 @@ nav {
   color: var(--text-muted);
 }
 
+// ── Reported target content (what was reported) ────
+.reported-target {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0 4px;
+}
+
+.reported-target-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.reported-target-kind {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.reported-target-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.reported-target-sub {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.reported-target-text {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.reported-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.reported-review-stars {
+  letter-spacing: 1px;
+  color: var(--border);
+
+  .on { color: #f5a623; }
+}
+
+.reported-review-author {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.report-detail-subtitle {
+  margin: 16px 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
 // ── Category form ──────────────────────────────────
 
 .category-form {
