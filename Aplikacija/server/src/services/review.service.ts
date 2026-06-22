@@ -28,6 +28,7 @@ export const findById = async (id: number) => {
       createdAt: true,
       user: { select: { id: true, name: true } },
       media: { select: { id: true, url: true, type: true } },
+      destination: { select: { id: true, title: true } },
     },
   });
   if (!review) throw new NotFoundError();
