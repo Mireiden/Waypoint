@@ -18,13 +18,14 @@ export const login = async (req: Request, res: Response) => {
       maxAge: 1000 * 60 * 60 * 24 * 7,
       sameSite: "strict",
       secure: config.server.env === `production`,
+      path: "/api",
     })
     .status(200)
     .json({ user });
 };
 
 export const register = async (req: Request, res: Response) => {
-  const registerInfo = await registerSchema.safeParseAsync(req.body);
+  const registerInfo = registerSchema.safeParse(req.body);
   if (!registerInfo.success) throw new ValidationError(treeifyError(registerInfo.error));
 
   const { user, token } = await authService.register(registerInfo.data);
@@ -34,11 +35,20 @@ export const register = async (req: Request, res: Response) => {
       maxAge: 1000 * 60 * 60 * 24 * 7,
       sameSite: "strict",
       secure: config.server.env === `production`,
+      path: "/api",
     })
     .status(201)
     .json({ user });
 };
 
 export const logout = (req: Request, res: Response) => {
-  res.clearCookie("jwt").status(200).json({ message: "Logged out successfuly." });
+  res
+    .clearCookie("jwt", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: config.server.env === "production",
+      path: "/api",
+    })
+    .status(200)
+    .json({ message: "Logged out successfuly." });
 };
