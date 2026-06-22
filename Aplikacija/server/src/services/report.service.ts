@@ -5,7 +5,7 @@ import type {
 } from "../schemas/report.schema.js";
 
 import { reportedTargets } from "../../generated/prisma/sql/reportedTargets.js";
-import { BadRequestError } from "../errors/badRequestError.js";
+import { BadRequestError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 import { removeUndefined } from "../utils/removeUndefined.js";
 
@@ -66,6 +66,15 @@ export const createReport = async (reporterId: number, data: CreateReportInput) 
   const { note, reason, targetId, targetType } = data;
   if (targetType === "user" && targetId === reporterId)
     throw new BadRequestError("You can't report yourself");
+
+  const targetExists =
+    targetType === "destination"
+      ? await prisma.destination.findUnique({ where: { id: targetId }, select: { id: true } })
+      : targetType === "review"
+        ? await prisma.review.findUnique({ where: { id: targetId }, select: { id: true } })
+        : await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } });
+
+  if (!targetExists) throw new NotFoundError();
 
   return await prisma.report.create({
     data: removeUndefined({

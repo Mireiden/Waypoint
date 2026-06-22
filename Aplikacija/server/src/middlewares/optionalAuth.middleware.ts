@@ -7,7 +7,7 @@ import { authUserSchema } from "../schemas/auth.schema.js";
 
 //calls next() even if the auth fails, basically just puts any user into req.user
 //used for routes that act differently based on user role.
-const optionalAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
+const optionalAuthMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   let token: string | undefined;
 
