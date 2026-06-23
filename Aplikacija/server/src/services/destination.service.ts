@@ -1,10 +1,12 @@
 import type { AuthUser } from "../schemas/auth.schema.js";
 import type {
   CreateDestinationInput,
+  ListDestinationsAdminQuery,
   ListDestinationsQuery,
   UpdateDestinationInput,
 } from "../schemas/destination.schema.js";
 
+import { Prisma } from "../../generated/prisma/client.js";
 import { createDestination as createDestinationSql } from "../../generated/prisma/sql/createDestination.js";
 import { getDestinationById } from "../../generated/prisma/sql/getDestinationById.js";
 import { getDestinations } from "../../generated/prisma/sql/getDestinations.js";
@@ -26,8 +28,34 @@ const assertValidPointIds = async (ids: number[]) => {
   if (found.length !== ids.length) throw new BadRequestError("Invalid point ids");
 };
 
-export const findAllAdmin = async () => {
+const adminOrderBy = (
+  sort: ListDestinationsAdminQuery["sort"],
+  order: ListDestinationsAdminQuery["order"],
+): Prisma.DestinationOrderByWithRelationInput => {
+  switch (sort) {
+    case "reports":
+      return { reports: { _count: order } };
+    case "reviews":
+      return { reviews: { _count: order } };
+    default:
+      return { createdAt: order };
+  }
+};
+
+export const findAllAdmin = async (query: ListDestinationsAdminQuery) => {
+  const { type, category, q, sort, order, limit } = query;
+
   return await prisma.destination.findMany({
+    where: {
+      ...(type && { type }),
+      ...(category && { categoryId: category }),
+      ...(q && {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { city: { contains: q, mode: "insensitive" } },
+        ],
+      }),
+    },
     select: {
       id: true,
       title: true,
@@ -38,7 +66,8 @@ export const findAllAdmin = async () => {
       category: { select: { id: true, name: true } },
       _count: { select: { reviews: true, reports: true } },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: adminOrderBy(sort, order),
+    take: limit,
   });
 };
 

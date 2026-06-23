@@ -58,18 +58,29 @@ const bboxSchema = z.string().transform((val, ctx) => {
   return { maxLat, maxLng, minLat, minLng };
 });
 
-export const listDestinationsQuerySchema = z.object({
+const listFilterBaseFields = {
   type: z.enum(["point", "route"]).optional(),
   category: z.coerce.number().int().positive().optional(),
   q: z.string().trim().min(1).max(100).optional(),
+  limit: z.coerce.number().int().positive().max(500).default(300),
+};
+
+export const listDestinationsQuerySchema = z.object({
+  ...listFilterBaseFields,
   bbox: bboxSchema.optional(),
   sort: z.enum(["recent", "rating", "popular"]).default("recent"),
-  limit: z.coerce.number().int().positive().max(500).default(300),
+});
+
+export const listDestinationsAdminQuerySchema = z.object({
+  ...listFilterBaseFields,
+  sort: z.enum(["recent", "reports", "reviews"]).default("recent"),
+  order: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export type AddRoutePointInput = z.infer<typeof addRoutePointSchema>;
 export type CreateDestinationInput = z.infer<typeof createDestinationSchema>;
 export type CreatePointInput = z.infer<typeof createPointSchema>;
 export type CreateRouteInput = z.infer<typeof createRouteSchema>;
+export type ListDestinationsAdminQuery = z.infer<typeof listDestinationsAdminQuerySchema>;
 export type ListDestinationsQuery = z.infer<typeof listDestinationsQuerySchema>;
 export type UpdateDestinationInput = z.infer<typeof updateDestinationSchema>;

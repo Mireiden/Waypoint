@@ -5,6 +5,7 @@ import { ValidationError } from "../errors/validationError.js";
 import {
   addRoutePointSchema,
   createDestinationSchema,
+  listDestinationsAdminQuerySchema,
   listDestinationsQuerySchema,
   updateDestinationSchema,
 } from "../schemas/destination.schema.js";
@@ -21,8 +22,11 @@ export const getDestinations = async (req: Request, res: Response) => {
   res.json(destinations);
 };
 
-export const getAdminDestinations = async (_req: Request, res: Response) => {
-  const destinations = await destinationService.findAllAdmin();
+export const getAdminDestinations = async (req: Request, res: Response) => {
+  const parsed = listDestinationsAdminQuerySchema.safeParse(req.query);
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
+
+  const destinations = await destinationService.findAllAdmin(parsed.data);
   res.json(destinations);
 };
 
