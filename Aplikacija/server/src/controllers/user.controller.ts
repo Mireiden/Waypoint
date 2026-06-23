@@ -3,7 +3,7 @@ import { treeifyError } from "zod";
 
 import { ValidationError } from "../errors/validationError.js";
 import { changePasswordSchema } from "../schemas/auth.schema.js";
-import { updateProfileSchema } from "../schemas/user.schema.js";
+import { deleteAccountSchema, updateProfileSchema } from "../schemas/user.schema.js";
 import * as userService from "../services/user.service.js";
 import { assertAuth } from "../utils/assertAuth.js";
 import { parseIdParam } from "../utils/parseIdParam.js";
@@ -54,7 +54,9 @@ export const updateMe = async (req: Request, res: Response) => {
 
 export const deleteMe = async (req: Request, res: Response) => {
   assertAuth(req);
-  await userService.deleteUser(req.user.id);
+  const parsed = deleteAccountSchema.safeParse(req.body);
+  if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
+  await userService.deleteAccount(req.user.id, parsed.data.currentPassword);
   res.clearCookie("jwt").status(204).send();
 };
 
