@@ -84,7 +84,7 @@ export const deleteAccount = async (id: number, currentPassword: string) => {
   const user = await prisma.user.findUnique({ where: { id }, select: { passwordHash: true } });
   if (!user) throw new NotFoundError("User not found");
   const correct = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!correct) throw new BadRequestError("Current password is incorrect.");
+  if (!correct) throw new BadRequestError("Wrong password.");
 
   await prisma.user.delete({ where: { id } });
 };
