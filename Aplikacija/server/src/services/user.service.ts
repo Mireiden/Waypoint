@@ -6,6 +6,7 @@ import { BadRequestError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 import { type ChangePasswordInput } from "../schemas/auth.schema.js";
 import { removeUndefined } from "../utils/removeUndefined.js";
+import * as cloudinaryService from "./cloudinary.service.js";
 
 export const findAll = async () => {
   return prisma.user.findMany({
@@ -72,6 +73,54 @@ export const changePassword = async (id: number, data: ChangePasswordInput) => {
       passwordHash: newPasswordHash,
     },
   });
+};
+
+export const uploadAvatar = async (userId: number, file: Express.Multer.File) => {
+  if (!file.mimetype.startsWith("image/")) throw new BadRequestError("Wrong file type");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { avatarPublicId: true },
+  });
+  if (!user) throw new NotFoundError("User not found");
+
+  const uploaded = await cloudinaryService.uploadBuffer(file.buffer, "image");
+
+  const updated = await prisma.user
+    .update({
+      where: { id: userId },
+      data: {
+        avatarUrl: uploaded.url,
+        avatarPublicId: uploaded.publicId,
+      },
+      select: {
+        id: true,
+        avatarUrl: true,
+      },
+    })
+    .catch(async (err: unknown) => {
+      await cloudinaryService.destroy(uploaded.publicId, "image");
+      throw err;
+    });
+
+  if (user.avatarPublicId) await cloudinaryService.destroy(user.avatarPublicId, "image");
+
+  return updated;
+};
+
+export const deleteAvatar = async (userId: number) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { avatarPublicId: true },
+  });
+  if (!user) throw new NotFoundError("User not found");
+  if (!user.avatarPublicId) return;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { avatarUrl: null, avatarPublicId: null },
+  });
+  await cloudinaryService.destroy(user.avatarPublicId, "image");
 };
 
 export const deleteUser = async (id: number) => {

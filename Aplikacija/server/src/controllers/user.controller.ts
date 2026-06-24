@@ -1,7 +1,7 @@
 import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
-import { ValidationError } from "../errors/validationError.js";
+import { BadRequestError, ValidationError } from "../errors/index.js";
 import { changePasswordSchema } from "../schemas/auth.schema.js";
 import { deleteAccountSchema, updateProfileSchema } from "../schemas/user.schema.js";
 import * as userService from "../services/user.service.js";
@@ -50,6 +50,21 @@ export const updateMe = async (req: Request, res: Response) => {
   if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
   const updated = await userService.updateProfile(req.user.id, parsed.data);
   res.json(updated);
+};
+
+export const uploadAvatar = async (req: Request, res: Response) => {
+  assertAuth(req);
+  if (!req.file) throw new BadRequestError("No file uploaded");
+
+  const updated = await userService.uploadAvatar(req.user.id, req.file);
+  res.json(updated);
+};
+
+export const deleteAvatar = async (req: Request, res: Response) => {
+  assertAuth(req);
+
+  await userService.deleteAvatar(req.user.id);
+  res.status(204).send();
 };
 
 export const deleteMe = async (req: Request, res: Response) => {
