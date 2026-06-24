@@ -112,14 +112,21 @@ export const findByUser = async (userId: number) => {
   });
 };
 
-export const findById = async (id: number) => {
+export const findById = async (id: number, userId?: number) => {
   const [dest] = await prisma.$queryRawTyped(getDestinationById(id));
   if (!dest) throw new NotFoundError();
 
   const media = await mediaService.findByDestinationId(id);
   const points = dest.type === "route" ? await prisma.$queryRawTyped(getRoutePoints(dest.id)) : [];
 
-  return { ...dest, media, points };
+  const isFavorited = userId
+    ? (await prisma.favorite.findUnique({
+        where: { userId_destinationId: { userId, destinationId: id } },
+        select: { userId: true },
+      })) !== null
+    : false;
+
+  return { ...dest, media, points, isFavorited };
 };
 
 export const createDestination = async (

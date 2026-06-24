@@ -38,7 +38,7 @@ export const getMyDestinations = async (req: Request, res: Response) => {
 
 export const getById = async (req: Request, res: Response) => {
   const id = parseIdParam(req.params.id);
-  const dest = await destinationService.findById(id);
+  const dest = await destinationService.findById(id, req.user?.id);
   res.json(dest);
 };
 
