@@ -1,0 +1,15 @@
+meta {
+  name: upload-avatar
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/me/avatar
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
