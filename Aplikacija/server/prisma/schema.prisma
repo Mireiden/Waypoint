@@ -51,6 +51,7 @@ model User {
   reviews        Review[]
   reports        Report[]      @relation("reporter")
   reportsAgainst Report[]      @relation("reportedUser")
+  favorites      Favorite[]
 
   @@map("users")
 }
@@ -96,13 +97,14 @@ model Destination {
   categoryId  Int                     @map("category_id")
   createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
-  category Category     @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_category")
-  reviews  Review[]
-  reports  Report[]
-  asPoint  RoutePoint[] @relation("point")
-  asRoute  RoutePoint[] @relation("route")
-  media    Media[]
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
+  category  Category     @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_category")
+  reviews   Review[]
+  reports   Report[]
+  asPoint   RoutePoint[] @relation("point")
+  asRoute   RoutePoint[] @relation("route")
+  media     Media[]
+  favorites Favorite[]
 
   @@index([city, country], map: "idx_destinations_city_country")
   @@index([geometry], map: "idx_destinations_geometry", type: Gist)
@@ -119,6 +121,19 @@ model RoutePoint {
 
   @@id([routeId, pointId])
   @@map("route_points")
+}
+
+model Favorite {
+  userId        Int      @map("user_id")
+  destinationId Int      @map("destination_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_id")
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_destination_id")
+
+  @@id([userId, destinationId])
+  @@index([destinationId], map: "idx_favorites_destination")
+  @@map("favorites")
 }
 
 model Review {
