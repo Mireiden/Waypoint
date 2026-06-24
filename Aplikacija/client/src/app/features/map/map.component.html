@@ -41,12 +41,16 @@
 
         <!-- Filter tabs -->
         <div class="filter-tabs">
-          <button class="filter-tab" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">All</button>
-          <button class="filter-tab" [class.active]="activeFilter() === 'route'" (click)="setFilter('route')">Routes</button>
-          <button class="filter-tab" [class.active]="activeFilter() === 'point'" (click)="setFilter('point')">Points</button>
+          <button class="filter-tab" [class.active]="!savedMode() && activeFilter() === 'all'" (click)="setFilter('all')">All</button>
+          <button class="filter-tab" [class.active]="!savedMode() && activeFilter() === 'route'" (click)="setFilter('route')">Routes</button>
+          <button class="filter-tab" [class.active]="!savedMode() && activeFilter() === 'point'" (click)="setFilter('point')">Points</button>
+          @if (auth.currentUser()) {
+            <button class="filter-tab saved-tab" [class.active]="savedMode()" (click)="showSaved()">♥ Saved</button>
+          }
         </div>
 
-        <!-- Category + sort -->
+        <!-- Category + sort (not applicable to the saved view) -->
+        @if (!savedMode()) {
         <div class="filter-selects">
           <select
             class="filter-select"
@@ -68,7 +72,48 @@
             <option value="popular">Most reviewed</option>
           </select>
         </div>
+        }
 
+        <!-- Saved list -->
+        @if (savedMode()) {
+          <div class="dest-list">
+            @if (favoritesLoading()) {
+              <div class="empty-state">
+                <span class="empty-icon">♥</span>
+                <p>Loading your saved destinations…</p>
+              </div>
+            } @else if (favorites().length === 0) {
+              <div class="empty-state">
+                <span class="empty-icon">♡</span>
+                <p>No saved destinations yet. Open a spot and tap “Save”.</p>
+              </div>
+            } @else {
+              @for (fav of favorites(); track fav.id) {
+                <button class="dest-card" (click)="selectSaved(fav.id)">
+                  <div class="card-body">
+                    <h3 class="card-title">{{ fav.title }}</h3>
+                    <div class="card-tags">
+                      @if (fav.category) {
+                        <span class="tag cat-tag">{{ fav.category.name }}</span>
+                        <span class="tag-sep">·</span>
+                      }
+                      <span class="tag">{{ fav.type === 'route' ? 'Route' : 'Point' }}</span>
+                      @if (fav.city) {
+                        <span class="tag-sep">·</span>
+                        <span class="tag">{{ fav.city }}</span>
+                      }
+                    </div>
+                    @if (fav._count.reviews > 0) {
+                      <div class="card-rating">
+                        <span class="review-count">{{ fav._count.reviews }} {{ fav._count.reviews === 1 ? 'review' : 'reviews' }}</span>
+                      </div>
+                    }
+                  </div>
+                </button>
+              }
+            }
+          </div>
+        } @else {
         <!-- Destination list -->
         <div class="dest-list">
           @if (destinations().length === 0) {
@@ -111,6 +156,7 @@
             }
           }
         </div>
+        }
       }
 
       @if (panelView() === 'detail') {
@@ -135,6 +181,17 @@
                   <span class="badge type-badge">{{ dest.type === 'route' ? '🗺 Route' : '📍 Point' }}</span>
                 </div>
 
+                @if (dest.user; as author) {
+                  <a class="detail-author" [routerLink]="['/users', author.id]">
+                    @if (author.avatarUrl) {
+                      <img class="detail-author-avatar" [src]="author.avatarUrl" [alt]="author.name" />
+                    } @else {
+                      <span class="detail-author-avatar fallback">{{ author.name[0] }}</span>
+                    }
+                    <span class="detail-author-name">by {{ author.name }}</span>
+                  </a>
+                }
+
                 @if (dest.reviewCount > 0) {
                   <div class="detail-rating-row">
                     <span class="stars detail-stars">
@@ -157,6 +214,23 @@
                 @if (dest.description) {
                   <p class="detail-description">{{ dest.description }}</p>
                 }
+
+                <div class="detail-actions">
+                  @if (auth.currentUser()) {
+                    <button
+                      type="button"
+                      class="save-btn"
+                      [class.saved]="dest.isFavorited"
+                      [disabled]="togglingFavorite()"
+                      (click)="toggleFavorite()"
+                    >
+                      {{ dest.isFavorited ? '♥ Saved' : '♡ Save' }}
+                    </button>
+                  }
+                  <button type="button" class="share-btn" (click)="shareDestination()">
+                    {{ shareLabel() }}
+                  </button>
+                </div>
 
                 @if (auth.currentUser() && !canModifySelected()) {
                   <button
@@ -268,12 +342,20 @@
                 <div class="media-section">
                   <h3 class="reviews-title">Photos & Videos</h3>
                   <div class="media-grid">
-                    @for (item of dest.media; track item.id) {
-                      @if (item.type === 'image') {
-                        <img class="media-thumb" [src]="item.url" [alt]="dest.title" />
-                      } @else {
-                        <video class="media-thumb" [src]="item.url" controls></video>
-                      }
+                    @for (item of dest.media; track item.id; let i = $index) {
+                      <button
+                        type="button"
+                        class="media-thumb-btn"
+                        (click)="openLightbox(dest.media, i)"
+                        [attr.aria-label]="'Enlarge ' + item.type"
+                      >
+                        @if (item.type === 'image') {
+                          <img class="media-thumb" [src]="item.url" [alt]="dest.title" />
+                        } @else {
+                          <video class="media-thumb" [src]="item.url"></video>
+                          <span class="media-play">▶</span>
+                        }
+                      </button>
                     }
                   </div>
                 </div>
@@ -361,8 +443,10 @@
                     >
                       <div class="review-header">
                         <div class="review-left">
-                          <span class="review-avatar">{{ review.user.name[0] }}</span>
-                          <span class="review-author">{{ review.user.name }}</span>
+                          <a class="review-identity" [routerLink]="['/users', review.user.id]">
+                            <span class="review-avatar">{{ review.user.name[0] }}</span>
+                            <span class="review-author">{{ review.user.name }}</span>
+                          </a>
                           @if (isOwnReview(review)) {
                             <span class="review-you">You</span>
                           }
@@ -424,12 +508,20 @@
                       }
                       @if (review.media.length > 0) {
                         <div class="review-media">
-                          @for (m of review.media; track m.id) {
-                            @if (m.type === 'image') {
-                              <img [src]="m.url" [alt]="review.user.name + ' photo'" />
-                            } @else {
-                              <video [src]="m.url" controls></video>
-                            }
+                          @for (m of review.media; track m.id; let i = $index) {
+                            <button
+                              type="button"
+                              class="media-thumb-btn"
+                              (click)="openLightbox(review.media, i)"
+                              [attr.aria-label]="'Enlarge ' + m.type"
+                            >
+                              @if (m.type === 'image') {
+                                <img [src]="m.url" [alt]="review.user.name + ' photo'" />
+                              } @else {
+                                <video [src]="m.url"></video>
+                                <span class="media-play">▶</span>
+                              }
+                            </button>
                           }
                         </div>
                       }
@@ -609,6 +701,17 @@
       [targetId]="rt.id"
       [targetLabel]="rt.label"
       (close)="closeReport()"
+    />
+  }
+
+  <!-- ══════════════════════════════════════════════
+       MEDIA LIGHTBOX
+  ══════════════════════════════════════════════ -->
+  @if (lightbox(); as lb) {
+    <app-media-lightbox
+      [items]="lb.items"
+      [startIndex]="lb.index"
+      (close)="closeLightbox()"
     />
   }
 

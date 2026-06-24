@@ -1,8 +1,8 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { UserWithCount } from '../../models/user.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { PublicProfile, UserWithCount } from '../../models/user.model';
 import {
   ReportedTarget,
   ReportSort,
@@ -10,11 +10,18 @@ import {
   ReportTargetType,
   TargetReport,
 } from '../../models/report.model';
-import { AdminDestination, Destination } from '../../models/destination.model';
+import {
+  AdminDestination,
+  AdminDestinationSort,
+  Destination,
+  DestinationType,
+  SortOrder,
+} from '../../models/destination.model';
 import { ReviewDetail } from '../../models/review.model';
 import { CategoryWithCount } from '../../models/category.model';
 import { AdminService } from '../../core/services/admin.service';
 import { ReportService } from '../../core/services/report.service';
+import { UserService } from '../../core/services/user.service';
 import { DestinationService } from '../../core/services/destination.service';
 import { ReviewService } from '../../core/services/review.service';
 import { CategoryService } from '../../core/services/category.service';
@@ -47,11 +54,20 @@ export class AdminComponent implements OnInit {
   // The reported target's actual content (so the admin can see/visit what was reported).
   targetDestination = signal<Destination | null>(null);
   targetReview = signal<ReviewDetail | null>(null);
+  targetUser = signal<PublicProfile | null>(null);
   loadingTargetContent = signal(false);
 
   users = signal<UserWithCount[]>([]);
   destinations = signal<AdminDestination[]>([]);
   categories = signal<CategoryWithCount[]>([]);
+
+  // ─── Destinations filtering / sorting ──────────────
+  destType = signal<DestinationType | 'all'>('all');
+  destCategory = signal<number | 'all'>('all');
+  destQuery = signal('');
+  destSort = signal<AdminDestinationSort>('recent');
+  destOrder = signal<SortOrder>('desc');
+  private destSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // New-category form
   newCategoryName = signal('');
@@ -85,12 +101,32 @@ export class AdminComponent implements OnInit {
   private readonly reportService = inject(ReportService);
   private readonly destinationService = inject(DestinationService);
   private readonly reviewService = inject(ReviewService);
+  private readonly userService = inject(UserService);
   private readonly categoryService = inject(CategoryService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
 
+  // When deep-linked to a specific reported user, expand their target once the
+  // reports list loads.
+  private pendingFocusUser: number | null = null;
+
   ngOnInit() {
-    // this.loadStats();
+    // Deep links (e.g. from a user profile): ?tab=reports&reportType=user&focusUser=<id>
+    const qp = this.route.snapshot.queryParamMap;
+    const tab = qp.get('tab') as AdminTab | null;
+    const validTabs: AdminTab[] = ['overview', 'reports', 'users', 'destinations', 'categories'];
+    if (tab && validTabs.includes(tab)) {
+      if (tab === 'reports') {
+        const rt = qp.get('reportType');
+        if (rt === 'all' || rt === 'user' || rt === 'destination' || rt === 'review') {
+          this.reportType.set(rt);
+        }
+        const focus = Number(qp.get('focusUser'));
+        this.pendingFocusUser = focus || null;
+      }
+      this.setTab(tab);
+    }
   }
 
   // loadStats() {
@@ -122,6 +158,12 @@ export class AdminComponent implements OnInit {
         next: (data) => {
           this.reportedTargets.set(data);
           this.loading.set(false);
+          // Auto-expand a deep-linked user's reports, if they have any.
+          if (this.pendingFocusUser != null) {
+            const target = data.find((t) => t.type === 'user' && t.id === this.pendingFocusUser);
+            this.pendingFocusUser = null;
+            if (target) this.toggleTarget(target);
+          }
         },
         error: () => this.loading.set(false),
       });
@@ -152,6 +194,7 @@ export class AdminComponent implements OnInit {
     this.targetReports.set([]);
     this.targetDestination.set(null);
     this.targetReview.set(null);
+    this.targetUser.set(null);
 
     // The individual reports (who reported it and why).
     this.loadingTargetReports.set(true);
@@ -181,9 +224,21 @@ export class AdminComponent implements OnInit {
         },
         error: () => this.loadingTargetContent.set(false),
       });
+    } else if (target.type === 'user') {
+      this.userService.getProfile(target.id).subscribe({
+        next: (u) => {
+          this.targetUser.set(u);
+          this.loadingTargetContent.set(false);
+        },
+        error: () => this.loadingTargetContent.set(false),
+      });
     } else {
-      this.loadingTargetContent.set(false); // user targets have no destination to visit
+      this.loadingTargetContent.set(false);
     }
+  }
+
+  goToUser(id: number) {
+    this.router.navigate(['/users', id]);
   }
 
   // Open the reported destination on the map. For a review, open its parent
@@ -215,6 +270,10 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  viewProfile(id: number) {
+    this.router.navigate(['/users', id]);
+  }
+
   loadUsers() {
     this.loading.set(true);
     this.adminService.getUsers().subscribe({
@@ -228,13 +287,51 @@ export class AdminComponent implements OnInit {
 
   loadDestinations() {
     this.loading.set(true);
-    this.adminService.getDestinations().subscribe({
-      next: (data) => {
-        this.destinations.set(data);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    const type = this.destType();
+    const category = this.destCategory();
+    const q = this.destQuery().trim();
+    this.adminService
+      .getDestinations({
+        type: type === 'all' ? undefined : type,
+        category: category === 'all' ? undefined : category,
+        q: q || undefined,
+        sort: this.destSort(),
+        order: this.destOrder(),
+      })
+      .subscribe({
+        next: (data) => {
+          this.destinations.set(data);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
+  setDestType(type: DestinationType | 'all') {
+    this.destType.set(type);
+    this.loadDestinations();
+  }
+
+  setDestCategory(category: number | 'all') {
+    this.destCategory.set(category);
+    this.loadDestinations();
+  }
+
+  setDestSort(sort: AdminDestinationSort) {
+    this.destSort.set(sort);
+    this.loadDestinations();
+  }
+
+  toggleDestOrder() {
+    this.destOrder.update((o) => (o === 'desc' ? 'asc' : 'desc'));
+    this.loadDestinations();
+  }
+
+  // Debounce free-text search so we don't fire a request on every keystroke.
+  onDestQueryChange(value: string) {
+    this.destQuery.set(value);
+    if (this.destSearchTimer) clearTimeout(this.destSearchTimer);
+    this.destSearchTimer = setTimeout(() => this.loadDestinations(), 300);
   }
 
   loadCategories() {
@@ -257,7 +354,11 @@ export class AdminComponent implements OnInit {
     this.openTargetKey.set(null);
     if (tab === 'reports') this.loadReports();
     if (tab === 'users' && this.users().length === 0) this.loadUsers();
-    if (tab === 'destinations' && this.destinations().length === 0) this.loadDestinations();
+    if (tab === 'destinations') {
+      this.loadDestinations();
+      // Categories power the category filter dropdown.
+      if (this.categories().length === 0) this.loadCategories();
+    }
     if (tab === 'categories' && this.categories().length === 0) this.loadCategories();
   }
 

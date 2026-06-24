@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { inject, Injectable } from '@angular/core';
-import { AdminDestination } from '../../models/destination.model';
+import { AdminDestination, AdminDestinationQueryParams } from '../../models/destination.model';
 import { UserWithCount } from '../../models/user.model';
 
 @Injectable({ providedIn: 'root' })
@@ -13,8 +13,17 @@ export class AdminService {
   //   return this.http.get<AdminStats>(`${this.base}/stats`, { withCredentials: true });
   // }
 
-  getDestinations() {
+  getDestinations(query?: AdminDestinationQueryParams) {
+    let params = new HttpParams();
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, value);
+        }
+      }
+    }
     return this.http.get<AdminDestination[]>(`${this.base}/destinations/admin`, {
+      params,
       withCredentials: true,
     });
   }

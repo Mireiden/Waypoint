@@ -401,6 +401,14 @@ nav {
   gap: 8px;
 }
 
+.order-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-width: 38px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .report-detail-row td {
   background: var(--surface-alt);
   padding: 4px 16px 16px;
@@ -518,6 +526,46 @@ nav {
 .reported-review-author {
   font-weight: 600;
   color: var(--text);
+}
+
+.reported-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reported-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+
+  &.fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-dark);
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+}
+
+.reported-user-info {
+  min-width: 0;
+
+  .reported-target-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.reported-user-role {
+  text-transform: capitalize;
+  font-weight: 600;
+  color: var(--accent-dark);
 }
 
 .report-detail-subtitle {

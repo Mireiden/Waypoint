@@ -195,6 +195,20 @@
   }
 }
 
+// The "♥ Saved" tab reads as a favorite — pink accent instead of the green.
+.saved-tab {
+  &.active {
+    background: #e0245e;
+    border-color: #e0245e;
+    color: white;
+  }
+
+  &:hover:not(.active) {
+    border-color: #e0245e;
+    color: #e0245e;
+  }
+}
+
 .filter-selects {
   flex-shrink: 0;
   display: flex;
@@ -620,6 +634,43 @@
   display: block;
 }
 
+// Clickable wrapper that opens the lightbox; resets default button chrome.
+.media-thumb-btn {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  border-radius: calc(var(--radius) - 2px);
+  overflow: hidden;
+
+  img,
+  video {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover img,
+  &:hover video {
+    transform: scale(1.04);
+  }
+}
+
+// Play affordance on video thumbnails (the videos no longer show native controls).
+.media-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
 // Reviews
 
 .reviews-section {
@@ -920,6 +971,21 @@
   font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.review-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 999px;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 0.8;
+    .review-author { color: var(--primary); text-decoration: underline; }
+  }
 }
 
 .review-author {
@@ -1546,6 +1612,111 @@ textarea.field-input {
 }
 
 // ── Report link (in destination detail) ──────────────
+.detail-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--primary);
+    .detail-author-name { text-decoration: underline; }
+  }
+}
+
+.detail-author-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+
+  &.fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-dark);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+}
+
+.detail-author-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  padding: 7px 16px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+
+  &:hover { border-color: var(--primary); color: var(--primary); }
+  &:active { transform: scale(0.97); }
+}
+
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  padding: 7px 16px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+
+  &:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &.saved {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
 .report-link {
   margin-top: 14px;
   display: inline-flex;

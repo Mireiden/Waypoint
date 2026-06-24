@@ -101,6 +101,13 @@
   color: rgba(255, 255, 255, 0.3);
 }
 
+.hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .btn-edit {
   margin-top: 10px;
   padding: 7px 20px;
@@ -219,6 +226,34 @@
     height: 22px;
     color: var(--text-muted);
   }
+}
+
+.avatar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-avatar {
+  height: 36px;
+  padding: 0 14px;
+  background: var(--surface-alt);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-avatar-remove:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .btn-save {
@@ -390,6 +425,13 @@
     box-shadow: var(--shadow);
     transform: translateY(-2px);
   }
+}
+
+// Favorites cards are links to the map detail — strip the anchor styling.
+.dest-card-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .dest-thumb {

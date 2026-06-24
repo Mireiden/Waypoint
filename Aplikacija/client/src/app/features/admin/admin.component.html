@@ -193,6 +193,28 @@
                 <p class="reported-target-sub">(no comment)</p>
                 }
               </div>
+              } @else if (targetUser(); as u) {
+              <div class="reported-target">
+                <div class="reported-target-head">
+                  <span class="reported-target-kind">Reported user</span>
+                  <button class="btn btn--view" (click)="goToUser(u.id)">View profile →</button>
+                </div>
+                <div class="reported-user">
+                  @if (u.avatarUrl) {
+                  <img class="reported-user-avatar" [src]="u.avatarUrl" [alt]="u.name" />
+                  } @else {
+                  <span class="reported-user-avatar fallback">{{ u.name[0] }}</span>
+                  }
+                  <div class="reported-user-info">
+                    <p class="reported-target-title">{{ u.name }}</p>
+                    <p class="reported-target-sub">
+                      @if (u.email) {<span>{{ u.email }}</span>}
+                      @if (u.role) {<span class="reported-user-role">{{ u.role }}</span>}
+                      <span>Joined {{ u.createdAt | date:'mediumDate' }}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
               }
 
               <!-- Why it was reported -->
@@ -262,17 +284,18 @@
             <td class="muted" data-label="Reports">{{ user._count.reports }}</td>
             <td class="muted" data-label="Joined">{{ user.createdAt | date:'mediumDate' }}</td>
             <td class="cell-actions" data-label="Actions">
-              @if (user.id !== auth.currentUser()?.id) {
-                @if (confirmingUserId() === user.id) {
-                <div class="action-btns">
-                  <span class="confirm-label">Delete?</span>
-                  <button class="btn btn--delete" (click)="deleteUser(user.id)">Yes</button>
-                  <button class="btn" (click)="confirmingUserId.set(null)">No</button>
-                </div>
-                } @else {
-                <button class="btn btn--delete" (click)="confirmingUserId.set(user.id)">Delete</button>
+              <div class="action-btns">
+                <button class="btn" (click)="viewProfile(user.id)">Profile</button>
+                @if (user.id !== auth.currentUser()?.id) {
+                  @if (confirmingUserId() === user.id) {
+                    <span class="confirm-label">Delete?</span>
+                    <button class="btn btn--delete" (click)="deleteUser(user.id)">Yes</button>
+                    <button class="btn" (click)="confirmingUserId.set(null)">No</button>
+                  } @else {
+                    <button class="btn btn--delete" (click)="confirmingUserId.set(user.id)">Delete</button>
+                  }
                 }
-              }
+              </div>
             </td>
           </tr>
           }
@@ -287,6 +310,54 @@
       <h1 class="section-title">Destinations</h1>
       <span class="count-badge">{{ destinations().length }}</span>
     </div>
+
+    <div class="report-filters">
+      <div class="report-filter-group">
+        @for (t of ['all', 'route', 'point']; track t) {
+        <button
+          type="button"
+          class="report-chip"
+          [class.active]="destType() === t"
+          (click)="setDestType($any(t))"
+        >{{ t === 'all' ? 'All' : (t | titlecase) + 's' }}</button>
+        }
+      </div>
+      <div class="report-filter-selects">
+        <input
+          class="form-input"
+          type="search"
+          placeholder="Search title or city…"
+          [ngModel]="destQuery()"
+          (ngModelChange)="onDestQueryChange($event)"
+        />
+        <select
+          class="form-input"
+          [ngModel]="destCategory()"
+          (ngModelChange)="setDestCategory($event)"
+        >
+          <option [ngValue]="'all'">All categories</option>
+          @for (cat of categories(); track cat.id) {
+          <option [ngValue]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+        <select class="form-input" [ngModel]="destSort()" (ngModelChange)="setDestSort($event)">
+          <option value="recent">Most recent</option>
+          <option value="reports">Most reports</option>
+          <option value="reviews">Most reviews</option>
+        </select>
+        <button
+          type="button"
+          class="report-chip order-toggle"
+          (click)="toggleDestOrder()"
+          [attr.aria-label]="destOrder() === 'desc' ? 'Descending' : 'Ascending'"
+          [title]="destOrder() === 'desc' ? 'Descending' : 'Ascending'"
+        >{{ destOrder() === 'desc' ? '↓' : '↑' }}</button>
+      </div>
+    </div>
+
+    @if (destinations().length === 0 && !loading()) {
+    <div class="empty-state">No destinations match these filters</div>
+    } @else {
     <div class="table-wrap">
       <table class="data-table">
         <thead>
@@ -330,6 +401,7 @@
         </tbody>
       </table>
     </div>
+    }
     }
 
     <!-- ─── Categories ────────────────────────── -->

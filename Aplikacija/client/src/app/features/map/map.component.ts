@@ -17,6 +17,8 @@ import { ApiService, NominatimResult } from '../../core/services/api.service';
 import { DestinationService } from '../../core/services/destination.service';
 import { CategoryService } from '../../core/services/category.service';
 import { ReviewService } from '../../core/services/review.service';
+import { FavoriteService } from '../../core/services/favorite.service';
+import { ShareService } from '../../core/services/share.service';
 import { AuthService } from '../../core/services/auth.service';
 import {
   CreateDestinationPayload,
@@ -25,17 +27,29 @@ import {
   DestinationReview,
   DestinationSort,
   DestinationSummary,
+  FavoriteDestination,
   PointGeometry,
 } from '../../models/destination.model';
 import { Category } from '../../models/category.model';
 import { ReportTargetType } from '../../models/report.model';
 import { categoryIcon } from '../../shared/category-icons';
 import { ReportDialogComponent } from '../../shared/components/report-dialog/report-dialog.component';
+import {
+  LightboxMedia,
+  MediaLightboxComponent,
+} from '../../shared/components/media-lightbox/media-lightbox.component';
 
 
 @Component({
   selector: 'app-map',
-  imports: [FormsModule, RouterLink, CommonModule, DatePipe, ReportDialogComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    CommonModule,
+    DatePipe,
+    ReportDialogComponent,
+    MediaLightboxComponent,
+  ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
@@ -45,6 +59,8 @@ export class MapComponent implements OnDestroy {
   private readonly destinationService = inject(DestinationService);
   private readonly categoryService = inject(CategoryService);
   private readonly reviewService = inject(ReviewService);
+  private readonly favoriteService = inject(FavoriteService);
+  private readonly shareService = inject(ShareService);
   private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
 
@@ -152,6 +168,13 @@ export class MapComponent implements OnDestroy {
   selectedCategory = signal<number | null>(null);
   sortBy = signal<DestinationSort>('recent');
   categories = signal<Category[]>([]);
+
+  // ─── Saved view (logged-in only) ─────────────────────
+  // When true, the list shows the user's saved destinations instead of the
+  // bbox-queried map results.
+  savedMode = signal(false);
+  favorites = signal<FavoriteDestination[]>([]);
+  favoritesLoading = signal(false);
 
   readonly destinations = signal<DestinationSummary[]>([]);
 
@@ -261,8 +284,34 @@ export class MapComponent implements OnDestroy {
   }
 
   setFilter(filter: 'all' | 'point' | 'route'): void {
+    this.savedMode.set(false);
     this.activeFilter.set(filter);
     this.reload$.next();
+  }
+
+  // Switch the list to the user's saved destinations and (re)load them.
+  showSaved(): void {
+    if (!this.auth.currentUser()) return;
+    this.savedMode.set(true);
+    this.panelView.set('list');
+    if (this.panelCollapsed()) this.panelCollapsed.set(false);
+    this.favoritesLoading.set(true);
+    this.favoriteService.getMine().subscribe({
+      next: (favs) => {
+        this.favorites.set(favs);
+        this.favoritesLoading.set(false);
+      },
+      error: (err) => {
+        this.favoritesLoading.set(false);
+        console.error('Failed to load saved destinations:', err);
+      },
+    });
+  }
+
+  // Open a saved destination's detail. Favorites carry no geometry, so we fetch
+  // the full destination by id (which also flies/fits the map to it).
+  selectSaved(id: number): void {
+    this.openDestinationById(id);
   }
 
   setCategory(categoryId: number | null): void {
@@ -298,8 +347,9 @@ export class MapComponent implements OnDestroy {
       this.mapService.flyTo(lat, lng, 17);
     }
 
-    this.destinationService.getById(summary.id).subscribe((dest) => {
-      this.selectedDest.set(dest);
+    this.destinationService.getById(summary.id).subscribe({
+      next: (dest) => this.selectedDest.set(dest),
+      error: (err) => console.error('Failed to load destination:', err),
     });
 
     this.confirmingReviewId.set(null);
@@ -381,6 +431,66 @@ export class MapComponent implements OnDestroy {
     this.reportTarget.set(null);
   }
 
+  // ─── Favorites (save a destination) ──────────────────
+  // True while a save/unsave request for the open destination is in flight.
+  togglingFavorite = signal(false);
+
+  toggleFavorite(): void {
+    const dest = this.selectedDest();
+    if (!dest || !this.auth.currentUser() || this.togglingFavorite()) return;
+
+    const next = !dest.isFavorited;
+    // Optimistic flip; revert if the request fails.
+    this.selectedDest.set({ ...dest, isFavorited: next });
+    this.togglingFavorite.set(true);
+
+    const request = next
+      ? this.favoriteService.add(dest.id)
+      : this.favoriteService.remove(dest.id);
+
+    // Keep the saved list in sync when unsaving from the detail panel.
+    if (!next) this.favorites.update((list) => list.filter((f) => f.id !== dest.id));
+
+    request.subscribe({
+      next: () => this.togglingFavorite.set(false),
+      error: (err) => {
+        this.togglingFavorite.set(false);
+        // Roll back the optimistic change.
+        const current = this.selectedDest();
+        if (current?.id === dest.id) this.selectedDest.set({ ...current, isFavorited: !next });
+        console.error('Failed to update favorite:', err);
+      },
+    });
+  }
+
+  // ─── Share a destination (public deep link) ──────────
+  shareLabel = signal('🔗 Share');
+
+  async shareDestination(): Promise<void> {
+    const dest = this.selectedDest();
+    if (!dest) return;
+    const url = `${location.origin}/map?dest=${dest.id}`;
+    const result = await this.shareService.share(url, dest.title);
+    if (result === 'copied') this.flashShareLabel('✓ Link copied!');
+    else if (result === 'failed') this.flashShareLabel('Could not share');
+  }
+
+  private flashShareLabel(text: string): void {
+    this.shareLabel.set(text);
+    setTimeout(() => this.shareLabel.set('🔗 Share'), 2000);
+  }
+
+  // ─── Media lightbox ──────────────────────────────────
+  lightbox = signal<{ items: LightboxMedia[]; index: number } | null>(null);
+
+  openLightbox(items: LightboxMedia[], index: number): void {
+    this.lightbox.set({ items, index });
+  }
+
+  closeLightbox(): void {
+    this.lightbox.set(null);
+  }
+
   // ─── Route points ────────────────────────────────────
   openAddPoint(): void {
     this.pointActionError.set(null);
@@ -406,7 +516,7 @@ export class MapComponent implements OnDestroy {
     if (!route) return;
     this.pointActionError.set(null);
     this.destinationService.addPoint(route.id, pointId).subscribe({
-      next: (updated) => this.selectedDest.set(updated),
+      next: (updated) => this.setSelectedPreservingFavorite(updated),
       error: (err) => this.pointActionError.set(this.pointError(err, 'Could not add point.')),
     });
   }
@@ -416,9 +526,18 @@ export class MapComponent implements OnDestroy {
     if (!route) return;
     this.pointActionError.set(null);
     this.destinationService.removePoint(route.id, pointId).subscribe({
-      next: (updated) => this.selectedDest.set(updated),
+      next: (updated) => this.setSelectedPreservingFavorite(updated),
       error: (err) => this.pointActionError.set(this.pointError(err, 'Could not remove point.')),
     });
+  }
+
+  // The add/remove-point endpoints return the route without the viewer's
+  // isFavorited flag (it's always false there), so keep the currently known
+  // favorite state when swapping in the updated route.
+  private setSelectedPreservingFavorite(updated: Destination): void {
+    const prev = this.selectedDest();
+    const isFavorited = prev?.id === updated.id ? prev.isFavorited : updated.isFavorited;
+    this.selectedDest.set({ ...updated, isFavorited });
   }
 
   // Switch into the create flow to draw a brand-new point that, once published,
@@ -439,7 +558,7 @@ export class MapComponent implements OnDestroy {
   private finishCreateForRoute(route: Destination): void {
     this.publishing.set(false);
     this.reload$.next();
-    this.selectedDest.set(route);
+    this.setSelectedPreservingFavorite(route);
     this.selectedReviews.set([]);
     this.panelView.set('detail');
     if (route.geometry.type === 'LineString') {

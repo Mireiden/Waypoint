@@ -4,7 +4,9 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { DestinationService } from '../../core/services/destination.service';
-import { UserDestination } from '../../models/destination.model';
+import { FavoriteService } from '../../core/services/favorite.service';
+import { ShareService } from '../../core/services/share.service';
+import { FavoriteDestination, UserDestination } from '../../models/destination.model';
 import { categoryIcon } from '../../shared/category-icons';
 
 @Component({
@@ -48,9 +50,14 @@ import { categoryIcon } from '../../shared/category-icons';
             <span class="stat">Since {{ formatDate(user.createdAt) }}</span>
           </div>
 
-          <button class="btn-edit" type="button" (click)="editOpen.set(!editOpen())">
-            {{ editOpen() ? 'Cancel' : 'Edit Profile' }}
-          </button>
+          <div class="hero-actions">
+            <button class="btn-edit" type="button" (click)="editOpen.set(!editOpen())">
+              {{ editOpen() ? 'Cancel' : 'Edit Profile' }}
+            </button>
+            <button class="btn-edit" type="button" (click)="shareProfile(user.id)">
+              {{ shareLabel() }}
+            </button>
+          </div>
         </div>
 
         <div class="profile-container">
@@ -72,33 +79,49 @@ import { categoryIcon } from '../../shared/category-icons';
                     />
                   </div>
                   <div class="field avatar-field">
-                    <label for="edit-avatar">Avatar URL</label>
+                    <label>Profile photo</label>
                     <div class="avatar-input-row">
-                      <input
-                        id="edit-avatar"
-                        type="url"
-                        [(ngModel)]="avatarInput"
-                        name="avatarUrl"
-                        placeholder="https://..."
-                        (input)="previewError.set(false)"
-                      />
-                      @if (avatarInput.trim()) {
-                        <div class="avatar-thumb">
-                          @if (!previewError()) {
-                            <img
-                              [src]="avatarInput.trim()"
-                              alt="Preview"
-                              (error)="previewError.set(true)"
-                            />
-                          } @else {
-                            <svg viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="8" r="4.5" fill="currentColor" />
-                              <path d="M3 21c0-5 4-8.5 9-8.5s9 3.5 9 8.5" fill="currentColor" />
-                            </svg>
-                          }
-                        </div>
-                      }
+                      <div class="avatar-thumb">
+                        @if (user.avatarUrl) {
+                          <img [src]="user.avatarUrl" alt="Current avatar" />
+                        } @else {
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="8" r="4.5" fill="currentColor" />
+                            <path d="M3 21c0-5 4-8.5 9-8.5s9 3.5 9 8.5" fill="currentColor" />
+                          </svg>
+                        }
+                      </div>
+                      <div class="avatar-actions">
+                        <input
+                          #avatarFile
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          (change)="onAvatarSelected($event)"
+                        />
+                        <button
+                          type="button"
+                          class="btn-avatar"
+                          [disabled]="isUploadingAvatar()"
+                          (click)="avatarFile.click()"
+                        >
+                          {{ isUploadingAvatar() ? 'Uploading…' : user.avatarUrl ? 'Change photo' : 'Upload photo' }}
+                        </button>
+                        @if (user.avatarUrl) {
+                          <button
+                            type="button"
+                            class="btn-avatar btn-avatar-remove"
+                            [disabled]="isUploadingAvatar()"
+                            (click)="removeAvatar()"
+                          >
+                            Remove
+                          </button>
+                        }
+                      </div>
                     </div>
+                    @if (avatarUploadError()) {
+                      <p class="form-error">{{ avatarUploadError() }}</p>
+                    }
                   </div>
                   <button type="submit" class="btn-save" [disabled]="isSaving()">
                     {{ isSaving() ? 'Saving…' : 'Save' }}
@@ -163,11 +186,66 @@ import { categoryIcon } from '../../shared/category-icons';
             >
               Points of Interest
             </button>
+            <button
+              class="tab"
+              [class.active]="activeTab() === 'saved'"
+              (click)="selectTab('saved')"
+            >
+              Saved
+            </button>
           </div>
 
           <!-- Tab content -->
           <div class="tab-content">
-            @if (destinationsLoading()) {
+            @if (activeTab() === 'saved') {
+              @if (favoritesLoading()) {
+                <div class="dest-skeleton-grid">
+                  @for (i of [1, 2, 3]; track i) {
+                    <div class="dest-skeleton"></div>
+                  }
+                </div>
+              } @else if (favorites().length > 0) {
+                <div class="dest-grid">
+                  @for (dest of favorites(); track dest.id) {
+                    <a
+                      class="dest-card dest-card-link"
+                      [routerLink]="['/map']"
+                      [queryParams]="{ dest: dest.id }"
+                    >
+                      <div class="dest-thumb">
+                        <span class="dest-thumb-fallback">
+                          {{ dest.type === 'route' ? '🗺' : '📍' }}
+                        </span>
+                      </div>
+                      <div class="dest-body">
+                        <h4 class="dest-title">{{ dest.title }}</h4>
+                        <div class="dest-meta">
+                          @if (dest.category) {
+                            <span class="dest-cat">{{ dest.category.name }}</span>
+                          }
+                          @if (dest.city) {
+                            <span class="dest-loc">📍 {{ dest.city }}</span>
+                          }
+                        </div>
+                        <div class="dest-foot">
+                          <span>{{ dest._count.reviews }} {{ dest._count.reviews === 1 ? 'review' : 'reviews' }}</span>
+                          @if (dest.user) {
+                            <span class="dest-date">by {{ dest.user.name }}</span>
+                          }
+                        </div>
+                      </div>
+                    </a>
+                  }
+                </div>
+              } @else {
+                <div class="empty-state">
+                  <div class="empty-icon">♡</div>
+                  <h3>No saved destinations yet</h3>
+                  <p>Tap “Save” on any point or route and it will show up here.</p>
+                  <a class="btn-cta" routerLink="/map">Go to map</a>
+                </div>
+              }
+            } @else if (destinationsLoading()) {
               <div class="dest-skeleton-grid">
                 @for (i of [1, 2, 3]; track i) {
                   <div class="dest-skeleton"></div>
@@ -236,12 +314,14 @@ export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly userService = inject(UserService);
   private readonly destinationService = inject(DestinationService);
+  private readonly favoriteService = inject(FavoriteService);
+  private readonly shareService = inject(ShareService);
   private readonly router = inject(Router);
 
   readonly categoryIcon = categoryIcon;
 
   editOpen = signal(false);
-  activeTab = signal<'routes' | 'points'>('routes');
+  activeTab = signal<'routes' | 'points' | 'saved'>('routes');
 
   // The user's own destinations, fetched from GET /destinations/mine.
   myDestinations = signal<UserDestination[]>([]);
@@ -249,8 +329,15 @@ export class ProfileComponent {
   readonly routes = computed(() => this.myDestinations().filter((d) => d.type === 'route'));
   readonly points = computed(() => this.myDestinations().filter((d) => d.type === 'point'));
 
+  // The user's saved destinations, fetched lazily from GET /me/favorites.
+  favorites = signal<FavoriteDestination[]>([]);
+  favoritesLoading = signal(false);
+  private favoritesLoaded = false;
+
+  shareLabel = signal('🔗 Share');
   avatarError = signal(false);
-  previewError = signal(false);
+  isUploadingAvatar = signal(false);
+  avatarUploadError = signal<string | null>(null);
   isSaving = signal(false);
   saveError = signal<string | null>(null);
   saveSuccess = signal(false);
@@ -264,7 +351,6 @@ export class ProfileComponent {
   pwConfirm = '';
 
   nameInput = this.auth.currentUser()?.name ?? '';
-  avatarInput = this.auth.currentUser()?.avatarUrl ?? '';
 
   constructor() {
     if (!this.auth.currentUser()) {
@@ -282,6 +368,66 @@ export class ProfileComponent {
         this.destinationsLoading.set(false);
       },
       error: () => this.destinationsLoading.set(false),
+    });
+  }
+
+  // Switch tabs; the Saved tab loads its data the first time it's opened.
+  selectTab(tab: 'routes' | 'points' | 'saved'): void {
+    this.activeTab.set(tab);
+    if (tab === 'saved' && !this.favoritesLoaded) this.loadFavorites();
+  }
+
+  private loadFavorites(): void {
+    this.favoritesLoaded = true;
+    this.favoritesLoading.set(true);
+    this.favoriteService.getMine().subscribe({
+      next: (favs) => {
+        this.favorites.set(favs);
+        this.favoritesLoading.set(false);
+      },
+      error: () => this.favoritesLoading.set(false),
+    });
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.avatarUploadError.set('Please choose an image file.');
+      return;
+    }
+
+    this.avatarUploadError.set(null);
+    this.isUploadingAvatar.set(true);
+    this.userService.uploadAvatar(file).subscribe({
+      next: ({ avatarUrl }) => {
+        const user = this.auth.currentUser()!;
+        this.auth.updateStoredUser({ ...user, avatarUrl });
+        this.avatarError.set(false);
+        this.isUploadingAvatar.set(false);
+      },
+      error: (err) => {
+        this.isUploadingAvatar.set(false);
+        this.avatarUploadError.set(err?.error?.error ?? 'Could not upload image. Try again.');
+      },
+    });
+  }
+
+  removeAvatar(): void {
+    this.avatarUploadError.set(null);
+    this.isUploadingAvatar.set(true);
+    this.userService.deleteAvatar().subscribe({
+      next: () => {
+        const user = this.auth.currentUser()!;
+        this.auth.updateStoredUser({ ...user, avatarUrl: null });
+        this.isUploadingAvatar.set(false);
+      },
+      error: (err) => {
+        this.isUploadingAvatar.set(false);
+        this.avatarUploadError.set(err?.error?.error ?? 'Could not remove image. Try again.');
+      },
     });
   }
 
@@ -322,35 +468,38 @@ export class ProfileComponent {
     });
   }
 
+  async shareProfile(id: number): Promise<void> {
+    const url = `${location.origin}/users/${id}`;
+    const result = await this.shareService.share(url, `${this.auth.currentUser()?.name} on Waypoint`);
+    if (result === 'copied') this.flashShareLabel('✓ Link copied!');
+    else if (result === 'failed') this.flashShareLabel('Could not share');
+  }
+
+  private flashShareLabel(text: string): void {
+    this.shareLabel.set(text);
+    setTimeout(() => this.shareLabel.set('🔗 Share'), 2000);
+  }
+
   onSave(): void {
     this.saveError.set(null);
     this.saveSuccess.set(false);
     this.isSaving.set(true);
 
-    const user = this.auth.currentUser()!;
-
-    this.userService
-      .updateProfile({
-        name: this.nameInput,
-        avatarUrl: this.avatarInput.trim() || null,
-      })
-      .subscribe({
-        next: (updated) => {
-          this.auth.updateStoredUser(updated);
-          this.avatarError.set(false);
-          this.nameInput = updated.name;
-          this.avatarInput = updated.avatarUrl ?? '';
-          this.isSaving.set(false);
-          this.saveSuccess.set(true);
-          setTimeout(() => {
-            this.saveSuccess.set(false);
-            this.editOpen.set(false);
-          }, 1500);
-        },
-        error: (err) => {
-          this.isSaving.set(false);
-          this.saveError.set(err?.error?.error ?? 'Could not save profile. Try again.');
-        },
-      });
+    this.userService.updateProfile({ name: this.nameInput }).subscribe({
+      next: (updated) => {
+        this.auth.updateStoredUser(updated);
+        this.nameInput = updated.name;
+        this.isSaving.set(false);
+        this.saveSuccess.set(true);
+        setTimeout(() => {
+          this.saveSuccess.set(false);
+          this.editOpen.set(false);
+        }, 1500);
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        this.saveError.set(err?.error?.error ?? 'Could not save profile. Try again.');
+      },
+    });
   }
 }

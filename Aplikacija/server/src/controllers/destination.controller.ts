@@ -36,6 +36,14 @@ export const getMyDestinations = async (req: Request, res: Response) => {
   res.json(destinations);
 };
 
+// Public: the destinations created by a given user (for their profile page).
+// Reuses the same query as getMyDestinations, just keyed by the URL id.
+export const getUserDestinations = async (req: Request, res: Response) => {
+  const userId = parseIdParam(req.params.id, "user id");
+  const destinations = await destinationService.findByUser(userId);
+  res.json(destinations);
+};
+
 export const getById = async (req: Request, res: Response) => {
   const id = parseIdParam(req.params.id);
   const dest = await destinationService.findById(id, req.user?.id);

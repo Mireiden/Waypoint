@@ -61,6 +61,23 @@ export interface Destination extends DestinationSummary {
   reviews: DestinationReview[];
   // Present for routes; empty for points. Ordered point destinations along the route.
   points: RoutePoint[];
+  // Whether the signed-in user has saved this destination. Always false when not signed in.
+  isFavorited: boolean;
+  // The user who created this destination (for linking to their profile).
+  user: { id: number; name: string; avatarUrl: string | null } | null;
+}
+
+// A saved destination as returned by GET /me/favorites (flattened from the
+// favorite join rows). Lighter than a full Destination — no geometry/media.
+export interface FavoriteDestination {
+  id: number;
+  title: string;
+  type: DestinationType;
+  city: string | null;
+  createdAt: string;
+  user: { id: number; name: string } | null;
+  category: { id: number; name: string } | null;
+  _count: { reviews: number };
 }
 
 // A user's own destination as listed on their profile (no geometry — list only).
@@ -114,6 +131,18 @@ export interface DestinationQueryParams {
   q?: string;
   bbox?: string; // "minLng,minLat,maxLng,maxLat"
   sort?: DestinationSort;
+  limit?: number;
+}
+
+export type AdminDestinationSort = 'recent' | 'reports' | 'reviews';
+export type SortOrder = 'asc' | 'desc';
+
+export interface AdminDestinationQueryParams {
+  type?: DestinationType;
+  category?: number;
+  q?: string;
+  sort?: AdminDestinationSort;
+  order?: SortOrder;
   limit?: number;
 }
 
