@@ -24,6 +24,15 @@ const envSchema = z.object({
 
   NOMINATIM_URL: z.url().default("https://nominatim.openstreetmap.org/reverse"),
 
+  // SEED_ADMIN_PASSWORD is required when seeding production
+  // SEED_RESET must be the literal string "true" to wipe
+  // z.coerce.boolean() would treat "false" as true, so we compare explicitly
+  SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
+  SEED_RESET: z
+    .string()
+    .optional()
+    .transform((v) => v === "true"),
+
   UPLOAD_MAX_FILES: z.coerce.number().default(10),
   UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().default(10),
   UPLOAD_MAX_MEDIA_PER_DESTINATION: z.coerce.number().default(10),
@@ -60,6 +69,11 @@ const config = {
     algorithm: env.JWT_ALGO as Algorithm,
     expiresIn: env.JWT_EXPIRES_IN as ExpiresIn,
     secret: env.JWT_SECRET,
+  },
+
+  seed: {
+    adminPassword: env.SEED_ADMIN_PASSWORD,
+    reset: env.SEED_RESET,
   },
 
   server: {

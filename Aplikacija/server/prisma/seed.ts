@@ -10,7 +10,8 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-// shared dev password for every seeded account
+// demo (throwaway) accounts share this password in dev. The admin password is
+// resolved separately and must come from SEED_ADMIN_PASSWORD in production
 const DEV_PASSWORD = "password123";
 
 interface LineStringGeometry {
@@ -34,10 +35,10 @@ interface SeedDestination {
   userId: number;
 }
 
-// Inserts a destination with its geometry in a single statement.
+// inserts a destination with its geometry in a single statement.
 // geometry is an Unsupported PostGIS column, so it must be built in raw SQL
-// (ST_GeomFromGeoJSON handles both Point and LineString uniformly). The old
-// create-then-update approach broke once geometry was made NOT NULL.
+// (ST_GeomFromGeoJSON handles both Point and LineString uniformly)
+// the old create-then-update approach broke once geometry was made NOT NULL
 async function createDestination(d: SeedDestination): Promise<number> {
   const rows = await prisma.$queryRaw<{ id: number }[]>`
     INSERT INTO destinations (title, description, type, geometry, city, country, user_id, category_id)
@@ -58,6 +59,16 @@ async function createDestination(d: SeedDestination): Promise<number> {
   return row.id;
 }
 
+function resolveAdminPassword(): string {
+  if (config.server.env === "production") {
+    if (!config.seed.adminPassword) {
+      throw new Error("SEED_ADMIN_PASSWORD must be set when seeding production");
+    }
+    return config.seed.adminPassword;
+  }
+  return config.seed.adminPassword ?? DEV_PASSWORD;
+}
+
 const point = (lng: number, lat: number): PointGeometry => ({
   type: "Point",
   coordinates: [lng, lat],
@@ -66,12 +77,18 @@ const point = (lng: number, lat: number): PointGeometry => ({
 async function main() {
   console.log("Seeding database...");
 
-  // clear existing data in dependency order
-  await prisma.media.deleteMany();
-  await prisma.routePoint.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.report.deleteMany();
-  await prisma.destination.deleteMany();
+  // RESET (dev only): wipe content so we can reload a clean state
+  // guarded twice — explicit SEED_RESET=true AND never in production — so a stray run can't delete real data
+  // order respects FK dependencies (children before parents)
+  if (config.seed.reset && config.server.env !== "production") {
+    console.log("SEED_RESET=true — clearing existing data...");
+    await prisma.media.deleteMany();
+    await prisma.routePoint.deleteMany();
+    await prisma.review.deleteMany();
+    await prisma.report.deleteMany();
+    await prisma.favorite.deleteMany();
+    await prisma.destination.deleteMany();
+  }
 
   // ---CATEGORIES---
   // upsert by unique name: idempotent, no duplicates
@@ -95,7 +112,9 @@ async function main() {
   console.log(`Created ${String(categories.length)} categories`);
 
   // ---USERS---
-  const passwordHash = await bcrypt.hash(DEV_PASSWORD, 10);
+  // admin gets the resolved (env-backed) password, demo accounts use the dev one
+  const adminHash = await bcrypt.hash(resolveAdminPassword(), 10);
+  const demoHash = await bcrypt.hash(DEV_PASSWORD, 10);
   const userData = [
     { email: "admin@waypoint.com", name: "Admin", role: "admin" as const },
     { email: "miroslav@waypoint.com", name: "Miroslav Vucetic", role: "user" as const },
@@ -103,6 +122,7 @@ async function main() {
     { email: "petar@waypoint.com", name: "Petar Petrovic", role: "user" as const },
   ];
   for (const u of userData) {
+    const passwordHash = u.role === "admin" ? adminHash : demoHash;
     await prisma.user.upsert({
       create: { ...u, passwordHash },
       update: { passwordHash },
@@ -115,7 +135,17 @@ async function main() {
     if (!found) throw new Error(`User not found: ${email}`);
     return found.id;
   };
-  console.log(`Created ${String(userData.length)} users (password for all: ${DEV_PASSWORD})`);
+  console.log(`Upserted ${String(userData.length)} users (demo password: ${DEV_PASSWORD})`);
+
+  // ---DEMO CONTENT (only when the DB is empty)---
+  // on the first deploy this populates demo data, on later runs
+  // it is skipped so real user content is never touched.
+  // Use SEED_RESET in dev to force a clean reload
+  const existingDestinations = await prisma.destination.count();
+  if (existingDestinations > 0) {
+    console.log(`Found ${String(existingDestinations)} destinations — skipping demo content.`);
+    return;
+  }
 
   // ---POINT DESTINATIONS---
   const nisFortress = await createDestination({
@@ -228,9 +258,9 @@ async function main() {
   // ---ROUTE POINTS---
   await prisma.routePoint.createMany({
     data: [
-      { pointId: duvanisteBank, position: 1, routeId: nisavaFishingRoute },
-      { pointId: underBridgeSpot, position: 2, routeId: nisavaFishingRoute },
-      { pointId: brziBrodBank, position: 3, routeId: nisavaFishingRoute },
+      { pointId: duvanisteBank, routeId: nisavaFishingRoute },
+      { pointId: underBridgeSpot, routeId: nisavaFishingRoute },
+      { pointId: brziBrodBank, routeId: nisavaFishingRoute },
     ],
   });
   console.log("Linked route points");
