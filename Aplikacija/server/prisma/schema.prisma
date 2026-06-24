@@ -38,13 +38,14 @@ enum MediaType {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String   @db.VarChar(255)
-  email        String   @unique @db.VarChar(255)
-  passwordHash String   @map("password_hash") @db.VarChar(255)
-  avatarUrl    String?  @map("avatar_url") @db.VarChar(255)
-  role         Role     @default(user)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(255)
+  email          String   @unique @db.VarChar(255)
+  passwordHash   String   @map("password_hash") @db.VarChar(255)
+  avatarUrl      String?  @map("avatar_url") @db.VarChar(255)
+  avatarPublicId String?  @map("avatar_public_id") @db.VarChar(255)
+  role           Role     @default(user)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   destinations   Destination[]
   reviews        Review[]
