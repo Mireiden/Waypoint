@@ -26,7 +26,7 @@ export const findById = async (id: number) => {
       rating: true,
       comment: true,
       createdAt: true,
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, avatarUrl: true } },
       media: { select: { id: true, url: true, type: true } },
       destination: { select: { id: true, title: true } },
     },
@@ -48,7 +48,7 @@ export const findByDestinationId = async (destId: number, query: ListReviewsQuer
       rating: true,
       comment: true,
       createdAt: true,
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, avatarUrl: true } },
       media: { select: { id: true, url: true, type: true } },
     },
   });
@@ -83,7 +83,7 @@ export const createReview = async (
         rating: true,
         comment: true,
         createdAt: true,
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, avatarUrl: true } },
         media: { select: { id: true, url: true, type: true, position: true } },
       },
     });
@@ -109,7 +109,7 @@ export const updateReview = async (id: number, actor: AuthUser, data: UpdateRevi
       rating: true,
       comment: true,
       createdAt: true,
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, avatarUrl: true } },
       media: { select: { id: true, url: true, type: true, position: true } },
     },
   });

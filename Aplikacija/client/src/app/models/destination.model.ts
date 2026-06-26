@@ -44,7 +44,7 @@ export interface DestinationReview {
   rating: number;
   comment: string | null;
   createdAt: string;
-  user: { id: number; name: string };
+  user: { id: number; name: string; avatarUrl: string | null };
   media: { id: number; url: string; type: MediaType }[];
 }
 

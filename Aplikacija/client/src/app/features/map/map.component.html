@@ -181,6 +181,20 @@
                   <span class="badge type-badge">{{ dest.type === 'route' ? '🗺 Route' : '📍 Point' }}</span>
                 </div>
 
+                <div class="detail-rating-row">
+                  @if (dest.reviewCount > 0) {
+                    <span class="stars detail-stars">
+                      @for (filled of stars(dest.avgRating); track $index) {
+                        <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                      }
+                    </span>
+                    <strong class="detail-rating-val">{{ dest.avgRating }}</strong>
+                    <span class="detail-review-count">{{ dest.reviewCount }} {{ dest.reviewCount === 1 ? 'review' : 'reviews' }}</span>
+                  } @else {
+                    <span class="detail-review-count">0 reviews</span>
+                  }
+                </div>
+
                 @if (dest.user; as author) {
                   <a class="detail-author" [routerLink]="['/users', author.id]">
                     @if (author.avatarUrl) {
@@ -190,18 +204,6 @@
                     }
                     <span class="detail-author-name">by {{ author.name }}</span>
                   </a>
-                }
-
-                @if (dest.reviewCount > 0) {
-                  <div class="detail-rating-row">
-                    <span class="stars detail-stars">
-                      @for (filled of stars(dest.avgRating); track $index) {
-                        <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
-                      }
-                    </span>
-                    <strong class="detail-rating-val">{{ dest.avgRating }}</strong>
-                    <span class="detail-review-count">{{ dest.reviewCount }} {{ dest.reviewCount === 1 ? 'review' : 'reviews' }}</span>
-                  </div>
                 }
 
                 @if (dest.city || dest.country) {
@@ -444,7 +446,11 @@
                       <div class="review-header">
                         <div class="review-left">
                           <a class="review-identity" [routerLink]="['/users', review.user.id]">
-                            <span class="review-avatar">{{ review.user.name[0] }}</span>
+                            @if (review.user.avatarUrl) {
+                              <img class="review-avatar" [src]="review.user.avatarUrl" [alt]="review.user.name" />
+                            } @else {
+                              <span class="review-avatar fallback">{{ review.user.name[0] }}</span>
+                            }
                             <span class="review-author">{{ review.user.name }}</span>
                           </a>
                           @if (isOwnReview(review)) {

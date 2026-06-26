@@ -17,15 +17,24 @@ import { AuthService } from '../../../core/services/auth.service';
             <a class="admin-link" routerLink="/admin" routerLinkActive="active">Admin</a>
           }
           <button class="profile-btn" type="button" routerLink="/profile">
-            <svg
-              class="avatar-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle cx="12" cy="8" r="4" fill="currentColor" />
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="currentColor" />
-            </svg>
+            @if (auth.currentUser()!.avatarUrl && !avatarError()) {
+              <img
+                class="avatar-img"
+                [src]="auth.currentUser()!.avatarUrl"
+                [alt]="auth.currentUser()!.name"
+                (error)="avatarError.set(true)"
+              />
+            } @else {
+              <svg
+                class="avatar-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="12" cy="8" r="4" fill="currentColor" />
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="currentColor" />
+              </svg>
+            }
             <span class="user-name">{{ auth.currentUser()!.name }}</span>
           </button>
 
@@ -74,6 +83,8 @@ export class NavbarComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   confirmingLogout = signal(false);
+  // Falls back to the silhouette SVG if the avatar URL fails to load.
+  avatarError = signal(false);
 
   logout(): void {
     this.confirmingLogout.set(false);

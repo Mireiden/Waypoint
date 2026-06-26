@@ -88,6 +88,15 @@
   flex-shrink: 0;
 }
 
+.avatar-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .user-name {
   font-size: 0.875rem;
   font-weight: 500;
