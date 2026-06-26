@@ -3,15 +3,16 @@ import { environment } from '../../../environments/environment';
 import { inject, Injectable } from '@angular/core';
 import { AdminDestination, AdminDestinationQueryParams } from '../../models/destination.model';
 import { UserWithCount } from '../../models/user.model';
+import { AdminStats } from '../../models/stats.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}`;
 
-  // getStats() {
-  //   return this.http.get<AdminStats>(`${this.base}/stats`, { withCredentials: true });
-  // }
+  getStats() {
+    return this.http.get<AdminStats>(`${this.base}/stats`, { withCredentials: true });
+  }
 
   getDestinations(query?: AdminDestinationQueryParams) {
     let params = new HttpParams();

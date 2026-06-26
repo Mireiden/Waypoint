@@ -27,6 +27,7 @@ import { ReviewService } from '../../core/services/review.service';
 import { CategoryService } from '../../core/services/category.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CATEGORY_EMOJIS, categoryIcon } from '../../shared/category-icons';
+import { AdminStats } from '../../models/stats.model';
 
 type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'categories';
 
@@ -39,7 +40,7 @@ type AdminTab = 'overview' | 'reports' | 'users' | 'destinations' | 'categories'
 export class AdminComponent implements OnInit {
   activeTab = signal<AdminTab>('overview');
 
-  // stats = signal<AdminStats | null>(null);
+  stats = signal<AdminStats | null>(null);
 
   // ─── Reports (UC-11) ───────────────────────────────
   // Reports are grouped by the target they were filed against.
@@ -126,19 +127,23 @@ export class AdminComponent implements OnInit {
         this.pendingFocusUser = focus || null;
       }
       this.setTab(tab);
+    } else {
+      // normal entry (no query param): the default tab is overview,
+      // setTab isn't called for here — so load its stats explicitly
+      this.loadStats();
     }
   }
 
-  // loadStats() {
-  //   this.loading.set(true);
-  //   this.adminService.getStats().subscribe({
-  //     next: (data) => {
-  //       this.stats.set(data);
-  //       this.loading.set(false);
-  //     },
-  //     error: () => this.loading.set(false),
-  //   });
-  // }
+  loadStats() {
+    this.loading.set(true);
+    this.adminService.getStats().subscribe({
+      next: (data) => {
+        this.stats.set(data);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
 
   targetKey(t: ReportedTarget): string {
     return `${t.type}:${t.id}`;
@@ -352,6 +357,7 @@ export class AdminComponent implements OnInit {
     this.confirmingUserId.set(null);
     this.expandedRows.set(new Set());
     this.openTargetKey.set(null);
+    if (tab === 'overview') this.loadStats();
     if (tab === 'reports') this.loadReports();
     if (tab === 'users' && this.users().length === 0) this.loadUsers();
     if (tab === 'destinations') {

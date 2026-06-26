@@ -7,6 +7,7 @@ import meRoutes from "./me.routes.js";
 import mediaRoutes from "./media.routes.js";
 import reportRoutes from "./report.routes.js";
 import reviewRoutes from "./review.routes.js";
+import statsRoutes from "./stats.routes.js";
 import userRoutes from "./user.routes.js";
 
 const router: Router = Router();
@@ -19,5 +20,6 @@ router.use("/destinations", destinationRoutes);
 router.use("/media", mediaRoutes);
 router.use("/reports", reportRoutes);
 router.use("/reviews", reviewRoutes);
+router.use("/stats", statsRoutes);
 
 export default router;
