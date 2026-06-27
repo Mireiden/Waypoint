@@ -213,33 +213,99 @@
                   </div>
                 }
 
-                @if (dest.description) {
-                  <p class="detail-description">{{ dest.description }}</p>
-                }
+                @if (!editingDest()) {
+                  @if (dest.description) {
+                    <p class="detail-description">{{ dest.description }}</p>
+                  }
 
-                <div class="detail-actions">
-                  @if (auth.currentUser()) {
+                  <div class="detail-actions">
+                    @if (auth.currentUser()) {
+                      <button
+                        type="button"
+                        class="save-btn"
+                        [class.saved]="dest.isFavorited"
+                        [disabled]="togglingFavorite()"
+                        (click)="toggleFavorite()"
+                      >
+                        {{ dest.isFavorited ? '♥ Saved' : '♡ Save' }}
+                      </button>
+                    }
+                    <button type="button" class="share-btn" (click)="shareDestination()">
+                      {{ shareLabel() }}
+                    </button>
+                    @if (canModifySelected()) {
+                      <button type="button" class="edit-dest-btn" (click)="startEditDest()">
+                        ✎ Edit
+                      </button>
+                    }
+                  </div>
+
+                  @if (auth.currentUser() && !canModifySelected()) {
                     <button
                       type="button"
-                      class="save-btn"
-                      [class.saved]="dest.isFavorited"
-                      [disabled]="togglingFavorite()"
-                      (click)="toggleFavorite()"
-                    >
-                      {{ dest.isFavorited ? '♥ Saved' : '♡ Save' }}
-                    </button>
+                      class="report-link"
+                      (click)="openReport('destination', dest.id, dest.title)"
+                    >⚑ Report this {{ dest.type }}</button>
                   }
-                  <button type="button" class="share-btn" (click)="shareDestination()">
-                    {{ shareLabel() }}
-                  </button>
-                </div>
+                }
 
-                @if (auth.currentUser() && !canModifySelected()) {
-                  <button
-                    type="button"
-                    class="report-link"
-                    (click)="openReport('destination', dest.id, dest.title)"
-                  >⚑ Report this {{ dest.type }}</button>
+                <!-- Inline edit form (owner/admin) -->
+                @if (editingDest()) {
+                  <div class="edit-form">
+                    <label class="field">
+                      <span class="field-label">Title <span class="req">*</span></span>
+                      <input type="text" class="field-input" [(ngModel)]="editTitle" />
+                    </label>
+
+                    <label class="field">
+                      <span class="field-label">Category <span class="req">*</span></span>
+                      <select class="field-input" [(ngModel)]="editCategoryId">
+                        <option [ngValue]="null" disabled>Choose a category…</option>
+                        @for (cat of categories(); track cat.id) {
+                          <option [ngValue]="cat.id">{{ categoryIcon(cat.icon) }} {{ cat.name }}</option>
+                        }
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span class="field-label">Description</span>
+                      <textarea class="field-input" rows="3" [(ngModel)]="editDescription"></textarea>
+                    </label>
+
+                    <label class="field">
+                      <span class="field-label">Add photos</span>
+                      <input type="file" class="field-input file-input" multiple accept="image/*,video/*" (change)="onEditFiles($event)" />
+                      @if (editNewFiles.length) {
+                        <ul class="file-list">
+                          @for (f of editNewFiles; track f.name + f.size + f.lastModified; let i = $index) {
+                            <li class="file-chip">
+                              <span class="file-chip-name">{{ f.name }}</span>
+                              <button
+                                type="button"
+                                class="file-chip-remove"
+                                (click)="removeEditFile(i)"
+                                aria-label="Remove file"
+                              >✕</button>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </label>
+
+                    @if (editError()) {
+                      <p class="create-error">{{ editError() }}</p>
+                    }
+
+                    <div class="edit-form-actions">
+                      <button type="button" class="rf-cancel" (click)="cancelEditDest()">Cancel</button>
+                      <button
+                        type="button"
+                        class="publish-btn"
+                        [disabled]="!canSaveEdit()"
+                        (click)="saveEditDest()"
+                      >{{ editSaving() ? 'Saving…' : 'Save changes' }}</button>
+                    </div>
+                  </div>
                 }
               </div>
 
@@ -345,19 +411,37 @@
                   <h3 class="reviews-title">Photos & Videos</h3>
                   <div class="media-grid">
                     @for (item of dest.media; track item.id; let i = $index) {
-                      <button
-                        type="button"
-                        class="media-thumb-btn"
-                        (click)="openLightbox(dest.media, i)"
-                        [attr.aria-label]="'Enlarge ' + item.type"
-                      >
-                        @if (item.type === 'image') {
-                          <img class="media-thumb" [src]="item.url" [alt]="dest.title" />
-                        } @else {
-                          <video class="media-thumb" [src]="item.url"></video>
-                          <span class="media-play">▶</span>
+                      <div class="media-thumb-wrap">
+                        <button
+                          type="button"
+                          class="media-thumb-btn"
+                          (click)="openLightbox(dest.media, i)"
+                          [attr.aria-label]="'Enlarge ' + item.type"
+                        >
+                          @if (item.type === 'image') {
+                            <img class="media-thumb" [src]="item.url" [alt]="dest.title" />
+                          } @else {
+                            <video class="media-thumb" [src]="item.url"></video>
+                            <span class="media-play">▶</span>
+                          }
+                        </button>
+                        @if (editingDest()) {
+                          @if (confirmRemoveMediaId() === item.id) {
+                            <span class="media-confirm">
+                              <button class="media-confirm-yes" type="button" (click)="deleteExistingMedia(item.id)">Remove</button>
+                              <button class="media-confirm-no" type="button" (click)="confirmRemoveMediaId.set(null)">Keep</button>
+                            </span>
+                          } @else {
+                            <button
+                              class="media-remove"
+                              type="button"
+                              title="Remove photo"
+                              aria-label="Remove photo"
+                              (click)="confirmRemoveMediaId.set(item.id)"
+                            >✕</button>
+                          }
                         }
-                      </button>
+                      </div>
                     }
                   </div>
                 </div>
@@ -596,7 +680,7 @@
                   <button class="redraw-btn" (click)="redraw()">Redraw</button>
                 </div>
                 @if (editing()) {
-                  <small class="edit-hint">Drag points to move, tap a point to delete, use the middle handles to add.</small>
+                  <small class="edit-hint">Drag points to move, tap a point to delete, use the middle handles to insert. Click empty map to extend the route.</small>
                 }
               }
             </div>
@@ -628,7 +712,19 @@
               <span class="field-label">Photos</span>
               <input type="file" class="field-input file-input" multiple accept="image/*,video/*" (change)="onFilesSelected($event)" />
               @if (newFiles.length) {
-                <span class="file-count">{{ newFiles.length }} file(s) selected</span>
+                <ul class="file-list">
+                  @for (f of newFiles; track f.name + f.size + f.lastModified; let i = $index) {
+                    <li class="file-chip">
+                      <span class="file-chip-name">{{ f.name }}</span>
+                      <button
+                        type="button"
+                        class="file-chip-remove"
+                        (click)="removeNewFile(i)"
+                        aria-label="Remove file"
+                      >✕</button>
+                    </li>
+                  }
+                </ul>
               }
             </label>
 

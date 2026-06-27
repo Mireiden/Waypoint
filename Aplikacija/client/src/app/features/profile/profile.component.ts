@@ -256,7 +256,11 @@ import { categoryIcon } from '../../shared/category-icons';
               @if (items.length > 0) {
                 <div class="dest-grid">
                   @for (dest of items; track dest.id) {
-                    <article class="dest-card">
+                    <a
+                      class="dest-card dest-card-link"
+                      [routerLink]="['/map']"
+                      [queryParams]="{ dest: dest.id }"
+                    >
                       <div class="dest-thumb">
                         @if (dest.media[0]?.type === 'image') {
                           <img [src]="dest.media[0].url" [alt]="dest.title" />
@@ -285,7 +289,7 @@ import { categoryIcon } from '../../shared/category-icons';
                           <span class="dest-date">{{ formatDate(dest.createdAt) }}</span>
                         </div>
                       </div>
-                    </article>
+                    </a>
                   }
                 </div>
               } @else if (activeTab() === 'routes') {

@@ -10,6 +10,20 @@ body {
   color: var(--text);
 }
 
+// While editing a route we add Geoman's `geoman-draw-cursor` class to the map so
+// empty map shows a crosshair ("click to keep drawing"). That rule also targets
+// `.leaflet-interactive`, which the vertex/middle handles are — so restore a hand
+// cursor over them to signal they're draggable (grab → grabbing while dragging).
+// Global (not component-scoped) because Leaflet/Geoman create these elements
+// outside Angular's view.
+.geoman-draw-cursor .marker-icon {
+  cursor: grab !important;
+
+  &:active {
+    cursor: grabbing !important;
+  }
+}
+
 :root {
   // Primary — forest green
   --primary:        #2e7d52;

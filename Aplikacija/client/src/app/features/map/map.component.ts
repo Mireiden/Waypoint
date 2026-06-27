@@ -163,6 +163,17 @@ export class MapComponent implements OnDestroy {
   createError = signal<string | null>(null);
   editing = signal(false);
 
+  // ─── Edit an existing destination (owner/admin) ──────
+  editingDest = signal(false);
+  editTitle = '';
+  editDescription = '';
+  editCategoryId: number | null = null;
+  editNewFiles: File[] = [];
+  editSaving = signal(false);
+  editError = signal<string | null>(null);
+  // Which existing media item is showing a "remove?" confirmation.
+  confirmRemoveMediaId = signal<number | null>(null);
+
   // Destination filters — drive the findMany query on the backend
   activeFilter = signal<'all' | 'point' | 'route'>('all');
   selectedCategory = signal<number | null>(null);
@@ -354,6 +365,7 @@ export class MapComponent implements OnDestroy {
 
     this.confirmingReviewId.set(null);
     this.cancelReviewForm();
+    this.cancelEditDest();
     this.closeAddPoint();
     this.reportTarget.set(null);
     this.reviewService.getByDestinationId(summary.id).subscribe({
@@ -363,6 +375,9 @@ export class MapComponent implements OnDestroy {
   }
 
   selectById(id: number): void {
+    // While creating/drawing, ignore clicks on existing destinations — otherwise a
+    // stray click opens a detail view and strands the half-drawn shape.
+    if (this.panelView() === 'create') return;
     const summary = this.destinations().find((d) => d.id === id);
     if (summary) this.selectDestination(summary);
   }
@@ -373,6 +388,7 @@ export class MapComponent implements OnDestroy {
     this.panelView.set('detail');
     if (this.panelCollapsed()) this.panelCollapsed.set(false);
     this.reportTarget.set(null);
+    this.cancelEditDest();
     this.closeAddPoint();
 
     this.destinationService.getById(id).subscribe({
@@ -417,6 +433,7 @@ export class MapComponent implements OnDestroy {
     this.selectedReviews.set([]);
     this.confirmingReviewId.set(null);
     this.cancelReviewForm();
+    this.cancelEditDest();
     this.closeAddPoint();
     this.reportTarget.set(null);
     this.mapService.zoomTo(13);
@@ -775,8 +792,27 @@ export class MapComponent implements OnDestroy {
   }
 
   onFilesSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.newFiles = input.files ? Array.from(input.files) : [];
+    this.newFiles = this.appendFiles(this.newFiles, event.target as HTMLInputElement);
+  }
+
+  removeNewFile(index: number): void {
+    this.newFiles = this.newFiles.filter((_, i) => i !== index);
+  }
+
+  // Accumulate picked files across multiple selections instead of replacing them
+  // (a file <input> only ever holds its most recent selection). De-dupes by
+  // name+size+mtime and resets the input so the same file can be re-picked.
+  private appendFiles(existing: File[], input: HTMLInputElement): File[] {
+    const incoming = input.files ? Array.from(input.files) : [];
+    const merged = [...existing];
+    for (const file of incoming) {
+      const dup = merged.some(
+        (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified,
+      );
+      if (!dup) merged.push(file);
+    }
+    input.value = '';
+    return merged;
   }
 
   canPublish(): boolean {
@@ -868,6 +904,102 @@ export class MapComponent implements OnDestroy {
     this.newFiles = [];
     this.createError.set(null);
     this.publishing.set(false);
+  }
+
+  // ─── Edit an existing destination ────────────────────
+  // Open the inline edit form for the selected destination, pre-filled with its
+  // current title / category / description. Geometry isn't editable here.
+  startEditDest(): void {
+    const dest = this.selectedDest();
+    if (!dest || !this.canModifySelected()) return;
+    this.editTitle = dest.title;
+    this.editDescription = dest.description ?? '';
+    this.editCategoryId = dest.category?.id ?? null;
+    this.editNewFiles = [];
+    this.editError.set(null);
+    this.confirmRemoveMediaId.set(null);
+    this.editingDest.set(true);
+  }
+
+  cancelEditDest(): void {
+    this.editingDest.set(false);
+    this.editNewFiles = [];
+    this.editError.set(null);
+    this.confirmRemoveMediaId.set(null);
+  }
+
+  onEditFiles(event: Event): void {
+    this.editNewFiles = this.appendFiles(this.editNewFiles, event.target as HTMLInputElement);
+  }
+
+  removeEditFile(index: number): void {
+    this.editNewFiles = this.editNewFiles.filter((_, i) => i !== index);
+  }
+
+  canSaveEdit(): boolean {
+    return this.editTitle.trim().length > 0 && this.editCategoryId !== null && !this.editSaving();
+  }
+
+  saveEditDest(): void {
+    const dest = this.selectedDest();
+    if (!dest || !this.canSaveEdit() || this.editCategoryId === null) return;
+
+    this.editSaving.set(true);
+    this.editError.set(null);
+    this.destinationService
+      .update(dest.id, {
+        title: this.editTitle.trim(),
+        description: this.editDescription.trim() || null,
+        categoryId: this.editCategoryId,
+      })
+      .subscribe({
+        next: (updated) => {
+          // Upload any newly added photos, then merge them onto the updated record.
+          if (this.editNewFiles.length) {
+            this.destinationService.uploadMedia(dest.id, this.editNewFiles).subscribe({
+              next: (media) => this.finishEditDest({ ...updated, media: [...updated.media, ...media] }),
+              error: (err) => {
+                // The text fields saved; only the upload failed — keep the form open.
+                this.setSelectedPreservingFavorite(updated);
+                this.reload$.next();
+                this.editSaving.set(false);
+                this.editError.set(this.pointError(err, 'Saved, but the photos could not be uploaded.'));
+              },
+            });
+          } else {
+            this.finishEditDest(updated);
+          }
+        },
+        error: (err) => {
+          this.editSaving.set(false);
+          this.editError.set(this.pointError(err, 'Could not save changes.'));
+        },
+      });
+  }
+
+  private finishEditDest(updated: Destination): void {
+    this.setSelectedPreservingFavorite(updated);
+    this.reload$.next(); // refresh list + map marker/tooltip (title/category may have changed)
+    this.editSaving.set(false);
+    this.editNewFiles = [];
+    this.editingDest.set(false);
+    this.confirmRemoveMediaId.set(null);
+  }
+
+  // Delete an already-saved media item from the destination (owner/admin only).
+  deleteExistingMedia(mediaId: number): void {
+    const dest = this.selectedDest();
+    if (!dest) return;
+    this.destinationService.deleteMedia(mediaId).subscribe({
+      next: () => {
+        this.confirmRemoveMediaId.set(null);
+        const current = this.selectedDest();
+        if (current?.id === dest.id) {
+          this.selectedDest.set({ ...current, media: current.media.filter((m) => m.id !== mediaId) });
+        }
+      },
+      error: (err) => this.editError.set(this.pointError(err, 'Could not remove the photo.')),
+    });
   }
 
   stars(rating: number): boolean[] {

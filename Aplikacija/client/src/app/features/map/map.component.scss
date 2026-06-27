@@ -6,7 +6,7 @@
 }
 
 .side-panel {
-  flex: 0 0 320px;
+  flex: 0 0 520px;
   width: 320px;
   height: 100%;
   display: flex;
@@ -712,7 +712,9 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &:hover {
     background: var(--primary);
@@ -730,7 +732,9 @@
     font-weight: 600;
     text-decoration: none;
 
-    &:hover { text-decoration: underline; }
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
@@ -764,8 +768,12 @@
   color: var(--border);
   transition: color 0.12s;
 
-  &.on { color: #f5a623; }
-  &:hover { color: #f5a623; }
+  &.on {
+    color: #f5a623;
+  }
+  &:hover {
+    color: #f5a623;
+  }
 }
 
 .rf-comment {
@@ -806,7 +814,9 @@
   font-weight: 600;
   color: var(--text-secondary, var(--text-muted));
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 
   &:hover {
     border-color: var(--primary);
@@ -873,7 +883,9 @@
   background: var(--surface);
   color: var(--text-muted);
 
-  &:hover { background: var(--surface-alt); }
+  &:hover {
+    background: var(--surface-alt);
+  }
 }
 
 .rf-submit {
@@ -881,8 +893,13 @@
   border-color: var(--primary);
   color: #fff;
 
-  &:hover:not(:disabled) { background: var(--primary-dark); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    background: var(--primary-dark);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .review-actions {
@@ -902,7 +919,9 @@
   padding: 3px 8px;
   border-radius: 4px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 
   &:hover {
     border-color: var(--primary);
@@ -927,7 +946,9 @@
   border-radius: var(--radius);
   padding: 12px;
   margin-bottom: 8px;
-  transition: box-shadow 0.3s, border-color 0.3s;
+  transition:
+    box-shadow 0.3s,
+    border-color 0.3s;
 
   &:last-child {
     margin-bottom: 0;
@@ -941,8 +962,13 @@
 }
 
 @keyframes reviewPulse {
-  0%, 100% { box-shadow: 0 0 0 3px var(--primary-light, rgba(34, 139, 34, 0.25)); }
-  50% { box-shadow: 0 0 0 6px var(--primary-light, rgba(34, 139, 34, 0.12)); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--primary-light, rgba(34, 139, 34, 0.25));
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--primary-light, rgba(34, 139, 34, 0.12));
+  }
 }
 
 .review-header {
@@ -988,7 +1014,10 @@
 
   &:hover {
     opacity: 0.8;
-    .review-author { color: var(--primary); text-decoration: underline; }
+    .review-author {
+      color: var(--primary);
+      text-decoration: underline;
+    }
   }
 }
 
@@ -1026,7 +1055,9 @@
   padding: 2px 4px;
   cursor: pointer;
   border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 
   &:hover {
     color: #fff;
@@ -1044,7 +1075,9 @@
   padding: 2px 4px;
   cursor: pointer;
   border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 
   &:hover {
     color: #fff;
@@ -1075,7 +1108,10 @@
   padding: 3px 8px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .review-confirm-yes {
@@ -1577,10 +1613,52 @@ textarea.field-input {
   font-size: 0.78rem;
 }
 
-.file-count {
-  font-size: 0.72rem;
-  color: var(--primary);
-  font-weight: 500;
+// Pending (not-yet-uploaded) files, each removable.
+.file-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 8px;
+  background: var(--surface-alt);
+  font-size: 0.74rem;
+  color: var(--text);
+}
+
+.file-chip-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-chip-remove {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--danger);
+  }
 }
 
 .create-error {
@@ -1627,7 +1705,9 @@ textarea.field-input {
 
   &:hover {
     color: var(--primary);
-    .detail-author-name { text-decoration: underline; }
+    .detail-author-name {
+      text-decoration: underline;
+    }
   }
 }
 
@@ -1675,10 +1755,19 @@ textarea.field-input {
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
 
-  &:hover { border-color: var(--primary); color: var(--primary); }
-  &:active { transform: scale(0.97); }
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
 .save-btn {
@@ -1694,7 +1783,11 @@ textarea.field-input {
   font-weight: 700;
   color: var(--accent);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
 
   &:hover:not(:disabled) {
     background: rgba(0, 0, 0, 0.03);
@@ -1739,6 +1832,118 @@ textarea.field-input {
   &:hover {
     color: #d97706;
   }
+}
+
+// ── Edit destination (owner/admin) ───────────────────
+.edit-dest-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  padding: 7px 16px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+}
+
+.edit-form-actions {
+  display: flex;
+  gap: 8px;
+
+  .rf-cancel {
+    flex-shrink: 0;
+  }
+  .publish-btn {
+    flex: 1;
+    margin-top: 0;
+  }
+}
+
+// Remove / confirm controls overlaid on existing media thumbnails while editing.
+.media-thumb-wrap {
+  position: relative;
+}
+
+.media-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--danger);
+  }
+}
+
+.media-confirm {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: calc(var(--radius) - 2px);
+
+  button {
+    border: none;
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
+.media-confirm-yes {
+  background: var(--danger);
+  color: #fff;
+}
+
+.media-confirm-no {
+  background: #fff;
+  color: var(--text);
 }
 
 // ── Route points (in route detail) ───────────────────
@@ -1808,7 +2013,9 @@ textarea.field-input {
   padding: 2px 5px;
   border-radius: 4px;
   cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 
   &:hover {
     color: #fff;
@@ -1828,7 +2035,9 @@ textarea.field-input {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &:hover {
     background: var(--primary);
@@ -1942,7 +2151,9 @@ textarea.field-input {
   color: var(--text);
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 
   &:hover {
     border-color: var(--primary);

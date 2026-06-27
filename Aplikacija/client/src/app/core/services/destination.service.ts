@@ -57,8 +57,7 @@ export class DestinationService {
     return this.http.delete<void>(`${this.base}/${id}`, { withCredentials: true });
   }
 
-  // Link an existing point destination to a route. Returns the updated route
-  // (including its refreshed `points` list). Owner/admin only — enforced server-side.
+  // link an existing point to the route; returns the updated route
   addPoint(routeId: number, pointId: number) {
     return this.http.post<Destination>(
       `${this.base}/${routeId}/points`,
@@ -67,7 +66,7 @@ export class DestinationService {
     );
   }
 
-  // Unlink a point from a route. Returns the updated route.
+  // unlink a point from a route; returns the updated route.
   removePoint(routeId: number, pointId: number) {
     return this.http.delete<Destination>(`${this.base}/${routeId}/points/${pointId}`, {
       withCredentials: true,

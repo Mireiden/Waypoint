@@ -25,17 +25,70 @@ export class MapService {
   private markers: L.Marker[] = [];
   private routeLayers: L.Polyline[] = [];
 
-  // Create-mode state
+  // create mode
   private drawnLayer: L.Layer | null = null;
   private createCb: ((geometry: DestinationGeometry) => void) | null = null;
   private editCb: ((geometry: DestinationGeometry) => void) | null = null;
 
-  // Re-read the drawn shape's geometry after any edit (drag / add / remove vertex).
+  // checks if existing destinations react to clicks; disabled if in draw mode
+  private overlaysInteractive = true;
+
+  // created for the purpose of having a more natural feel when going into "edit" mode because the preview lines otherwise disappears
+  private previewLine: L.Polyline | null = null;
+
   private readonly handleEdit = (): void => {
     if (!this.drawnLayer) return;
     const feature = (this.drawnLayer as L.Polyline | L.Marker).toGeoJSON();
     this.editCb?.(feature.geometry as DestinationGeometry);
   };
+
+  // While editing a route, a click on empty map extends the polyline with a new vertex at its end.
+  // Clicks on Geoman's handles or the line itself are left to edit mode (move / insert / delete).
+  private readonly handleMapAppend = (e: L.LeafletMouseEvent): void => {
+    if (!(this.drawnLayer instanceof L.Polyline)) return;
+    const target = e.originalEvent.target as HTMLElement | null;
+    if (target?.closest('.leaflet-marker-icon') || target?.closest('.leaflet-interactive')) return;
+
+    const layer = this.drawnLayer as L.Polyline & { pm: L.PM.PMLayer };
+    const latlngs = layer.getLatLngs() as L.LatLng[];
+    layer.setLatLngs([...latlngs, e.latlng]);
+    // Refresh Geoman's edit handles so the new vertex becomes draggable.
+    layer.pm.disable();
+    layer.pm.enable({ removeVertexOn: 'click' });
+    layer.on('pm:edit', this.handleEdit);
+    layer.on('pm:vertexremoved', this.handleEdit);
+    layer.on('pm:markerdragend', this.handleEdit);
+    this.editCb?.(layer.toGeoJSON().geometry as DestinationGeometry);
+  };
+
+  // Track the cursor while editing a route and redraw the preview segment from the line's last vertex to it.
+  private readonly handlePreviewMove = (e: L.LeafletMouseEvent): void => {
+    if (!(this.drawnLayer instanceof L.Polyline) || !this.map) return;
+    const latlngs = this.drawnLayer.getLatLngs() as L.LatLng[];
+    if (latlngs.length === 0) return;
+    const last = latlngs[latlngs.length - 1];
+    const pts: L.LatLngTuple[] = [
+      [last.lat, last.lng],
+      [e.latlng.lat, e.latlng.lng],
+    ];
+    if (this.previewLine) {
+      this.previewLine.setLatLngs(pts);
+    } else {
+      this.previewLine = L.polyline(pts, {
+        color: ROUTE_COLOR,
+        weight: 3,
+        opacity: 0.6,
+        dashArray: '6 8',
+        interactive: false,
+        pmIgnore: true,
+      }).addTo(this.map);
+    }
+  };
+
+  private clearPreviewLine(): void {
+    this.previewLine?.remove();
+    this.previewLine = null;
+  }
 
   init(elementId: string): L.Map {
     if (this.map) {
@@ -75,7 +128,7 @@ export class MapService {
   ): void {
     this.clearMarkers();
     items.forEach((item) => {
-      const marker = L.marker([item.lat, item.lng])
+      const marker = L.marker([item.lat, item.lng], { interactive: this.overlaysInteractive })
         .bindTooltip(item.title, { direction: 'top' })
         .on('click', () => onClick(item.id));
       marker.addTo(this.map!);
@@ -88,14 +141,19 @@ export class MapService {
     this.markers = [];
   }
 
-  /** Draw route destinations as polylines. `latlngs` are [lat, lng] pairs (Leaflet order). */
+  // Draw route destinations as polylines. `latlngs` are [lat, lng] pairs (Leaflet order).
   setRoutes(
     items: { id: number; latlngs: L.LatLngTuple[]; title: string }[],
     onClick: (id: number) => void,
   ): void {
     this.clearRoutes();
     items.forEach((item) => {
-      const line = L.polyline(item.latlngs, { color: ROUTE_COLOR, weight: 4, opacity: 0.85 })
+      const line = L.polyline(item.latlngs, {
+        color: ROUTE_COLOR,
+        weight: 4,
+        opacity: 0.85,
+        interactive: this.overlaysInteractive,
+      })
         .bindTooltip(item.title, { direction: 'top', sticky: true })
         .on('click', () => onClick(item.id));
       line.addTo(this.map!);
@@ -108,10 +166,11 @@ export class MapService {
     this.routeLayers = [];
   }
 
-  /** Enable Geoman drawing for a point (marker) or route (line). */
+  // Enable Geoman drawing for a point (marker) or route (polyline).
   enableCreate(type: 'point' | 'route', onCreated: (geometry: DestinationGeometry) => void): void {
     if (!this.map) return;
     this.clearDrawn();
+    this.setOverlaysInteractive(false);
     this.createCb = onCreated;
     this.map.pm.enableDraw(type === 'point' ? 'Marker' : 'Line', {
       continueDrawing: false,
@@ -119,15 +178,27 @@ export class MapService {
     });
   }
 
-  /** Stop drawing and discard the in-progress shape (used on cancel). */
+  // Stop drawing and discard the in-progress shape (used on cancel)
   disableCreate(): void {
     if (!this.map) return;
     this.map.pm.disableDraw();
     this.clearDrawn();
+    this.setOverlaysInteractive(true);
     this.createCb = null;
   }
 
-  /** Remove the temporary drawn shape from the map. */
+  // Toggles the clickable state for destinations so that there are no accidental clicks on adjacent destinations
+  // while creating a new destination. This was done because of a bug that pulls the user inside of the destination detail
+  // tab and then the route could not be finished.
+  setOverlaysInteractive(interactive: boolean): void {
+    this.overlaysInteractive = interactive;
+    const pe = interactive ? '' : 'none';
+    [...this.markers, ...this.routeLayers].forEach((layer) => {
+      const el = (layer as { getElement?: () => HTMLElement | SVGElement | null }).getElement?.();
+      if (el) (el as HTMLElement).style.pointerEvents = pe;
+    });
+  }
+
   clearDrawn(): void {
     if (this.drawnLayer) {
       this.drawnLayer.remove();
@@ -135,11 +206,7 @@ export class MapService {
     }
   }
 
-  /**
-   * Close the drawn route into a loop by appending the first vertex to the end.
-   * Returns the updated geometry, or null if it can't be closed (not a polyline,
-   * fewer than 3 points, or already closed).
-   */
+  // Closes the loop by appending the first vertex to the last one (only applicable if there are more than 2 points in the polyline)
   closeDrawnLoop(): DestinationGeometry | null {
     if (!(this.drawnLayer instanceof L.Polyline)) return null;
     const latlngs = this.drawnLayer.getLatLngs() as L.LatLng[];
@@ -154,10 +221,6 @@ export class MapService {
     return feature.geometry as DestinationGeometry;
   }
 
-  /**
-   * Remove the last vertex of the drawn route. Returns the updated geometry,
-   * or null if it can't (not a polyline, or already at the 2-point minimum).
-   */
   undoLastDrawnPoint(): DestinationGeometry | null {
     if (!(this.drawnLayer instanceof L.Polyline)) return null;
     const latlngs = this.drawnLayer.getLatLngs() as L.LatLng[];
@@ -181,9 +244,23 @@ export class MapService {
     layer.on('pm:edit', this.handleEdit);
     layer.on('pm:vertexremoved', this.handleEdit);
     layer.on('pm:markerdragend', this.handleEdit);
+    // Routes can also be extended: clicking empty map appends a vertex. Borrow
+    // Geoman's own draw cursor (crosshair) so it reads as "click to keep drawing".
+    // The vertex/middle handles are restored to a grab/grabbing cursor via a global
+    // rule in styles.scss (`.geoman-draw-cursor .marker-icon`), since Geoman's
+    // crosshair rule would otherwise cover them too.
+    if (layer instanceof L.Polyline) {
+      this.map?.on('click', this.handleMapAppend);
+      this.map?.on('mousemove', this.handlePreviewMove);
+      this.map?.getContainer().classList.add('geoman-draw-cursor');
+    }
   }
 
   disableEditDrawn(): void {
+    this.map?.off('click', this.handleMapAppend);
+    this.map?.off('mousemove', this.handlePreviewMove);
+    this.clearPreviewLine();
+    this.map?.getContainer().classList.remove('geoman-draw-cursor');
     const layer = this.drawnLayer as (L.Polyline | L.Marker) & { pm?: L.PM.PMLayer };
     if (!layer?.pm) return;
     layer.pm.disable();
@@ -233,6 +310,8 @@ export class MapService {
     this.drawnLayer = null;
     this.createCb = null;
     this.editCb = null;
+    this.overlaysInteractive = true;
+    this.previewLine = null;
   }
 
   invalidateSize(): void {
