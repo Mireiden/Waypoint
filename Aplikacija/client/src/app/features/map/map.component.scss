@@ -1863,6 +1863,63 @@ textarea.field-input {
   }
 }
 
+// ── Admin: delete destination ────────────────────────
+.delete-dest {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.delete-dest-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--danger);
+  border-radius: 999px;
+  background: transparent;
+  padding: 7px 16px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--danger);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+
+  &:hover { background: var(--danger); color: #fff; }
+  &:active { transform: scale(0.97); }
+}
+
+.delete-dest-prompt {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.delete-dest-confirm {
+  display: flex;
+  gap: 8px;
+
+  button {
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:disabled { opacity: 0.6; cursor: default; }
+  }
+
+  .delete-confirm-yes { background: var(--danger); color: #fff; }
+  .delete-confirm-no {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+  }
+}
+
 .edit-form {
   display: flex;
   flex-direction: column;

@@ -1,11 +1,4 @@
-import {
-  Component,
-  OnDestroy,
-  inject,
-  signal,
-  computed,
-  afterNextRender,
-} from '@angular/core';
+import { Component, OnDestroy, inject, signal, computed, afterNextRender } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -39,6 +32,10 @@ import {
   MediaLightboxComponent,
 } from '../../shared/components/media-lightbox/media-lightbox.component';
 
+// Below this zoom the viewport covers more than ~a city, so the bbox query would
+// return an unbounded number of destinations. We stop loading markers/list results
+// there and prompt the user to zoom in. Tune higher to hide them sooner.
+const MIN_LIST_ZOOM = 13;
 
 @Component({
   selector: 'app-map',
@@ -174,6 +171,11 @@ export class MapComponent implements OnDestroy {
   // Which existing media item is showing a "remove?" confirmation.
   confirmRemoveMediaId = signal<number | null>(null);
 
+  // ─── Delete a destination (admin) ────────────────────
+  confirmingDeleteDest = signal(false);
+  deletingDest = signal(false);
+  deleteDestError = signal<string | null>(null);
+
   // Destination filters — drive the findMany query on the backend
   activeFilter = signal<'all' | 'point' | 'route'>('all');
   selectedCategory = signal<number | null>(null);
@@ -188,6 +190,9 @@ export class MapComponent implements OnDestroy {
   favoritesLoading = signal(false);
 
   readonly destinations = signal<DestinationSummary[]>([]);
+  // True when the map is zoomed out past MIN_LIST_ZOOM — we stop loading results
+  // and show a "zoom in" hint instead of an empty list.
+  readonly tooZoomedOut = signal(false);
 
   private readonly reload$ = new Subject<void>();
 
@@ -225,7 +230,15 @@ export class MapComponent implements OnDestroy {
     this.reload$
       .pipe(
         debounceTime(300),
-        switchMap(() => this.destinationService.getAll(this.buildQuery())),
+        switchMap(() => {
+          const zoom = this.mapService.getZoom();
+          const tooFar = zoom !== null && zoom < MIN_LIST_ZOOM;
+          this.tooZoomedOut.set(tooFar);
+          // Don't query the whole world when zoomed out — clear what's shown instead.
+          return tooFar
+            ? of([] as DestinationSummary[])
+            : this.destinationService.getAll(this.buildQuery());
+        }),
         takeUntilDestroyed(),
       )
       .subscribe({
@@ -366,6 +379,7 @@ export class MapComponent implements OnDestroy {
     this.confirmingReviewId.set(null);
     this.cancelReviewForm();
     this.cancelEditDest();
+    this.cancelDeleteDest();
     this.closeAddPoint();
     this.reportTarget.set(null);
     this.reviewService.getByDestinationId(summary.id).subscribe({
@@ -389,6 +403,7 @@ export class MapComponent implements OnDestroy {
     if (this.panelCollapsed()) this.panelCollapsed.set(false);
     this.reportTarget.set(null);
     this.cancelEditDest();
+    this.cancelDeleteDest();
     this.closeAddPoint();
 
     this.destinationService.getById(id).subscribe({
@@ -434,6 +449,7 @@ export class MapComponent implements OnDestroy {
     this.confirmingReviewId.set(null);
     this.cancelReviewForm();
     this.cancelEditDest();
+    this.cancelDeleteDest();
     this.closeAddPoint();
     this.reportTarget.set(null);
     this.mapService.zoomTo(13);
@@ -461,9 +477,7 @@ export class MapComponent implements OnDestroy {
     this.selectedDest.set({ ...dest, isFavorited: next });
     this.togglingFavorite.set(true);
 
-    const request = next
-      ? this.favoriteService.add(dest.id)
-      : this.favoriteService.remove(dest.id);
+    const request = next ? this.favoriteService.add(dest.id) : this.favoriteService.remove(dest.id);
 
     // Keep the saved list in sync when unsaving from the detail panel.
     if (!next) this.favorites.update((list) => list.filter((f) => f.id !== dest.id));
@@ -715,7 +729,9 @@ export class MapComponent implements OnDestroy {
   private failReview(err: unknown): void {
     this.reviewSubmitting.set(false);
     const apiError = (err as { error?: { error?: string } })?.error?.error;
-    this.reviewError.set(typeof apiError === 'string' ? apiError : 'Could not save your review. Try again.');
+    this.reviewError.set(
+      typeof apiError === 'string' ? apiError : 'Could not save your review. Try again.',
+    );
   }
 
   /** Keep the detail header's rating row in sync with the current review list. */
@@ -817,8 +833,7 @@ export class MapComponent implements OnDestroy {
 
   canPublish(): boolean {
     const g = this.drawnGeometry();
-    const geometryValid =
-      !!g && (g.type !== 'LineString' || g.coordinates.length >= 2);
+    const geometryValid = !!g && (g.type !== 'LineString' || g.coordinates.length >= 2);
     return (
       this.newTitle.trim().length > 0 &&
       this.newCategoryId !== null &&
@@ -957,13 +972,16 @@ export class MapComponent implements OnDestroy {
           // Upload any newly added photos, then merge them onto the updated record.
           if (this.editNewFiles.length) {
             this.destinationService.uploadMedia(dest.id, this.editNewFiles).subscribe({
-              next: (media) => this.finishEditDest({ ...updated, media: [...updated.media, ...media] }),
+              next: (media) =>
+                this.finishEditDest({ ...updated, media: [...updated.media, ...media] }),
               error: (err) => {
                 // The text fields saved; only the upload failed — keep the form open.
                 this.setSelectedPreservingFavorite(updated);
                 this.reload$.next();
                 this.editSaving.set(false);
-                this.editError.set(this.pointError(err, 'Saved, but the photos could not be uploaded.'));
+                this.editError.set(
+                  this.pointError(err, 'Saved, but the photos could not be uploaded.'),
+                );
               },
             });
           } else {
@@ -995,10 +1013,50 @@ export class MapComponent implements OnDestroy {
         this.confirmRemoveMediaId.set(null);
         const current = this.selectedDest();
         if (current?.id === dest.id) {
-          this.selectedDest.set({ ...current, media: current.media.filter((m) => m.id !== mediaId) });
+          this.selectedDest.set({
+            ...current,
+            media: current.media.filter((m) => m.id !== mediaId),
+          });
         }
       },
       error: (err) => this.editError.set(this.pointError(err, 'Could not remove the photo.')),
+    });
+  }
+
+  // ─── Delete a destination (admin) ────────────────────
+  requestDeleteDest(): void {
+    this.deleteDestError.set(null);
+    this.confirmingDeleteDest.set(true);
+  }
+
+  cancelDeleteDest(): void {
+    this.confirmingDeleteDest.set(false);
+    this.deleteDestError.set(null);
+  }
+
+  deleteSelectedDest(): void {
+    const dest = this.selectedDest();
+    if (!dest || this.deletingDest()) return;
+    this.deletingDest.set(true);
+    this.deleteDestError.set(null);
+    this.destinationService.delete(dest.id).subscribe({
+      next: () => {
+        this.deletingDest.set(false);
+        this.confirmingDeleteDest.set(false);
+        // Drop it from the owned set and any loaded lists, then return to the list.
+        this.ownedIds.update((set) => {
+          const next = new Set(set);
+          next.delete(dest.id);
+          return next;
+        });
+        this.favorites.update((list) => list.filter((f) => f.id !== dest.id));
+        this.backToList();
+        this.reload$.next();
+      },
+      error: (err) => {
+        this.deletingDest.set(false);
+        this.deleteDestError.set(this.pointError(err, 'Could not delete this destination.'));
+      },
     });
   }
 

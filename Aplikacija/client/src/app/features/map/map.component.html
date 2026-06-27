@@ -116,7 +116,12 @@
         } @else {
         <!-- Destination list -->
         <div class="dest-list">
-          @if (destinations().length === 0) {
+          @if (tooZoomedOut()) {
+            <div class="empty-state">
+              <span class="empty-icon">🔍</span>
+              <p>Zoom in to see destinations</p>
+            </div>
+          } @else if (destinations().length === 0) {
             <div class="empty-state">
               <span class="empty-icon">🗺</span>
               <p>No destinations found</p>
@@ -246,6 +251,36 @@
                       class="report-link"
                       (click)="openReport('destination', dest.id, dest.title)"
                     >⚑ Report this {{ dest.type }}</button>
+                  }
+
+                  <!-- Admin delete (with inline confirmation) -->
+                  @if (isAdmin()) {
+                    <div class="delete-dest">
+                      @if (confirmingDeleteDest()) {
+                        <p class="delete-dest-prompt">Delete this {{ dest.type }} permanently?</p>
+                        <div class="delete-dest-confirm">
+                          <button
+                            type="button"
+                            class="delete-confirm-yes"
+                            [disabled]="deletingDest()"
+                            (click)="deleteSelectedDest()"
+                          >{{ deletingDest() ? 'Deleting…' : 'Yes, delete' }}</button>
+                          <button
+                            type="button"
+                            class="delete-confirm-no"
+                            [disabled]="deletingDest()"
+                            (click)="cancelDeleteDest()"
+                          >Cancel</button>
+                        </div>
+                      } @else {
+                        <button type="button" class="delete-dest-btn" (click)="requestDeleteDest()">
+                          🗑 Delete this {{ dest.type }}
+                        </button>
+                      }
+                      @if (deleteDestError()) {
+                        <p class="create-error">{{ deleteDestError() }}</p>
+                      }
+                    </div>
                   }
                 }
 

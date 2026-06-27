@@ -288,6 +288,10 @@ export class MapService {
     this.map?.setZoom(zoom, { animate: true });
   }
 
+  getZoom(): number | null {
+    return this.map?.getZoom() ?? null;
+  }
+
   getMap(): L.Map | null {
     return this.map;
   }
