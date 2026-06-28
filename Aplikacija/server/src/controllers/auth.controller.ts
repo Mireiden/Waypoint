@@ -16,7 +16,7 @@ export const login = async (req: Request, res: Response) => {
     .cookie("jwt", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,
-      sameSite: "strict",
+      sameSite: config.server.env === "production" ? "none" : "strict",
       secure: config.server.env === `production`,
       path: "/api",
     })
@@ -33,7 +33,7 @@ export const register = async (req: Request, res: Response) => {
     .cookie("jwt", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,
-      sameSite: "strict",
+      sameSite: config.server.env === "production" ? "none" : "strict",
       secure: config.server.env === `production`,
       path: "/api",
     })
@@ -45,7 +45,7 @@ export const logout = (req: Request, res: Response) => {
   res
     .clearCookie("jwt", {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: config.server.env === "production" ? "none" : "strict",
       secure: config.server.env === "production",
       path: "/api",
     })
