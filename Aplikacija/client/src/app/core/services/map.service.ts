@@ -244,11 +244,9 @@ export class MapService {
     layer.on('pm:edit', this.handleEdit);
     layer.on('pm:vertexremoved', this.handleEdit);
     layer.on('pm:markerdragend', this.handleEdit);
-    // Routes can also be extended: clicking empty map appends a vertex. Borrow
-    // Geoman's own draw cursor (crosshair) so it reads as "click to keep drawing".
-    // The vertex/middle handles are restored to a grab/grabbing cursor via a global
-    // rule in styles.scss (`.geoman-draw-cursor .marker-icon`), since Geoman's
-    // crosshair rule would otherwise cover them too.
+    // Routes can be extended in the edit mode; extending a route is the same as drawing one
+    // We are using Geoman's crosshair cursor for drawing and moving vertices now activates
+    // grabbing hand cursor for better user experience (otherwise, the crosshair would have been used for everything)
     if (layer instanceof L.Polyline) {
       this.map?.on('click', this.handleMapAppend);
       this.map?.on('mousemove', this.handlePreviewMove);

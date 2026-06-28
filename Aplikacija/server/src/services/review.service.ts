@@ -6,7 +6,7 @@ import type {
 } from "../schemas/review.schema.js";
 
 import { Prisma } from "../../generated/prisma/client.js";
-import { NotFoundError } from "../errors/index.js";
+import { ForbiddenError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 import { assertOwnerOrAdmin } from "../utils/assertOwnerOrAdmin.js";
 import { removeUndefined } from "../utils/removeUndefined.js";
@@ -62,9 +62,12 @@ export const createReview = async (
 ) => {
   const dest = await prisma.destination.findUnique({
     where: { id: destinationId },
-    select: { id: true },
+    select: { id: true, userId: true },
   });
   if (!dest) throw new NotFoundError("Invalid destination ID");
+  if (dest.userId === userId) {
+    throw new ForbiddenError("You cannot review your own destination");
+  }
 
   const uploaded = await mediaService.uploadFiles(files);
 

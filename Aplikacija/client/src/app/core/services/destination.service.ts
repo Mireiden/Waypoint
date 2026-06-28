@@ -38,7 +38,7 @@ export class DestinationService {
 
   create(payload: CreateDestinationPayload, files: File[] = []) {
     // The backend create route is multipart (upload.array("files")) and expects
-    // `geometry` as a JSON string; the server parses it back via its jsonString() preprocessor.
+    // `geometry` as a JSON string; the server parses it with jsonString()
     const form = new FormData();
     form.append('type', payload.type);
     form.append('title', payload.title);

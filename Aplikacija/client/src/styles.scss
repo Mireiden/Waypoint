@@ -4,10 +4,20 @@
   padding: 0;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   font-family: 'Segoe UI', system-ui, sans-serif;
   background: var(--surface);
   color: var(--text);
+  // Pin the app to the viewport so the page itself can't scroll (which on
+  // mobile would drag the fixed navbar out of view). Internal panels scroll
+  // on their own. overscroll-behavior stops the iOS/Android rubber-band bounce.
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 // While editing a route we add Geoman's `geoman-draw-cursor` class to the map so

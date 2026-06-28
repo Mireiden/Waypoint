@@ -34,6 +34,11 @@
       padding: 0;
     }
   }
+
+  // While the user is dragging the sheet, follow the finger with no easing.
+  &.dragging {
+    transition: none;
+  }
 }
 
 .panel-header {
@@ -72,16 +77,18 @@
   overflow: hidden;
 }
 
-// Mobile drag handle (hidden on desktop)
 .panel-handle {
   display: none;
   flex-shrink: 0;
   justify-content: center;
   align-items: center;
   padding: 10px;
-  cursor: pointer;
+  cursor: grab;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  // Keep vertical drags as sheet gestures instead of letting the browser
+  // scroll the page underneath.
+  touch-action: none;
 
   &::before {
     content: '';
@@ -122,8 +129,6 @@
   }
 }
 
-// ─── Collapsed strip ───────────────────────────
-
 .collapsed-strip {
   display: flex;
   flex-direction: column;
@@ -152,8 +157,6 @@
   letter-spacing: 0.8px;
   color: var(--text-muted);
 }
-
-// ─── Filter tabs ───────────────────────────────
 
 .filter-tabs {
   flex-shrink: 0;
@@ -195,7 +198,6 @@
   }
 }
 
-// The "♥ Saved" tab reads as a favorite — pink accent instead of the green.
 .saved-tab {
   &.active {
     background: #e0245e;
@@ -433,7 +435,6 @@
   padding: 2px 7px;
 }
 
-//Detailed view for the sidebar
 .panel-detail {
   display: flex;
   flex-direction: column;
@@ -610,8 +611,6 @@
   color: var(--text-muted);
 }
 
-// Media gallery
-
 .media-section {
   border-top: 1px solid var(--border);
   padding: 16px;
@@ -634,7 +633,6 @@
   display: block;
 }
 
-// Clickable wrapper that opens the lightbox; resets default button chrome.
 .media-thumb-btn {
   position: relative;
   padding: 0;
@@ -657,7 +655,6 @@
   }
 }
 
-// Play affordance on video thumbnails (the videos no longer show native controls).
 .media-play {
   position: absolute;
   inset: 0;
@@ -670,8 +667,6 @@
   pointer-events: none;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
-
-// Reviews
 
 .reviews-section {
   border-top: 1px solid var(--border);
@@ -699,7 +694,6 @@
   padding: 1px 8px;
 }
 
-/* ── Write / edit a review ─────────────────── */
 .write-review-btn {
   width: 100%;
   margin-bottom: 12px;
@@ -823,7 +817,6 @@
     color: var(--primary);
   }
 
-  // Hide the browser's native file input; the label is the button.
   input {
     position: absolute;
     width: 1px;
@@ -1134,7 +1127,6 @@
   color: var(--text-muted);
 }
 
-//Map area
 .map-area {
   flex: 1;
   position: relative;
@@ -1147,7 +1139,6 @@
   height: 100%;
 }
 
-// Search overlay — centered relative to .map-area
 .search-overlay {
   position: absolute;
   top: 16px;
@@ -1277,8 +1268,6 @@
   text-overflow: ellipsis;
 }
 
-//Map dim overlay effect on sidebar expanded
-
 .map-dim-overlay {
   position: absolute;
   inset: 0;
@@ -1287,17 +1276,6 @@
   cursor: pointer;
   animation: fadeIn 0.2s ease;
 }
-
-/* @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-} */
-
-//Waypoints
 
 .waypoints-section {
   padding: 0 16px 16px;
@@ -1381,7 +1359,6 @@
     left: 0;
     right: 0;
     z-index: 20;
-    // Override desktop flex sizing
     flex: none !important;
     width: 100% !important;
     height: 72vh;
@@ -1390,13 +1367,11 @@
     border-top: 1px solid var(--border);
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.14);
-    // Collapsed = mostly hidden, peeking ~92px from bottom
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateY(0); // open by default CSS-wise; JS sets collapsed=true on mobile
+    transform: translateY(0);
 
     &.collapsed {
       transform: translateY(calc(100% - 92px));
-      // Cancel the desktop collapsed overrides
       flex: none !important;
       width: 100% !important;
 
@@ -1406,7 +1381,6 @@
       }
     }
 
-    // Expanded doesn't change width on mobile (already full width)
     &.expanded {
       flex: none !important;
       width: 100% !important;
@@ -1414,10 +1388,9 @@
   }
 
   .panel-handle {
-    display: flex; // visible on mobile
+    display: flex;
   }
 
-  // Desktop-only elements
   .panel-header {
     display: none;
   }
@@ -1426,13 +1399,11 @@
     display: none;
   }
 
-  // No dim overlay on mobile (panel already covers most of the screen)
   .map-dim-overlay {
     display: none;
   }
 }
 
-/* ─── Create destination ─────────────────────────── */
 .create-cta {
   flex-shrink: 0;
   display: flex;
@@ -1613,7 +1584,6 @@ textarea.field-input {
   font-size: 0.78rem;
 }
 
-// Pending (not-yet-uploaded) files, each removable.
 .file-list {
   list-style: none;
   margin: 6px 0 0;
@@ -1693,7 +1663,6 @@ textarea.field-input {
   }
 }
 
-// ── Report link (in destination detail) ──────────────
 .detail-author {
   display: inline-flex;
   align-items: center;
@@ -1834,7 +1803,6 @@ textarea.field-input {
   }
 }
 
-// ── Edit destination (owner/admin) ───────────────────
 .edit-dest-btn {
   display: inline-flex;
   align-items: center;
@@ -1863,7 +1831,6 @@ textarea.field-input {
   }
 }
 
-// ── Admin: delete destination ────────────────────────
 .delete-dest {
   margin-top: 14px;
   padding-top: 14px;
@@ -1883,10 +1850,18 @@ textarea.field-input {
   font-weight: 700;
   color: var(--danger);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    transform 0.1s;
 
-  &:hover { background: var(--danger); color: #fff; }
-  &:active { transform: scale(0.97); }
+  &:hover {
+    background: var(--danger);
+    color: #fff;
+  }
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
 .delete-dest-prompt {
@@ -1909,10 +1884,16 @@ textarea.field-input {
     font-weight: 700;
     cursor: pointer;
 
-    &:disabled { opacity: 0.6; cursor: default; }
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
   }
 
-  .delete-confirm-yes { background: var(--danger); color: #fff; }
+  .delete-confirm-yes {
+    background: var(--danger);
+    color: #fff;
+  }
   .delete-confirm-no {
     background: transparent;
     border: 1.5px solid var(--border);
@@ -1944,7 +1925,6 @@ textarea.field-input {
   }
 }
 
-// Remove / confirm controls overlaid on existing media thumbnails while editing.
 .media-thumb-wrap {
   position: relative;
 }
@@ -2003,7 +1983,6 @@ textarea.field-input {
   color: var(--text);
 }
 
-// ── Route points (in route detail) ───────────────────
 .points-section {
   border-top: 1px solid var(--border);
   padding: 16px;

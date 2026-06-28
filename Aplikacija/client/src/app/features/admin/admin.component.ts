@@ -42,7 +42,6 @@ export class AdminComponent implements OnInit {
 
   stats = signal<AdminStats | null>(null);
 
-  // ─── Reports (UC-11) ───────────────────────────────
   // Reports are grouped by the target they were filed against.
   reportedTargets = signal<ReportedTarget[]>([]);
   reportStatus = signal<ReportStatus>('pending');
@@ -62,7 +61,7 @@ export class AdminComponent implements OnInit {
   destinations = signal<AdminDestination[]>([]);
   categories = signal<CategoryWithCount[]>([]);
 
-  // ─── Destinations filtering / sorting ──────────────
+  // Destination filtering / sorting
   destType = signal<DestinationType | 'all'>('all');
   destCategory = signal<number | 'all'>('all');
   destQuery = signal('');
@@ -70,7 +69,7 @@ export class AdminComponent implements OnInit {
   destOrder = signal<SortOrder>('desc');
   private destSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // New-category form
+  // New category form
   newCategoryName = signal('');
   newCategoryIcon = signal<string>(CATEGORY_EMOJIS[0]);
   savingCategory = signal(false);
@@ -108,12 +107,9 @@ export class AdminComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
 
-  // When deep-linked to a specific reported user, expand their target once the
-  // reports list loads.
   private pendingFocusUser: number | null = null;
 
   ngOnInit() {
-    // Deep links (e.g. from a user profile): ?tab=reports&reportType=user&focusUser=<id>
     const qp = this.route.snapshot.queryParamMap;
     const tab = qp.get('tab') as AdminTab | null;
     const validTabs: AdminTab[] = ['overview', 'reports', 'users', 'destinations', 'categories'];
@@ -129,7 +125,6 @@ export class AdminComponent implements OnInit {
       this.setTab(tab);
     } else {
       // normal entry (no query param): the default tab is overview,
-      // setTab isn't called for here — so load its stats explicitly
       this.loadStats();
     }
   }
@@ -211,7 +206,7 @@ export class AdminComponent implements OnInit {
       error: () => this.loadingTargetReports.set(false),
     });
 
-    // The reported content itself, reusing the existing detail endpoints.
+    // The reported content itself
     this.loadingTargetContent.set(true);
     if (target.type === 'destination') {
       this.destinationService.getById(target.id).subscribe({
@@ -247,7 +242,7 @@ export class AdminComponent implements OnInit {
   }
 
   // Open the reported destination on the map. For a review, open its parent
-  // destination and highlight the review via query params.
+  // destination and highlight the review
   goToDestination(target: ReportedTarget) {
     if (target.type === 'destination') {
       this.router.navigate(['/map'], { queryParams: { dest: target.id } });
@@ -362,7 +357,6 @@ export class AdminComponent implements OnInit {
     if (tab === 'users' && this.users().length === 0) this.loadUsers();
     if (tab === 'destinations') {
       this.loadDestinations();
-      // Categories power the category filter dropdown.
       if (this.categories().length === 0) this.loadCategories();
     }
     if (tab === 'categories' && this.categories().length === 0) this.loadCategories();

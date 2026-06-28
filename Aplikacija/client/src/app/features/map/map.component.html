@@ -1,14 +1,20 @@
 <div class="explore-layout">
+  <aside
+    #sidePanel
+    class="side-panel"
+    [class.collapsed]="panelCollapsed()"
+    [class.expanded]="panelExpanded()"
+    [class.dragging]="dragging()"
+    [style.transform]="dragTranslate() !== null ? 'translateY(' + dragTranslate() + 'px)' : null"
+  >
+    <div
+      class="panel-handle"
+      (pointerdown)="onHandlePointerDown($event)"
+      (pointermove)="onHandlePointerMove($event)"
+      (pointerup)="onHandlePointerUp()"
+      (pointercancel)="onHandlePointerUp()"
+    ></div>
 
-  <!-- ══════════════════════════════════════════════
-       SIDE PANEL
-  ══════════════════════════════════════════════ -->
-  <aside class="side-panel" [class.collapsed]="panelCollapsed()" [class.expanded]="panelExpanded()">
-
-    <!-- Mobile drag handle -->
-    <div class="panel-handle" (click)="togglePanel()"></div>
-
-    <!-- Header -->
     <div class="panel-header">
       @if (!panelCollapsed()) {
         <div class="panel-header-inner">
@@ -19,20 +25,22 @@
           class="header-btn expand-btn"
           (click)="toggleExpanded()"
           [title]="panelExpanded() ? 'Shrink panel' : 'Expand panel'"
-        >{{ panelExpanded() ? '⤡' : '⤢' }}</button>
+        >
+          {{ panelExpanded() ? '⤡' : '⤢' }}
+        </button>
       }
       <button
         class="header-btn"
         (click)="togglePanel()"
         [title]="panelCollapsed() ? 'Open panel' : 'Collapse panel'"
-      >{{ panelCollapsed() ? '›' : '‹' }}</button>
+      >
+        {{ panelCollapsed() ? '›' : '‹' }}
+      </button>
     </div>
 
-    <!-- ─── Expanded content ───────────────────── -->
+    <!-- Expanded content -->
     @if (!panelCollapsed()) {
-
       @if (panelView() === 'list') {
-
         @if (auth.currentUser()) {
           <button class="create-cta" (click)="startCreate()">
             <span class="create-cta-icon">＋</span> Create destination
@@ -41,40 +49,54 @@
 
         <!-- Filter tabs -->
         <div class="filter-tabs">
-          <button class="filter-tab" [class.active]="!savedMode() && activeFilter() === 'all'" (click)="setFilter('all')">All</button>
-          <button class="filter-tab" [class.active]="!savedMode() && activeFilter() === 'route'" (click)="setFilter('route')">Routes</button>
-          <button class="filter-tab" [class.active]="!savedMode() && activeFilter() === 'point'" (click)="setFilter('point')">Points</button>
+          <button
+            class="filter-tab"
+            [class.active]="!savedMode() && activeFilter() === 'all'"
+            (click)="setFilter('all')"
+          >
+            All
+          </button>
+          <button
+            class="filter-tab"
+            [class.active]="!savedMode() && activeFilter() === 'route'"
+            (click)="setFilter('route')"
+          >
+            Routes
+          </button>
+          <button
+            class="filter-tab"
+            [class.active]="!savedMode() && activeFilter() === 'point'"
+            (click)="setFilter('point')"
+          >
+            Points
+          </button>
           @if (auth.currentUser()) {
-            <button class="filter-tab saved-tab" [class.active]="savedMode()" (click)="showSaved()">♥ Saved</button>
+            <button class="filter-tab saved-tab" [class.active]="savedMode()" (click)="showSaved()">
+              ♥ Saved
+            </button>
           }
         </div>
 
-        <!-- Category + sort (not applicable to the saved view) -->
         @if (!savedMode()) {
-        <div class="filter-selects">
-          <select
-            class="filter-select"
-            [ngModel]="selectedCategory()"
-            (ngModelChange)="setCategory($event)"
-          >
-            <option [ngValue]="null">All categories</option>
-            @for (cat of categories(); track cat.id) {
-              <option [ngValue]="cat.id">{{ categoryIcon(cat.icon) }} {{ cat.name }}</option>
-            }
-          </select>
-          <select
-            class="filter-select"
-            [ngModel]="sortBy()"
-            (ngModelChange)="setSort($event)"
-          >
-            <option value="recent">Newest</option>
-            <option value="rating">Top rated</option>
-            <option value="popular">Most reviewed</option>
-          </select>
-        </div>
+          <div class="filter-selects">
+            <select
+              class="filter-select"
+              [ngModel]="selectedCategory()"
+              (ngModelChange)="setCategory($event)"
+            >
+              <option [ngValue]="null">All categories</option>
+              @for (cat of categories(); track cat.id) {
+                <option [ngValue]="cat.id">{{ categoryIcon(cat.icon) }} {{ cat.name }}</option>
+              }
+            </select>
+            <select class="filter-select" [ngModel]="sortBy()" (ngModelChange)="setSort($event)">
+              <option value="recent">Newest</option>
+              <option value="rating">Top rated</option>
+              <option value="popular">Most reviewed</option>
+            </select>
+          </div>
         }
 
-        <!-- Saved list -->
         @if (savedMode()) {
           <div class="dest-list">
             @if (favoritesLoading()) {
@@ -105,7 +127,10 @@
                     </div>
                     @if (fav._count.reviews > 0) {
                       <div class="card-rating">
-                        <span class="review-count">{{ fav._count.reviews }} {{ fav._count.reviews === 1 ? 'review' : 'reviews' }}</span>
+                        <span class="review-count"
+                          >{{ fav._count.reviews }}
+                          {{ fav._count.reviews === 1 ? 'review' : 'reviews' }}</span
+                        >
                       </div>
                     }
                   </div>
@@ -114,76 +139,78 @@
             }
           </div>
         } @else {
-        <!-- Destination list -->
-        <div class="dest-list">
-          @if (tooZoomedOut()) {
-            <div class="empty-state">
-              <span class="empty-icon">🔍</span>
-              <p>Zoom in to see destinations</p>
-            </div>
-          } @else if (destinations().length === 0) {
-            <div class="empty-state">
-              <span class="empty-icon">🗺</span>
-              <p>No destinations found</p>
-            </div>
-          } @else {
-            @for (dest of destinations(); track dest.id) {
-              <button class="dest-card" (click)="selectDestination(dest)">
-                <div class="card-body">
-                  <h3 class="card-title">{{ dest.title }}</h3>
-                  <div class="card-tags">
-                    @if (dest.category) {
-                      <span class="tag cat-tag">{{ categoryIcon(dest.category.icon) }} {{ dest.category.name }}</span>
-                      <span class="tag-sep">·</span>
+          <div class="dest-list">
+            @if (tooZoomedOut()) {
+              <div class="empty-state">
+                <span class="empty-icon">🔍</span>
+                <p>Zoom in to see destinations</p>
+              </div>
+            } @else if (destinations().length === 0) {
+              <div class="empty-state">
+                <span class="empty-icon">🗺</span>
+                <p>No destinations found</p>
+              </div>
+            } @else {
+              @for (dest of destinations(); track dest.id) {
+                <button class="dest-card" (click)="selectDestination(dest)">
+                  <div class="card-body">
+                    <h3 class="card-title">{{ dest.title }}</h3>
+                    <div class="card-tags">
+                      @if (dest.category) {
+                        <span class="tag cat-tag"
+                          >{{ categoryIcon(dest.category.icon) }} {{ dest.category.name }}</span
+                        >
+                        <span class="tag-sep">·</span>
+                      }
+                      <span class="tag">{{ dest.type === 'route' ? 'Route' : 'Point' }}</span>
+                      @if (dest.city) {
+                        <span class="tag-sep">·</span>
+                        <span class="tag">{{ dest.city }}</span>
+                      }
+                    </div>
+                    @if (dest.reviewCount > 0) {
+                      <div class="card-rating">
+                        <span class="stars">
+                          @for (filled of stars(dest.avgRating); track $index) {
+                            <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
+                          }
+                        </span>
+                        <span class="rating-val">{{ dest.avgRating }}</span>
+                        <span class="review-count">({{ dest.reviewCount }})</span>
+                      </div>
                     }
-                    <span class="tag">{{ dest.type === 'route' ? 'Route' : 'Point' }}</span>
-                    @if (dest.city) {
-                      <span class="tag-sep">·</span>
-                      <span class="tag">{{ dest.city }}</span>
+                    @if (dest.description) {
+                      <p class="card-description">{{ dest.description }}</p>
                     }
                   </div>
-                  @if (dest.reviewCount > 0) {
-                    <div class="card-rating">
-                      <span class="stars">
-                        @for (filled of stars(dest.avgRating); track $index) {
-                          <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
-                        }
-                      </span>
-                      <span class="rating-val">{{ dest.avgRating }}</span>
-                      <span class="review-count">({{ dest.reviewCount }})</span>
-                    </div>
-                  }
-                  @if (dest.description) {
-                    <p class="card-description">{{ dest.description }}</p>
-                  }
-                </div>
-              </button>
+                </button>
+              }
             }
-          }
-        </div>
+          </div>
         }
       }
 
       @if (panelView() === 'detail') {
         @if (selectedDest(); as dest) {
           <div class="panel-detail">
-
             <button class="detail-back" (click)="backToList()">
               <span class="back-arrow">←</span>
               Back to list
             </button>
 
             <div class="detail-content">
-
-              <!-- Body -->
               <div class="detail-body">
                 <h2 class="detail-title">{{ dest.title }}</h2>
 
                 <div class="detail-badges">
                   @if (dest.category) {
-                    <span class="badge cat-badge">{{ categoryIcon(dest.category.icon) }} {{ dest.category.name }}</span>
+                    <span class="badge cat-badge"
+                      >{{ categoryIcon(dest.category.icon) }} {{ dest.category.name }}</span
+                    >
                   }
-                  <span class="badge type-badge">{{ dest.type === 'route' ? '🗺 Route' : '📍 Point' }}</span>
+                  <span class="badge type-badge">{{
+                    dest.type === 'route' ? '🗺 Route' : '📍 Point'
+                  }}</span>
                 </div>
 
                 <div class="detail-rating-row">
@@ -194,7 +221,10 @@
                       }
                     </span>
                     <strong class="detail-rating-val">{{ dest.avgRating }}</strong>
-                    <span class="detail-review-count">{{ dest.reviewCount }} {{ dest.reviewCount === 1 ? 'review' : 'reviews' }}</span>
+                    <span class="detail-review-count"
+                      >{{ dest.reviewCount }}
+                      {{ dest.reviewCount === 1 ? 'review' : 'reviews' }}</span
+                    >
                   } @else {
                     <span class="detail-review-count">0 reviews</span>
                   }
@@ -203,7 +233,11 @@
                 @if (dest.user; as author) {
                   <a class="detail-author" [routerLink]="['/users', author.id]">
                     @if (author.avatarUrl) {
-                      <img class="detail-author-avatar" [src]="author.avatarUrl" [alt]="author.name" />
+                      <img
+                        class="detail-author-avatar"
+                        [src]="author.avatarUrl"
+                        [alt]="author.name"
+                      />
                     } @else {
                       <span class="detail-author-avatar fallback">{{ author.name[0] }}</span>
                     }
@@ -250,11 +284,12 @@
                       type="button"
                       class="report-link"
                       (click)="openReport('destination', dest.id, dest.title)"
-                    >⚑ Report this {{ dest.type }}</button>
+                    >
+                      ⚑ Report this {{ dest.type }}
+                    </button>
                   }
 
-                  <!-- Admin delete (with inline confirmation) -->
-                  @if (isAdmin()) {
+                  @if (canModifySelected()) {
                     <div class="delete-dest">
                       @if (confirmingDeleteDest()) {
                         <p class="delete-dest-prompt">Delete this {{ dest.type }} permanently?</p>
@@ -264,13 +299,17 @@
                             class="delete-confirm-yes"
                             [disabled]="deletingDest()"
                             (click)="deleteSelectedDest()"
-                          >{{ deletingDest() ? 'Deleting…' : 'Yes, delete' }}</button>
+                          >
+                            {{ deletingDest() ? 'Deleting…' : 'Yes, delete' }}
+                          </button>
                           <button
                             type="button"
                             class="delete-confirm-no"
                             [disabled]="deletingDest()"
                             (click)="cancelDeleteDest()"
-                          >Cancel</button>
+                          >
+                            Cancel
+                          </button>
                         </div>
                       } @else {
                         <button type="button" class="delete-dest-btn" (click)="requestDeleteDest()">
@@ -284,7 +323,6 @@
                   }
                 }
 
-                <!-- Inline edit form (owner/admin) -->
                 @if (editingDest()) {
                   <div class="edit-form">
                     <label class="field">
@@ -297,22 +335,38 @@
                       <select class="field-input" [(ngModel)]="editCategoryId">
                         <option [ngValue]="null" disabled>Choose a category…</option>
                         @for (cat of categories(); track cat.id) {
-                          <option [ngValue]="cat.id">{{ categoryIcon(cat.icon) }} {{ cat.name }}</option>
+                          <option [ngValue]="cat.id">
+                            {{ categoryIcon(cat.icon) }} {{ cat.name }}
+                          </option>
                         }
                       </select>
                     </label>
 
                     <label class="field">
                       <span class="field-label">Description</span>
-                      <textarea class="field-input" rows="3" [(ngModel)]="editDescription"></textarea>
+                      <textarea
+                        class="field-input"
+                        rows="3"
+                        [(ngModel)]="editDescription"
+                      ></textarea>
                     </label>
 
                     <label class="field">
                       <span class="field-label">Add photos</span>
-                      <input type="file" class="field-input file-input" multiple accept="image/*,video/*" (change)="onEditFiles($event)" />
+                      <input
+                        type="file"
+                        class="field-input file-input"
+                        multiple
+                        accept="image/*,video/*"
+                        (change)="onEditFiles($event)"
+                      />
                       @if (editNewFiles.length) {
                         <ul class="file-list">
-                          @for (f of editNewFiles; track f.name + f.size + f.lastModified; let i = $index) {
+                          @for (
+                            f of editNewFiles;
+                            track f.name + f.size + f.lastModified;
+                            let i = $index
+                          ) {
                             <li class="file-chip">
                               <span class="file-chip-name">{{ f.name }}</span>
                               <button
@@ -320,7 +374,9 @@
                                 class="file-chip-remove"
                                 (click)="removeEditFile(i)"
                                 aria-label="Remove file"
-                              >✕</button>
+                              >
+                                ✕
+                              </button>
                             </li>
                           }
                         </ul>
@@ -332,19 +388,22 @@
                     }
 
                     <div class="edit-form-actions">
-                      <button type="button" class="rf-cancel" (click)="cancelEditDest()">Cancel</button>
+                      <button type="button" class="rf-cancel" (click)="cancelEditDest()">
+                        Cancel
+                      </button>
                       <button
                         type="button"
                         class="publish-btn"
                         [disabled]="!canSaveEdit()"
                         (click)="saveEditDest()"
-                      >{{ editSaving() ? 'Saving…' : 'Save changes' }}</button>
+                      >
+                        {{ editSaving() ? 'Saving…' : 'Save changes' }}
+                      </button>
                     </div>
                   </div>
                 }
               </div>
 
-              <!-- Points along the route -->
               @if (dest.type === 'route') {
                 <div class="points-section">
                   <h3 class="reviews-title">
@@ -369,7 +428,9 @@
                               title="Remove from route"
                               aria-label="Remove from route"
                               (click)="removePointFromRoute(point.id)"
-                            >✕</button>
+                            >
+                              ✕
+                            </button>
                           }
                         </li>
                       }
@@ -389,7 +450,9 @@
                           class="add-point-create"
                           type="button"
                           (click)="startCreatePointForRoute()"
-                        >＋ Create a new point on the map</button>
+                        >
+                          ＋ Create a new point on the map
+                        </button>
 
                         <div class="add-point-or"><span>or pick an existing one</span></div>
 
@@ -429,7 +492,9 @@
                             </p>
                           }
                         </div>
-                        <button class="point-add-cancel" type="button" (click)="closeAddPoint()">Done</button>
+                        <button class="point-add-cancel" type="button" (click)="closeAddPoint()">
+                          Done
+                        </button>
                       </div>
                     } @else {
                       <button class="add-point-btn" type="button" (click)="openAddPoint()">
@@ -440,7 +505,6 @@
                 </div>
               }
 
-              <!-- Media -->
               @if (dest.media.length > 0) {
                 <div class="media-section">
                   <h3 class="reviews-title">Photos & Videos</h3>
@@ -463,8 +527,20 @@
                         @if (editingDest()) {
                           @if (confirmRemoveMediaId() === item.id) {
                             <span class="media-confirm">
-                              <button class="media-confirm-yes" type="button" (click)="deleteExistingMedia(item.id)">Remove</button>
-                              <button class="media-confirm-no" type="button" (click)="confirmRemoveMediaId.set(null)">Keep</button>
+                              <button
+                                class="media-confirm-yes"
+                                type="button"
+                                (click)="deleteExistingMedia(item.id)"
+                              >
+                                Remove
+                              </button>
+                              <button
+                                class="media-confirm-no"
+                                type="button"
+                                (click)="confirmRemoveMediaId.set(null)"
+                              >
+                                Keep
+                              </button>
                             </span>
                           } @else {
                             <button
@@ -473,7 +549,9 @@
                               title="Remove photo"
                               aria-label="Remove photo"
                               (click)="confirmRemoveMediaId.set(item.id)"
-                            >✕</button>
+                            >
+                              ✕
+                            </button>
                           }
                         }
                       </div>
@@ -482,7 +560,6 @@
                 </div>
               }
 
-              <!-- Reviews -->
               <div class="reviews-section">
                 <h3 class="reviews-title">
                   Reviews
@@ -491,7 +568,6 @@
                   }
                 </h3>
 
-                <!-- Write / edit a review -->
                 @if (showReviewForm()) {
                   <div class="review-form">
                     <div class="rf-stars">
@@ -502,7 +578,9 @@
                           [class.on]="reviewRating() >= n"
                           (click)="reviewRating.set(n)"
                           [attr.aria-label]="n + ' stars'"
-                        >★</button>
+                        >
+                          ★
+                        </button>
                       }
                     </div>
                     <textarea
@@ -525,7 +603,8 @@
                         </label>
                         @if (reviewFiles.length > 0) {
                           <span class="rf-file-count">
-                            {{ reviewFiles.length }} file{{ reviewFiles.length === 1 ? '' : 's' }} selected
+                            {{ reviewFiles.length }} file{{ reviewFiles.length === 1 ? '' : 's' }}
+                            selected
                           </span>
                         }
                       </div>
@@ -534,14 +613,22 @@
                       <p class="rf-error">{{ reviewError() }}</p>
                     }
                     <div class="rf-actions">
-                      <button type="button" class="rf-cancel" (click)="cancelReviewForm()">Cancel</button>
+                      <button type="button" class="rf-cancel" (click)="cancelReviewForm()">
+                        Cancel
+                      </button>
                       <button
                         type="button"
                         class="rf-submit"
                         [disabled]="reviewRating() < 1 || reviewSubmitting()"
                         (click)="submitReview()"
                       >
-                        {{ reviewSubmitting() ? 'Saving…' : (editingReviewId() ? 'Update review' : 'Post review') }}
+                        {{
+                          reviewSubmitting()
+                            ? 'Saving…'
+                            : editingReviewId()
+                              ? 'Update review'
+                              : 'Post review'
+                        }}
                       </button>
                     </div>
                   </div>
@@ -550,9 +637,7 @@
                     ★ Write a review
                   </button>
                 } @else if (!auth.currentUser()) {
-                  <p class="review-signin">
-                    <a routerLink="/auth">Sign in</a> to leave a review.
-                  </p>
+                  <p class="review-signin"><a routerLink="/auth">Sign in</a> to leave a review.</p>
                 }
 
                 @if (selectedReviews().length > 0) {
@@ -566,7 +651,11 @@
                         <div class="review-left">
                           <a class="review-identity" [routerLink]="['/users', review.user.id]">
                             @if (review.user.avatarUrl) {
-                              <img class="review-avatar" [src]="review.user.avatarUrl" [alt]="review.user.name" />
+                              <img
+                                class="review-avatar"
+                                [src]="review.user.avatarUrl"
+                                [alt]="review.user.name"
+                              />
                             } @else {
                               <span class="review-avatar fallback">{{ review.user.name[0] }}</span>
                             }
@@ -582,7 +671,7 @@
                               <span [class.filled]="filled">{{ filled ? '★' : '☆' }}</span>
                             }
                           </span>
-                          <span class="review-date">{{ review.createdAt | date:'MMM y' }}</span>
+                          <span class="review-date">{{ review.createdAt | date: 'MMM y' }}</span>
                           @if (confirmingReviewId() === review.id) {
                             <span class="review-confirm">
                               <span class="review-confirm-label">Delete?</span>
@@ -590,12 +679,16 @@
                                 class="review-confirm-yes"
                                 type="button"
                                 (click)="deleteReview(review.id)"
-                              >Yes</button>
+                              >
+                                Yes
+                              </button>
                               <button
                                 class="review-confirm-no"
                                 type="button"
                                 (click)="confirmingReviewId.set(null)"
-                              >No</button>
+                              >
+                                No
+                              </button>
                             </span>
                           } @else {
                             <span class="review-actions">
@@ -604,7 +697,9 @@
                                   class="review-edit"
                                   type="button"
                                   (click)="openReviewForm(review)"
-                                >Edit</button>
+                                >
+                                  Edit
+                                </button>
                               }
                               @if (auth.currentUser() && !isOwnReview(review) && !isAdmin()) {
                                 <button
@@ -612,8 +707,12 @@
                                   type="button"
                                   title="Report review"
                                   aria-label="Report review"
-                                  (click)="openReport('review', review.id, 'Review by ' + review.user.name)"
-                                >⚑</button>
+                                  (click)="
+                                    openReport('review', review.id, 'Review by ' + review.user.name)
+                                  "
+                                >
+                                  ⚑
+                                </button>
                               }
                               @if (isOwnReview(review) || isAdmin()) {
                                 <button
@@ -622,7 +721,9 @@
                                   title="Delete review"
                                   aria-label="Delete review"
                                   (click)="confirmingReviewId.set(review.id)"
-                                >✕</button>
+                                >
+                                  ✕
+                                </button>
                               }
                             </span>
                           }
@@ -656,7 +757,6 @@
                   <p class="reviews-empty">No reviews yet. Be the first to share your thoughts.</p>
                 }
               </div>
-
             </div>
           </div>
         }
@@ -673,33 +773,47 @@
             {{ creatingForRoute() ? 'New point for this route' : 'New destination' }}
           </h2>
 
-          <!-- Step 1: choose type (locked to point when adding to a route) -->
           @if (!creatingForRoute()) {
             <div class="create-type-row">
               <button
                 class="type-choice"
                 [class.active]="createType() === 'point'"
                 (click)="chooseCreateType('point')"
-              >📍 Point</button>
+              >
+                📍 Point
+              </button>
               <button
                 class="type-choice"
                 [class.active]="createType() === 'route'"
                 (click)="chooseCreateType('route')"
-              >🗺 Route</button>
+              >
+                🗺 Route
+              </button>
             </div>
           }
 
-          <!-- Step 2: drawing hint / status -->
           @if (createType()) {
             <div class="draw-status" [class.done]="drawnGeometry()">
               @if (!drawnGeometry()) {
                 @if (createType() === 'point') {
                   <span>Click on the map to drop the point.</span>
                 } @else {
-                  <span>Click on the map to add points; double-click to finish the route (min. 2 points).</span>
+                  <span
+                    >Click on the map to add points; double-click to finish the route (min. 2
+                    points).</span
+                  >
                 }
               } @else {
-                <span>✓ {{ createType() === 'point' ? 'Point placed' : (isLoopClosed() ? 'Loop closed' : 'Route drawn') }}.</span>
+                <span
+                  >✓
+                  {{
+                    createType() === 'point'
+                      ? 'Point placed'
+                      : isLoopClosed()
+                        ? 'Loop closed'
+                        : 'Route drawn'
+                  }}.</span
+                >
                 <div class="draw-actions">
                   @if (createType() === 'route' && canUndo()) {
                     <button class="redraw-btn" (click)="undoLastPoint()">Undo point</button>
@@ -715,17 +829,24 @@
                   <button class="redraw-btn" (click)="redraw()">Redraw</button>
                 </div>
                 @if (editing()) {
-                  <small class="edit-hint">Drag points to move, tap a point to delete, use the middle handles to insert. Click empty map to extend the route.</small>
+                  <small class="edit-hint"
+                    >Drag points to move, tap a point to delete, use the middle handles to insert.
+                    Click empty map to extend the route.</small
+                  >
                 }
               }
             </div>
           }
 
-          <!-- Step 3: metadata form -->
           <div class="create-form">
             <label class="field">
               <span class="field-label">Title <span class="req">*</span></span>
-              <input type="text" class="field-input" [(ngModel)]="newTitle" placeholder="e.g. Kalemegdan walk" />
+              <input
+                type="text"
+                class="field-input"
+                [(ngModel)]="newTitle"
+                placeholder="e.g. Kalemegdan walk"
+              />
             </label>
 
             <label class="field">
@@ -740,12 +861,23 @@
 
             <label class="field">
               <span class="field-label">Description</span>
-              <textarea class="field-input" rows="3" [(ngModel)]="newDescription" placeholder="Tell people about this place…"></textarea>
+              <textarea
+                class="field-input"
+                rows="3"
+                [(ngModel)]="newDescription"
+                placeholder="Tell people about this place…"
+              ></textarea>
             </label>
 
             <label class="field">
               <span class="field-label">Photos</span>
-              <input type="file" class="field-input file-input" multiple accept="image/*,video/*" (change)="onFilesSelected($event)" />
+              <input
+                type="file"
+                class="field-input file-input"
+                multiple
+                accept="image/*,video/*"
+                (change)="onFilesSelected($event)"
+              />
               @if (newFiles.length) {
                 <ul class="file-list">
                   @for (f of newFiles; track f.name + f.size + f.lastModified; let i = $index) {
@@ -756,7 +888,9 @@
                         class="file-chip-remove"
                         (click)="removeNewFile(i)"
                         aria-label="Remove file"
-                      >✕</button>
+                      >
+                        ✕
+                      </button>
                     </li>
                   }
                 </ul>
@@ -779,21 +913,18 @@
       }
     }
 
-    <!-- ─── Collapsed strip ──────────────────── -->
     @if (panelCollapsed()) {
       <div class="collapsed-strip">
         <span class="collapsed-count">{{ destinations().length }}</span>
         <span class="collapsed-label">spots</span>
       </div>
     }
-
   </aside>
 
   <!-- ══════════════════════════════════════════════
        MAP AREA
   ══════════════════════════════════════════════ -->
   <div class="map-area">
-
     @if (panelExpanded()) {
       <div class="map-dim-overlay" (click)="toggleExpanded()"></div>
     }
@@ -819,7 +950,9 @@
           @for (result of suggestions(); track result.place_id) {
             <li class="suggestion-item" (mousedown)="selectLocation(result)">
               <span class="suggestion-name">{{ result.display_name.split(',')[0] }}</span>
-              <span class="suggestion-sub">{{ result.display_name.split(',').slice(1, 3).join(',') }}</span>
+              <span class="suggestion-sub">{{
+                result.display_name.split(',').slice(1, 3).join(',')
+              }}</span>
             </li>
           }
         </ul>
@@ -829,9 +962,6 @@
     <div id="map" class="leaflet-map"></div>
   </div>
 
-  <!-- ══════════════════════════════════════════════
-       REPORT DIALOG (UC-10)
-  ══════════════════════════════════════════════ -->
   @if (reportTarget(); as rt) {
     <app-report-dialog
       [targetType]="rt.type"
@@ -841,15 +971,7 @@
     />
   }
 
-  <!-- ══════════════════════════════════════════════
-       MEDIA LIGHTBOX
-  ══════════════════════════════════════════════ -->
   @if (lightbox(); as lb) {
-    <app-media-lightbox
-      [items]="lb.items"
-      [startIndex]="lb.index"
-      (close)="closeLightbox()"
-    />
+    <app-media-lightbox [items]="lb.items" [startIndex]="lb.index" (close)="closeLightbox()" />
   }
-
 </div>

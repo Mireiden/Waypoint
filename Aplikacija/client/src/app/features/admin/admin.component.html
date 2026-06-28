@@ -1,10 +1,9 @@
 <div class="admin-layout">
-
   <!-- ══════════════════════════════════════════════
        SIDEBAR NAV
   ══════════════════════════════════════════════ -->
   @if (sidebarOpen()) {
-  <div class="nav-backdrop" (click)="sidebarOpen.set(false)"></div>
+    <div class="nav-backdrop" (click)="sidebarOpen.set(false)"></div>
   }
 
   <aside class="admin-nav" [class.open]="sidebarOpen()">
@@ -13,29 +12,41 @@
       <span class="brand-label">Admin</span>
     </div>
     <nav>
-      <button class="nav-item" [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">
+      <button
+        class="nav-item"
+        [class.active]="activeTab() === 'overview'"
+        (click)="setTab('overview')"
+      >
         <span class="nav-icon">▦</span> Overview
       </button>
-      <button class="nav-item" [class.active]="activeTab() === 'reports'" (click)="setTab('reports')">
+      <button
+        class="nav-item"
+        [class.active]="activeTab() === 'reports'"
+        (click)="setTab('reports')"
+      >
         <span class="nav-icon">⚑</span> Reports
       </button>
       <button class="nav-item" [class.active]="activeTab() === 'users'" (click)="setTab('users')">
         <span class="nav-icon">◉</span> Users
       </button>
-      <button class="nav-item" [class.active]="activeTab() === 'destinations'" (click)="setTab('destinations')">
+      <button
+        class="nav-item"
+        [class.active]="activeTab() === 'destinations'"
+        (click)="setTab('destinations')"
+      >
         <span class="nav-icon">◎</span> Destinations
       </button>
-      <button class="nav-item" [class.active]="activeTab() === 'categories'" (click)="setTab('categories')">
+      <button
+        class="nav-item"
+        [class.active]="activeTab() === 'categories'"
+        (click)="setTab('categories')"
+      >
         <span class="nav-icon">◳</span> Categories
       </button>
     </nav>
   </aside>
 
-  <!-- ══════════════════════════════════════════════
-       MAIN CONTENT
-  ══════════════════════════════════════════════ -->
   <main class="admin-main">
-
     <div class="mobile-topbar">
       <button class="hamburger" (click)="sidebarOpen.set(true)" aria-label="Open menu">
         <span></span><span></span><span></span>
@@ -44,17 +55,15 @@
     </div>
 
     @if (loading()) {
-    <div class="loading-bar"></div>
+      <div class="loading-bar"></div>
     }
 
     @switch (activeTab()) {
-
-    <!-- ─── Overview ──────────────────────────── -->
-    @case ('overview') {
-    <div class="section-header">
-      <h1 class="section-title">Overview</h1>
-    </div>
-    @if (stats(); as s) {
+      @case ('overview') {
+        <div class="section-header">
+          <h1 class="section-title">Overview</h1>
+        </div>
+        @if (stats(); as s) {
           <div class="stats-grid">
             <div class="stat-card">
               <span class="stat-value">{{ s.users }}</span>
@@ -74,467 +83,532 @@
             </div>
           </div>
         }
-    }
+      }
 
-    <!-- ─── Reports ───────────────────────────── -->
-    @case ('reports') {
-    <div class="section-header">
-      <h1 class="section-title">Reports</h1>
-      <span class="count-badge">{{ reportedTargets().length }}</span>
-    </div>
-
-    <div class="report-filters">
-      <div class="report-filter-group">
-        @for (s of ['pending', 'resolved', 'dismissed']; track s) {
-        <button
-          type="button"
-          class="report-chip"
-          [class.active]="reportStatus() === s"
-          (click)="setReportStatus($any(s))"
-        >{{ s | titlecase }}</button>
-        }
-      </div>
-      <div class="report-filter-selects">
-        <select class="form-input" [ngModel]="reportType()" (ngModelChange)="setReportType($event)">
-          <option value="all">All targets</option>
-          <option value="destination">Destinations</option>
-          <option value="review">Reviews</option>
-          <option value="user">Users</option>
-        </select>
-        <select class="form-input" [ngModel]="reportSort()" (ngModelChange)="setReportSort($event)">
-          <option value="mostReports">Most reported</option>
-          <option value="newest">Newest</option>
-          <option value="oldest">Oldest</option>
-        </select>
-      </div>
-    </div>
-
-    @if (reportedTargets().length === 0 && !loading()) {
-    <div class="empty-state">No {{ reportStatus() }} reports</div>
-    } @else {
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Target</th>
-            <th>Reports</th>
-            <th>Latest</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (target of reportedTargets(); track targetKey(target)) {
-          <tr [class.row-expanded]="openTargetKey() === targetKey(target)">
-            <td class="cell-key cell-head" data-label="Target" (click)="toggleTarget(target)">
-              <span class="target-badge target-badge--{{ target.type }}">{{ target.type | titlecase }}</span>
-              <span class="cell-head-text">#{{ target.id }}</span>
-              <button type="button" class="row-toggle" aria-label="Toggle details">⌄</button>
-            </td>
-            <td class="muted" data-label="Reports">{{ target.count }}</td>
-            <td class="muted" data-label="Latest">{{ target.latest | date:'medium' }}</td>
-            <td class="cell-actions" data-label="Actions">
-              <div class="action-btns">
-                <button class="btn btn--view" (click)="toggleTarget(target)">
-                  {{ openTargetKey() === targetKey(target) ? 'Hide' : 'View' }}
-                </button>
-                @if (reportStatus() !== 'resolved') {
-                <button class="btn btn--approve" (click)="resolveTarget(target, 'resolved')">Resolve</button>
-                }
-                @if (reportStatus() !== 'dismissed') {
-                <button class="btn btn--decline" (click)="resolveTarget(target, 'dismissed')">Dismiss</button>
-                }
-              </div>
-            </td>
-          </tr>
-
-          @if (openTargetKey() === targetKey(target)) {
-          <tr class="report-detail-row row-expanded">
-            <td colspan="4">
-
-              <!-- What was reported -->
-              @if (loadingTargetContent()) {
-              <p class="report-detail-loading">Loading content…</p>
-              } @else if (targetDestination(); as d) {
-              <div class="reported-target">
-                <div class="reported-target-head">
-                  <span class="reported-target-kind">Reported destination</span>
-                  <button class="btn btn--view" (click)="goToDestination(target)">Go to destination →</button>
-                </div>
-                <p class="reported-target-title">{{ d.title }}</p>
-                @if (d.city || d.country) {
-                <p class="reported-target-sub">{{ [d.city, d.country].join(', ') }}</p>
-                }
-                @if (d.description) {
-                <p class="reported-target-text">{{ d.description }}</p>
-                }
-              </div>
-              } @else if (targetReview(); as r) {
-              <div class="reported-target">
-                <div class="reported-target-head">
-                  <span class="reported-target-kind">Reported review</span>
-                  @if (r.destination) {
-                  <button class="btn btn--view" (click)="goToDestination(target)">Go to the review →</button>
-                  }
-                </div>
-                <div class="reported-review-meta">
-                  <span class="reported-review-stars">
-                    @for (filled of stars(r.rating); track $index) {
-                    <span [class.on]="filled">★</span>
-                    }
-                  </span>
-                  <span class="reported-review-author">by {{ r.user.name }}</span>
-                  @if (r.destination) {
-                  <span class="reported-review-on">on {{ r.destination.title }}</span>
-                  }
-                </div>
-                @if (r.comment) {
-                <p class="reported-target-text">“{{ r.comment }}”</p>
-                } @else {
-                <p class="reported-target-sub">(no comment)</p>
-                }
-              </div>
-              } @else if (targetUser(); as u) {
-              <div class="reported-target">
-                <div class="reported-target-head">
-                  <span class="reported-target-kind">Reported user</span>
-                  <button class="btn btn--view" (click)="goToUser(u.id)">View profile →</button>
-                </div>
-                <div class="reported-user">
-                  @if (u.avatarUrl) {
-                  <img class="reported-user-avatar" [src]="u.avatarUrl" [alt]="u.name" />
-                  } @else {
-                  <span class="reported-user-avatar fallback">{{ u.name[0] }}</span>
-                  }
-                  <div class="reported-user-info">
-                    <p class="reported-target-title">{{ u.name }}</p>
-                    <p class="reported-target-sub">
-                      @if (u.email) {<span>{{ u.email }}</span>}
-                      @if (u.role) {<span class="reported-user-role">{{ u.role }}</span>}
-                      <span>Joined {{ u.createdAt | date:'mediumDate' }}</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-              }
-
-              <!-- Why it was reported -->
-              <h4 class="report-detail-subtitle">Reports</h4>
-              @if (loadingTargetReports()) {
-              <p class="report-detail-loading">Loading reports…</p>
-              } @else {
-              <ul class="report-detail-list">
-                @for (report of targetReports(); track report.id) {
-                <li class="report-detail-item">
-                  <div class="report-detail-head">
-                    <span class="report-detail-reason">{{ report.reason | titlecase }}</span>
-                    <span class="report-detail-meta">
-                      {{ report.user.name }} · {{ report.createdAt | date:'mediumDate' }}
-                    </span>
-                  </div>
-                  @if (report.note) {
-                  <p class="report-detail-note">{{ report.note }}</p>
-                  }
-                </li>
-                }
-              </ul>
-              }
-            </td>
-          </tr>
-          }
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-    }
-
-    <!-- ─── Users ─────────────────────────────── -->
-    @case ('users') {
-    <div class="section-header">
-      <h1 class="section-title">Users</h1>
-      <span class="count-badge">{{ users().length }}</span>
-    </div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Destinations</th>
-            <th>Reviews</th>
-            <th>Reports</th>
-            <th>Joined</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of users(); track user.id) {
-          <tr [class.row-expanded]="isExpanded(user.id)">
-            <td class="cell-key cell-head" data-label="Name" (click)="toggleRow(user.id)">
-              <span class="cell-head-text">{{ user.name }}</span>
-              <button type="button" class="row-toggle" aria-label="Toggle details">⌄</button>
-            </td>
-            <td class="muted" data-label="Email">{{ user.email }}</td>
-            <td class="cell-key" data-label="Role">
-              <span class="role-badge" [class.role-badge--admin]="user.role === 'admin'">{{ user.role }}</span>
-            </td>
-            <td class="muted" data-label="Destinations">{{ user._count.destinations }}</td>
-            <td class="muted" data-label="Reviews">{{ user._count.reviews }}</td>
-            <td class="muted" data-label="Reports">{{ user._count.reports }}</td>
-            <td class="muted" data-label="Joined">{{ user.createdAt | date:'mediumDate' }}</td>
-            <td class="cell-actions" data-label="Actions">
-              <div class="action-btns">
-                <button class="btn" (click)="viewProfile(user.id)">Profile</button>
-                @if (user.id !== auth.currentUser()?.id) {
-                  @if (confirmingUserId() === user.id) {
-                    <span class="confirm-label">Delete?</span>
-                    <button class="btn btn--delete" (click)="deleteUser(user.id)">Yes</button>
-                    <button class="btn" (click)="confirmingUserId.set(null)">No</button>
-                  } @else {
-                    <button class="btn btn--delete" (click)="confirmingUserId.set(user.id)">Delete</button>
-                  }
-                }
-              </div>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-
-    <!-- ─── Destinations ──────────────────────── -->
-    @case ('destinations') {
-    <div class="section-header">
-      <h1 class="section-title">Destinations</h1>
-      <span class="count-badge">{{ destinations().length }}</span>
-    </div>
-
-    <div class="report-filters">
-      <div class="report-filter-group">
-        @for (t of ['all', 'route', 'point']; track t) {
-        <button
-          type="button"
-          class="report-chip"
-          [class.active]="destType() === t"
-          (click)="setDestType($any(t))"
-        >{{ t === 'all' ? 'All' : (t | titlecase) + 's' }}</button>
-        }
-      </div>
-      <div class="report-filter-selects">
-        <input
-          class="form-input"
-          type="search"
-          placeholder="Search title or city…"
-          [ngModel]="destQuery()"
-          (ngModelChange)="onDestQueryChange($event)"
-        />
-        <select
-          class="form-input"
-          [ngModel]="destCategory()"
-          (ngModelChange)="setDestCategory($event)"
-        >
-          <option [ngValue]="'all'">All categories</option>
-          @for (cat of categories(); track cat.id) {
-          <option [ngValue]="cat.id">{{ cat.name }}</option>
-          }
-        </select>
-        <select class="form-input" [ngModel]="destSort()" (ngModelChange)="setDestSort($event)">
-          <option value="recent">Most recent</option>
-          <option value="reports">Most reports</option>
-          <option value="reviews">Most reviews</option>
-        </select>
-        <button
-          type="button"
-          class="report-chip order-toggle"
-          (click)="toggleDestOrder()"
-          [attr.aria-label]="destOrder() === 'desc' ? 'Descending' : 'Ascending'"
-          [title]="destOrder() === 'desc' ? 'Descending' : 'Ascending'"
-        >{{ destOrder() === 'desc' ? '↓' : '↑' }}</button>
-      </div>
-    </div>
-
-    @if (destinations().length === 0 && !loading()) {
-    <div class="empty-state">No destinations match these filters</div>
-    } @else {
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Type</th>
-            <th>Category</th>
-            <th>City</th>
-            <th>Owner</th>
-            <th>Reviews</th>
-            <th>Reports</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (dest of destinations(); track dest.id) {
-          <tr [class.row-expanded]="isExpanded(dest.id)">
-            <td class="cell-key cell-head" data-label="Title" (click)="toggleRow(dest.id)">
-              <span class="cell-head-text">{{ dest.title }}</span>
-              <button type="button" class="row-toggle" aria-label="Toggle details">⌄</button>
-            </td>
-            <td class="muted cell-key" data-label="Type">{{ dest.type }}</td>
-            <td class="muted" data-label="Category">{{ dest.category?.name ?? '—' }}</td>
-            <td class="muted" data-label="City">{{ dest.city ?? '—' }}</td>
-            <td class="muted" data-label="Owner">{{ dest.user?.name ?? '—' }}</td>
-            <td class="muted" data-label="Reviews">{{ dest._count.reviews }}</td>
-            <td class="muted" data-label="Reports">{{ dest._count.reports }}</td>
-            <td class="cell-actions" data-label="Actions">
-              @if (confirmingDestId() === dest.id) {
-              <div class="action-btns">
-                <span class="confirm-label">Delete?</span>
-                <button class="btn btn--delete" (click)="deleteDestination(dest.id)">Yes</button>
-                <button class="btn" (click)="confirmingDestId.set(null)">No</button>
-              </div>
-              } @else {
-              <button class="btn btn--delete" (click)="confirmingDestId.set(dest.id)">Delete</button>
-              }
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-    }
-
-    <!-- ─── Categories ────────────────────────── -->
-    @case ('categories') {
-    <div class="section-header">
-      <h1 class="section-title">Categories</h1>
-      <span class="count-badge">{{ categories().length }}</span>
-    </div>
-
-    <div class="category-form">
-      <input
-        class="form-input"
-        type="text"
-        placeholder="Category name"
-        [ngModel]="newCategoryName()"
-        (ngModelChange)="newCategoryName.set($event)"
-        (keyup.enter)="createCategory()"
-      />
-      <div class="icon-picker">
-        <button
-          type="button"
-          class="icon-picker-trigger"
-          (click)="addIconPickerOpen.set(!addIconPickerOpen())"
-        >
-          <span class="ip-current">{{ categoryIcon(newCategoryIcon()) }}</span>
-          <span class="ip-caret">▾</span>
-        </button>
-        @if (addIconPickerOpen()) {
-        <div class="icon-backdrop" (click)="addIconPickerOpen.set(false)"></div>
-        <div class="icon-grid">
-          @for (emoji of emojiChoices; track emoji) {
-          <button
-            type="button"
-            class="icon-option"
-            [class.selected]="newCategoryIcon() === emoji"
-            (click)="pickNewIcon(emoji)"
-          >{{ emoji }}</button>
-          }
+      @case ('reports') {
+        <div class="section-header">
+          <h1 class="section-title">Reports</h1>
+          <span class="count-badge">{{ reportedTargets().length }}</span>
         </div>
+
+        <div class="report-filters">
+          <div class="report-filter-group">
+            @for (s of ['pending', 'resolved', 'dismissed']; track s) {
+              <button
+                type="button"
+                class="report-chip"
+                [class.active]="reportStatus() === s"
+                (click)="setReportStatus($any(s))"
+              >
+                {{ s | titlecase }}
+              </button>
+            }
+          </div>
+          <div class="report-filter-selects">
+            <select
+              class="form-input"
+              [ngModel]="reportType()"
+              (ngModelChange)="setReportType($event)"
+            >
+              <option value="all">All targets</option>
+              <option value="destination">Destinations</option>
+              <option value="review">Reviews</option>
+              <option value="user">Users</option>
+            </select>
+            <select
+              class="form-input"
+              [ngModel]="reportSort()"
+              (ngModelChange)="setReportSort($event)"
+            >
+              <option value="mostReports">Most reported</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </div>
+        </div>
+
+        @if (reportedTargets().length === 0 && !loading()) {
+          <div class="empty-state">No {{ reportStatus() }} reports</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Target</th>
+                  <th>Reports</th>
+                  <th>Latest</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (target of reportedTargets(); track targetKey(target)) {
+                  <tr [class.row-expanded]="openTargetKey() === targetKey(target)">
+                    <td
+                      class="cell-key cell-head"
+                      data-label="Target"
+                      (click)="toggleTarget(target)"
+                    >
+                      <span class="target-badge target-badge--{{ target.type }}">{{
+                        target.type | titlecase
+                      }}</span>
+                      <span class="cell-head-text">#{{ target.id }}</span>
+                      <button type="button" class="row-toggle" aria-label="Toggle details">
+                        ⌄
+                      </button>
+                    </td>
+                    <td class="muted" data-label="Reports">{{ target.count }}</td>
+                    <td class="muted" data-label="Latest">{{ target.latest | date: 'medium' }}</td>
+                    <td class="cell-actions" data-label="Actions">
+                      <div class="action-btns">
+                        <button class="btn btn--view" (click)="toggleTarget(target)">
+                          {{ openTargetKey() === targetKey(target) ? 'Hide' : 'View' }}
+                        </button>
+                        @if (reportStatus() !== 'resolved') {
+                          <button
+                            class="btn btn--approve"
+                            (click)="resolveTarget(target, 'resolved')"
+                          >
+                            Resolve
+                          </button>
+                        }
+                        @if (reportStatus() !== 'dismissed') {
+                          <button
+                            class="btn btn--decline"
+                            (click)="resolveTarget(target, 'dismissed')"
+                          >
+                            Dismiss
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+
+                  @if (openTargetKey() === targetKey(target)) {
+                    <tr class="report-detail-row row-expanded">
+                      <td colspan="4">
+                        @if (loadingTargetContent()) {
+                          <p class="report-detail-loading">Loading content…</p>
+                        } @else if (targetDestination(); as d) {
+                          <div class="reported-target">
+                            <div class="reported-target-head">
+                              <span class="reported-target-kind">Reported destination</span>
+                              <button class="btn btn--view" (click)="goToDestination(target)">
+                                Go to destination →
+                              </button>
+                            </div>
+                            <p class="reported-target-title">{{ d.title }}</p>
+                            @if (d.city || d.country) {
+                              <p class="reported-target-sub">
+                                {{ [d.city, d.country].join(', ') }}
+                              </p>
+                            }
+                            @if (d.description) {
+                              <p class="reported-target-text">{{ d.description }}</p>
+                            }
+                          </div>
+                        } @else if (targetReview(); as r) {
+                          <div class="reported-target">
+                            <div class="reported-target-head">
+                              <span class="reported-target-kind">Reported review</span>
+                              @if (r.destination) {
+                                <button class="btn btn--view" (click)="goToDestination(target)">
+                                  Go to the review →
+                                </button>
+                              }
+                            </div>
+                            <div class="reported-review-meta">
+                              <span class="reported-review-stars">
+                                @for (filled of stars(r.rating); track $index) {
+                                  <span [class.on]="filled">★</span>
+                                }
+                              </span>
+                              <span class="reported-review-author">by {{ r.user.name }}</span>
+                              @if (r.destination) {
+                                <span class="reported-review-on">on {{ r.destination.title }}</span>
+                              }
+                            </div>
+                            @if (r.comment) {
+                              <p class="reported-target-text">“{{ r.comment }}”</p>
+                            } @else {
+                              <p class="reported-target-sub">(no comment)</p>
+                            }
+                          </div>
+                        } @else if (targetUser(); as u) {
+                          <div class="reported-target">
+                            <div class="reported-target-head">
+                              <span class="reported-target-kind">Reported user</span>
+                              <button class="btn btn--view" (click)="goToUser(u.id)">
+                                View profile →
+                              </button>
+                            </div>
+                            <div class="reported-user">
+                              @if (u.avatarUrl) {
+                                <img
+                                  class="reported-user-avatar"
+                                  [src]="u.avatarUrl"
+                                  [alt]="u.name"
+                                />
+                              } @else {
+                                <span class="reported-user-avatar fallback">{{ u.name[0] }}</span>
+                              }
+                              <div class="reported-user-info">
+                                <p class="reported-target-title">{{ u.name }}</p>
+                                <p class="reported-target-sub">
+                                  @if (u.email) {
+                                    <span>{{ u.email }}</span>
+                                  }
+                                  @if (u.role) {
+                                    <span class="reported-user-role">{{ u.role }}</span>
+                                  }
+                                  <span>Joined {{ u.createdAt | date: 'mediumDate' }}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        }
+
+                        <h4 class="report-detail-subtitle">Reports</h4>
+                        @if (loadingTargetReports()) {
+                          <p class="report-detail-loading">Loading reports…</p>
+                        } @else {
+                          <ul class="report-detail-list">
+                            @for (report of targetReports(); track report.id) {
+                              <li class="report-detail-item">
+                                <div class="report-detail-head">
+                                  <span class="report-detail-reason">{{
+                                    report.reason | titlecase
+                                  }}</span>
+                                  <span class="report-detail-meta">
+                                    {{ report.user.name }} ·
+                                    {{ report.createdAt | date: 'mediumDate' }}
+                                  </span>
+                                </div>
+                                @if (report.note) {
+                                  <p class="report-detail-note">{{ report.note }}</p>
+                                }
+                              </li>
+                            }
+                          </ul>
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
         }
-      </div>
-      <button class="btn btn--add" (click)="createCategory()" [disabled]="savingCategory()">
-        Add
-      </button>
-    </div>
+      }
 
-    @if (categoryError()) {
-    <div class="form-error">{{ categoryError() }}</div>
-    }
+      @case ('users') {
+        <div class="section-header">
+          <h1 class="section-title">Users</h1>
+          <span class="count-badge">{{ users().length }}</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Destinations</th>
+                <th>Reviews</th>
+                <th>Reports</th>
+                <th>Joined</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users(); track user.id) {
+                <tr [class.row-expanded]="isExpanded(user.id)">
+                  <td class="cell-key cell-head" data-label="Name" (click)="toggleRow(user.id)">
+                    <span class="cell-head-text">{{ user.name }}</span>
+                    <button type="button" class="row-toggle" aria-label="Toggle details">⌄</button>
+                  </td>
+                  <td class="muted" data-label="Email">{{ user.email }}</td>
+                  <td class="cell-key" data-label="Role">
+                    <span class="role-badge" [class.role-badge--admin]="user.role === 'admin'">{{
+                      user.role
+                    }}</span>
+                  </td>
+                  <td class="muted" data-label="Destinations">{{ user._count.destinations }}</td>
+                  <td class="muted" data-label="Reviews">{{ user._count.reviews }}</td>
+                  <td class="muted" data-label="Reports">{{ user._count.reports }}</td>
+                  <td class="muted" data-label="Joined">
+                    {{ user.createdAt | date: 'mediumDate' }}
+                  </td>
+                  <td class="cell-actions" data-label="Actions">
+                    <div class="action-btns">
+                      <button class="btn" (click)="viewProfile(user.id)">Profile</button>
+                      @if (user.id !== auth.currentUser()?.id) {
+                        @if (confirmingUserId() === user.id) {
+                          <span class="confirm-label">Delete?</span>
+                          <button class="btn btn--delete" (click)="deleteUser(user.id)">Yes</button>
+                          <button class="btn" (click)="confirmingUserId.set(null)">No</button>
+                        } @else {
+                          <button class="btn btn--delete" (click)="confirmingUserId.set(user.id)">
+                            Delete
+                          </button>
+                        }
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
 
-    @if (categories().length === 0 && !loading()) {
-    <div class="empty-state">No categories yet</div>
-    } @else {
-    <div class="table-wrap table-wrap--categories">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Icon</th>
-            <th>Name</th>
-            <th>Destinations</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (cat of categories(); track cat.id) {
-          @if (editingId() === cat.id) {
-          <tr class="row-expanded">
-            <td data-label="Icon">
-              <div class="icon-picker">
-                <button
-                  type="button"
-                  class="icon-picker-trigger"
-                  (click)="editIconPickerOpen.set(!editIconPickerOpen())"
-                >
-                  <span class="ip-current">{{ categoryIcon(editIcon()) }}</span>
-                  <span class="ip-caret">▾</span>
-                </button>
-                @if (editIconPickerOpen()) {
-                <div class="icon-backdrop" (click)="editIconPickerOpen.set(false)"></div>
-                <div class="icon-grid">
-                  @for (emoji of emojiChoices; track emoji) {
+      @case ('destinations') {
+        <div class="section-header">
+          <h1 class="section-title">Destinations</h1>
+          <span class="count-badge">{{ destinations().length }}</span>
+        </div>
+
+        <div class="report-filters">
+          <div class="report-filter-group">
+            @for (t of ['all', 'route', 'point']; track t) {
+              <button
+                type="button"
+                class="report-chip"
+                [class.active]="destType() === t"
+                (click)="setDestType($any(t))"
+              >
+                {{ t === 'all' ? 'All' : (t | titlecase) + 's' }}
+              </button>
+            }
+          </div>
+          <div class="report-filter-selects">
+            <input
+              class="form-input"
+              type="search"
+              placeholder="Search title or city…"
+              [ngModel]="destQuery()"
+              (ngModelChange)="onDestQueryChange($event)"
+            />
+            <select
+              class="form-input"
+              [ngModel]="destCategory()"
+              (ngModelChange)="setDestCategory($event)"
+            >
+              <option [ngValue]="'all'">All categories</option>
+              @for (cat of categories(); track cat.id) {
+                <option [ngValue]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+            <select class="form-input" [ngModel]="destSort()" (ngModelChange)="setDestSort($event)">
+              <option value="recent">Most recent</option>
+              <option value="reports">Most reports</option>
+              <option value="reviews">Most reviews</option>
+            </select>
+            <button
+              type="button"
+              class="report-chip order-toggle"
+              (click)="toggleDestOrder()"
+              [attr.aria-label]="destOrder() === 'desc' ? 'Descending' : 'Ascending'"
+              [title]="destOrder() === 'desc' ? 'Descending' : 'Ascending'"
+            >
+              {{ destOrder() === 'desc' ? '↓' : '↑' }}
+            </button>
+          </div>
+        </div>
+
+        @if (destinations().length === 0 && !loading()) {
+          <div class="empty-state">No destinations match these filters</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>City</th>
+                  <th>Owner</th>
+                  <th>Reviews</th>
+                  <th>Reports</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (dest of destinations(); track dest.id) {
+                  <tr [class.row-expanded]="isExpanded(dest.id)">
+                    <td class="cell-key cell-head" data-label="Title" (click)="toggleRow(dest.id)">
+                      <span class="cell-head-text">{{ dest.title }}</span>
+                      <button type="button" class="row-toggle" aria-label="Toggle details">
+                        ⌄
+                      </button>
+                    </td>
+                    <td class="muted cell-key" data-label="Type">{{ dest.type }}</td>
+                    <td class="muted" data-label="Category">{{ dest.category?.name ?? '—' }}</td>
+                    <td class="muted" data-label="City">{{ dest.city ?? '—' }}</td>
+                    <td class="muted" data-label="Owner">{{ dest.user?.name ?? '—' }}</td>
+                    <td class="muted" data-label="Reviews">{{ dest._count.reviews }}</td>
+                    <td class="muted" data-label="Reports">{{ dest._count.reports }}</td>
+                    <td class="cell-actions" data-label="Actions">
+                      @if (confirmingDestId() === dest.id) {
+                        <div class="action-btns">
+                          <span class="confirm-label">Delete?</span>
+                          <button class="btn btn--delete" (click)="deleteDestination(dest.id)">
+                            Yes
+                          </button>
+                          <button class="btn" (click)="confirmingDestId.set(null)">No</button>
+                        </div>
+                      } @else {
+                        <button class="btn btn--delete" (click)="confirmingDestId.set(dest.id)">
+                          Delete
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+
+      @case ('categories') {
+        <div class="section-header">
+          <h1 class="section-title">Categories</h1>
+          <span class="count-badge">{{ categories().length }}</span>
+        </div>
+
+        <div class="category-form">
+          <input
+            class="form-input"
+            type="text"
+            placeholder="Category name"
+            [ngModel]="newCategoryName()"
+            (ngModelChange)="newCategoryName.set($event)"
+            (keyup.enter)="createCategory()"
+          />
+          <div class="icon-picker">
+            <button
+              type="button"
+              class="icon-picker-trigger"
+              (click)="addIconPickerOpen.set(!addIconPickerOpen())"
+            >
+              <span class="ip-current">{{ categoryIcon(newCategoryIcon()) }}</span>
+              <span class="ip-caret">▾</span>
+            </button>
+            @if (addIconPickerOpen()) {
+              <div class="icon-backdrop" (click)="addIconPickerOpen.set(false)"></div>
+              <div class="icon-grid">
+                @for (emoji of emojiChoices; track emoji) {
                   <button
                     type="button"
                     class="icon-option"
-                    [class.selected]="editIcon() === emoji"
-                    (click)="pickEditIcon(emoji)"
-                  >{{ emoji }}</button>
-                  }
-                </div>
+                    [class.selected]="newCategoryIcon() === emoji"
+                    (click)="pickNewIcon(emoji)"
+                  >
+                    {{ emoji }}
+                  </button>
                 }
               </div>
-            </td>
-            <td data-label="Name">
-              <input
-                class="form-input"
-                type="text"
-                [ngModel]="editName()"
-                (ngModelChange)="editName.set($event)"
-                (keyup.enter)="saveEdit(cat.id)"
-              />
-            </td>
-            <td class="muted" data-label="Destinations">{{ cat._count.destinations }}</td>
-            <td class="cell-actions" data-label="Actions">
-              <div class="action-btns">
-                <button class="btn btn--approve" (click)="saveEdit(cat.id)">Save</button>
-                <button class="btn" (click)="cancelEdit()">Cancel</button>
-              </div>
-            </td>
-          </tr>
-          } @else {
-          <tr [class.row-expanded]="isExpanded(cat.id)">
-            <td class="cell-key" data-label="Icon">{{ categoryIcon(cat.icon) }}</td>
-            <td class="cell-key cell-head" data-label="Name" (click)="toggleRow(cat.id)">
-              <span class="cell-head-text">{{ cat.name }}</span>
-              <button type="button" class="row-toggle" aria-label="Toggle details">⌄</button>
-            </td>
-            <td class="muted" data-label="Destinations">{{ cat._count.destinations }}</td>
-            <td class="cell-actions" data-label="Actions">
-              <div class="action-btns">
-                <button class="btn btn--edit" (click)="startEdit(cat)">Edit</button>
-                <button class="btn btn--delete" (click)="deleteCategory(cat.id)">Delete</button>
-              </div>
-            </td>
-          </tr>
-          }
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-    }
+            }
+          </div>
+          <button class="btn btn--add" (click)="createCategory()" [disabled]="savingCategory()">
+            Add
+          </button>
+        </div>
 
+        @if (categoryError()) {
+          <div class="form-error">{{ categoryError() }}</div>
+        }
+
+        @if (categories().length === 0 && !loading()) {
+          <div class="empty-state">No categories yet</div>
+        } @else {
+          <div class="table-wrap table-wrap--categories">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Icon</th>
+                  <th>Name</th>
+                  <th>Destinations</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cat of categories(); track cat.id) {
+                  @if (editingId() === cat.id) {
+                    <tr class="row-expanded">
+                      <td data-label="Icon">
+                        <div class="icon-picker">
+                          <button
+                            type="button"
+                            class="icon-picker-trigger"
+                            (click)="editIconPickerOpen.set(!editIconPickerOpen())"
+                          >
+                            <span class="ip-current">{{ categoryIcon(editIcon()) }}</span>
+                            <span class="ip-caret">▾</span>
+                          </button>
+                          @if (editIconPickerOpen()) {
+                            <div
+                              class="icon-backdrop"
+                              (click)="editIconPickerOpen.set(false)"
+                            ></div>
+                            <div class="icon-grid">
+                              @for (emoji of emojiChoices; track emoji) {
+                                <button
+                                  type="button"
+                                  class="icon-option"
+                                  [class.selected]="editIcon() === emoji"
+                                  (click)="pickEditIcon(emoji)"
+                                >
+                                  {{ emoji }}
+                                </button>
+                              }
+                            </div>
+                          }
+                        </div>
+                      </td>
+                      <td data-label="Name">
+                        <input
+                          class="form-input"
+                          type="text"
+                          [ngModel]="editName()"
+                          (ngModelChange)="editName.set($event)"
+                          (keyup.enter)="saveEdit(cat.id)"
+                        />
+                      </td>
+                      <td class="muted" data-label="Destinations">{{ cat._count.destinations }}</td>
+                      <td class="cell-actions" data-label="Actions">
+                        <div class="action-btns">
+                          <button class="btn btn--approve" (click)="saveEdit(cat.id)">Save</button>
+                          <button class="btn" (click)="cancelEdit()">Cancel</button>
+                        </div>
+                      </td>
+                    </tr>
+                  } @else {
+                    <tr [class.row-expanded]="isExpanded(cat.id)">
+                      <td class="cell-key" data-label="Icon">{{ categoryIcon(cat.icon) }}</td>
+                      <td class="cell-key cell-head" data-label="Name" (click)="toggleRow(cat.id)">
+                        <span class="cell-head-text">{{ cat.name }}</span>
+                        <button type="button" class="row-toggle" aria-label="Toggle details">
+                          ⌄
+                        </button>
+                      </td>
+                      <td class="muted" data-label="Destinations">{{ cat._count.destinations }}</td>
+                      <td class="cell-actions" data-label="Actions">
+                        <div class="action-btns">
+                          <button class="btn btn--edit" (click)="startEdit(cat)">Edit</button>
+                          <button class="btn btn--delete" (click)="deleteCategory(cat.id)">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
     }
   </main>
-
 </div>

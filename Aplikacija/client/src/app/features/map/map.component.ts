@@ -1,4 +1,13 @@
-import { Component, OnDestroy, inject, signal, computed, afterNextRender } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  inject,
+  signal,
+  computed,
+  afterNextRender,
+  viewChild,
+  ElementRef,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -32,9 +41,7 @@ import {
   MediaLightboxComponent,
 } from '../../shared/components/media-lightbox/media-lightbox.component';
 
-// Below this zoom the viewport covers more than ~a city, so the bbox query would
-// return an unbounded number of destinations. We stop loading markers/list results
-// there and prompt the user to zoom in. Tune higher to hide them sooner.
+// Bellow this zoom level, the destinations stop being rendered
 const MIN_LIST_ZOOM = 13;
 
 @Component({
@@ -61,34 +68,36 @@ export class MapComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
 
-  // Search state
   searchQuery = signal('');
   suggestions = signal<NominatimResult[]>([]);
   showSuggestions = signal(false);
   isSearching = signal(false);
   private readonly search$ = new Subject<string>();
 
-  // Panel state
   panelCollapsed = signal(false);
   panelExpanded = signal(false);
+
+  // Bottom-sheet drag (mobile). dragTranslate is the live translateY in px while
+  // dragging; null means CSS class drives the position.
+  private readonly sidePanel = viewChild<ElementRef<HTMLElement>>('sidePanel');
+  dragging = signal(false);
+  dragTranslate = signal<number | null>(null);
+  private dragStartY = 0;
+  private dragStartTranslate = 0;
+  private collapsedTranslate = 0;
   panelView = signal<'list' | 'detail' | 'create'>('list');
   selectedDest = signal<Destination | null>(null);
   selectedReviews = signal<DestinationReview[]>([]);
-  // A review to visually highlight (e.g. when arriving from a report link).
+  // Signal for highlighting the review when coming from admin dash
   highlightedReviewId = signal<number | null>(null);
 
-  // Admins can moderate (delete) any review straight from the detail panel.
+  // Admins can delete any review straight from the detail panel.
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'admin');
   // Which review is showing an inline "delete?" confirmation.
   confirmingReviewId = signal<number | null>(null);
 
-  // ─── Report (UC-10) ──────────────────────────────────
-  // When set, the report dialog is shown for this target.
   reportTarget = signal<{ type: ReportTargetType; id: number; label: string } | null>(null);
 
-  // ─── Route points (owner/admin only) ─────────────────
-  // Ids of the destinations the current user owns — lets us show point-management
-  // controls without the detail payload carrying the owner id.
   private readonly ownedIds = signal<Set<number>>(new Set());
   addingPoint = signal(false);
   pointSearch = signal('');
@@ -101,19 +110,19 @@ export class MapComponent implements OnDestroy {
   private readonly addPointRouteId = signal<number | null>(null);
   readonly creatingForRoute = computed(() => this.addPointRouteId() !== null);
 
-  // Whether the current user owns the selected destination (or is an admin).
+  // Checks if the current user owns the selected destination (or is an admin).
   readonly canModifySelected = computed(() => {
     const dest = this.selectedDest();
     return !!dest && (this.isAdmin() || this.ownedIds().has(dest.id));
   });
 
-  // Whether the current user may edit the selected route's points.
+  // Checks if the current user can edit the selected route's points.
   readonly canManagePoints = computed(
     () => this.canModifySelected() && this.selectedDest()?.type === 'route',
   );
 
-  // Point destinations not already on the route, near the polyline, search-filtered,
-  // sorted nearest-first. Each entry carries its distance to the route (metres).
+  // Points that are already created but not in the route and
+  // are withing the radius
   readonly availablePoints = computed(() => {
     const dest = this.selectedDest();
     if (!dest || dest.geometry.type !== 'LineString') return [];
@@ -132,7 +141,6 @@ export class MapComponent implements OnDestroy {
       .sort((a, b) => a.dist - b.dist);
   });
 
-  // ─── Write / edit a review ───────────────────────────
   showReviewForm = signal(false);
   editingReviewId = signal<number | null>(null);
   reviewRating = signal(0);
@@ -141,15 +149,22 @@ export class MapComponent implements OnDestroy {
   reviewSubmitting = signal(false);
   reviewError = signal<string | null>(null);
 
-  // The current user's own review for the selected destination, if any.
+  // The current user's review for the selected destination, if there is one
   readonly myReview = computed(() => {
     const uid = this.auth.currentUser()?.id;
     return uid ? (this.selectedReviews().find((r) => r.user.id === uid) ?? null) : null;
   });
-  // Logged in and hasn't reviewed this destination yet.
-  readonly canWriteReview = computed(() => !!this.auth.currentUser() && !this.myReview());
+  // Logged in, doesn't own this destination, and hasn't reviewed it yet.
+  readonly canWriteReview = computed(() => {
+    const dest = this.selectedDest();
+    return (
+      !!this.auth.currentUser() &&
+      !!dest &&
+      !this.ownedIds().has(dest.id) &&
+      !this.myReview()
+    );
+  });
 
-  // Create-destination state
   createType = signal<'point' | 'route' | null>(null);
   drawnGeometry = signal<DestinationGeometry | null>(null);
   newTitle = '';
@@ -160,7 +175,6 @@ export class MapComponent implements OnDestroy {
   createError = signal<string | null>(null);
   editing = signal(false);
 
-  // ─── Edit an existing destination (owner/admin) ──────
   editingDest = signal(false);
   editTitle = '';
   editDescription = '';
@@ -171,27 +185,23 @@ export class MapComponent implements OnDestroy {
   // Which existing media item is showing a "remove?" confirmation.
   confirmRemoveMediaId = signal<number | null>(null);
 
-  // ─── Delete a destination (admin) ────────────────────
   confirmingDeleteDest = signal(false);
   deletingDest = signal(false);
   deleteDestError = signal<string | null>(null);
 
-  // Destination filters — drive the findMany query on the backend
   activeFilter = signal<'all' | 'point' | 'route'>('all');
   selectedCategory = signal<number | null>(null);
   sortBy = signal<DestinationSort>('recent');
   categories = signal<Category[]>([]);
 
-  // ─── Saved view (logged-in only) ─────────────────────
-  // When true, the list shows the user's saved destinations instead of the
-  // bbox-queried map results.
+  // When true, the list shows the user's saved destinations instead of the bbox-queried map results.
   savedMode = signal(false);
   favorites = signal<FavoriteDestination[]>([]);
   favoritesLoading = signal(false);
 
   readonly destinations = signal<DestinationSummary[]>([]);
-  // True when the map is zoomed out past MIN_LIST_ZOOM — we stop loading results
-  // and show a "zoom in" hint instead of an empty list.
+  // True when the map is zoomed out past MIN_LIST_ZOOM after
+  // which we stop rendering results and show a hint on the sidebar to zoom in
   readonly tooZoomedOut = signal(false);
 
   private readonly reload$ = new Subject<void>();
@@ -207,8 +217,7 @@ export class MapComponent implements OnDestroy {
         error: (err) => console.error('Failed to load categories:', err),
       });
 
-      // Track which destinations belong to the signed-in user so we can show
-      // point-management controls on their own routes.
+      // Track which destinations belong to the signed-in user so we can show management controls on their own routes.
       if (this.auth.currentUser()) {
         this.destinationService.getMine().subscribe({
           next: (mine) => this.ownedIds.set(new Set(mine.map((d) => d.id))),
@@ -216,7 +225,7 @@ export class MapComponent implements OnDestroy {
         });
       }
 
-      // Deep link from elsewhere (e.g. admin report moderation): ?dest=&review=
+      // Deep link from elsewhere (like admin report tab)
       const params = this.route.snapshot.queryParamMap;
       const destId = Number(params.get('dest'));
       if (destId) {
@@ -244,7 +253,6 @@ export class MapComponent implements OnDestroy {
       .subscribe({
         next: (dests) => {
           this.destinations.set(dests);
-          // Points (and the marker for routes) as markers; routes also get a polyline.
           this.mapService.setMarkers(
             dests.map((d) => {
               const [lng, lat] = this.centerCoords(d);
@@ -307,13 +315,57 @@ export class MapComponent implements OnDestroy {
     setTimeout(() => this.mapService.invalidateSize(), 300);
   }
 
+  // ─── Bottom-sheet handle: drag to open/collapse (mobile) ──────────────
+  // Pointer events cover both touch and mouse. A drag shorter than the tap
+  // threshold falls back to a plain toggle, so the handle still works on tap.
+  onHandlePointerDown(ev: PointerEvent): void {
+    const panel = this.sidePanel()?.nativeElement;
+    if (!panel) return;
+    // Collapsed state translates the sheet down by (height - 92px); see SCSS.
+    this.collapsedTranslate = panel.offsetHeight - 92;
+    this.dragStartTranslate = this.panelCollapsed() ? this.collapsedTranslate : 0;
+    this.dragStartY = ev.clientY;
+    this.dragging.set(true);
+    this.dragTranslate.set(this.dragStartTranslate);
+    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+  }
+
+  onHandlePointerMove(ev: PointerEvent): void {
+    if (!this.dragging()) return;
+    const delta = ev.clientY - this.dragStartY;
+    const t = Math.max(0, Math.min(this.collapsedTranslate, this.dragStartTranslate + delta));
+    this.dragTranslate.set(t);
+  }
+
+  onHandlePointerUp(): void {
+    if (!this.dragging()) return;
+    const t = this.dragTranslate() ?? this.dragStartTranslate;
+    const moved = Math.abs(t - this.dragStartTranslate);
+    this.dragging.set(false);
+    this.dragTranslate.set(null);
+
+    if (moved < 8) {
+      // Treat as a tap.
+      this.togglePanel();
+      return;
+    }
+    // Snap to whichever state the sheet is closer to.
+    const shouldCollapse = t > this.collapsedTranslate / 2;
+    if (shouldCollapse !== this.panelCollapsed()) {
+      this.togglePanel();
+    } else {
+      // Same state: clearing the inline transform lets the CSS spring it back.
+      setTimeout(() => this.mapService.invalidateSize(), 300);
+    }
+  }
+
   setFilter(filter: 'all' | 'point' | 'route'): void {
     this.savedMode.set(false);
     this.activeFilter.set(filter);
     this.reload$.next();
   }
 
-  // Switch the list to the user's saved destinations and (re)load them.
+  // Switch the list to the user's saved destinations
   showSaved(): void {
     if (!this.auth.currentUser()) return;
     this.savedMode.set(true);
@@ -332,8 +384,7 @@ export class MapComponent implements OnDestroy {
     });
   }
 
-  // Open a saved destination's detail. Favorites carry no geometry, so we fetch
-  // the full destination by id (which also flies/fits the map to it).
+  // Open a saved destination's detail. Favorites carry no geometry, so we fetch the full destination by id (which also flies the map to it).
   selectSaved(id: number): void {
     this.openDestinationById(id);
   }
@@ -389,15 +440,14 @@ export class MapComponent implements OnDestroy {
   }
 
   selectById(id: number): void {
-    // While creating/drawing, ignore clicks on existing destinations — otherwise a
-    // stray click opens a detail view and strands the half-drawn shape.
+    // While creating/drawing, ignore clicks on existing destinations, otherwise an accidental click opens a detail view and the user gets stuck on the detail view before being
+    // able to create a destination
     if (this.panelView() === 'create') return;
     const summary = this.destinations().find((d) => d.id === id);
     if (summary) this.selectDestination(summary);
   }
 
-  // Open a destination's detail straight from its id (used for deep links — the
-  // destination may not be in the currently loaded list/bbox).
+  // Open a destination's detail straight from its id (used for deep links (even though the destination might not be in the bbox)
   private openDestinationById(id: number, reviewId: number | null = null): void {
     this.panelView.set('detail');
     if (this.panelCollapsed()) this.panelCollapsed.set(false);
@@ -432,13 +482,11 @@ export class MapComponent implements OnDestroy {
 
   private highlightReview(reviewId: number): void {
     this.highlightedReviewId.set(reviewId);
-    // Wait for the review list to render, then scroll it into view.
     setTimeout(() => {
       document
         .getElementById('review-' + reviewId)
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 200);
-    // Fade the highlight out after a few seconds.
     setTimeout(() => this.highlightedReviewId.set(null), 4500);
   }
 
@@ -464,7 +512,6 @@ export class MapComponent implements OnDestroy {
     this.reportTarget.set(null);
   }
 
-  // ─── Favorites (save a destination) ──────────────────
   // True while a save/unsave request for the open destination is in flight.
   togglingFavorite = signal(false);
 
@@ -473,7 +520,6 @@ export class MapComponent implements OnDestroy {
     if (!dest || !this.auth.currentUser() || this.togglingFavorite()) return;
 
     const next = !dest.isFavorited;
-    // Optimistic flip; revert if the request fails.
     this.selectedDest.set({ ...dest, isFavorited: next });
     this.togglingFavorite.set(true);
 
@@ -486,7 +532,6 @@ export class MapComponent implements OnDestroy {
       next: () => this.togglingFavorite.set(false),
       error: (err) => {
         this.togglingFavorite.set(false);
-        // Roll back the optimistic change.
         const current = this.selectedDest();
         if (current?.id === dest.id) this.selectedDest.set({ ...current, isFavorited: !next });
         console.error('Failed to update favorite:', err);
@@ -494,7 +539,6 @@ export class MapComponent implements OnDestroy {
     });
   }
 
-  // ─── Share a destination (public deep link) ──────────
   shareLabel = signal('🔗 Share');
 
   async shareDestination(): Promise<void> {
@@ -511,7 +555,6 @@ export class MapComponent implements OnDestroy {
     setTimeout(() => this.shareLabel.set('🔗 Share'), 2000);
   }
 
-  // ─── Media lightbox ──────────────────────────────────
   lightbox = signal<{ items: LightboxMedia[]; index: number } | null>(null);
 
   openLightbox(items: LightboxMedia[], index: number): void {
@@ -522,7 +565,6 @@ export class MapComponent implements OnDestroy {
     this.lightbox.set(null);
   }
 
-  // ─── Route points ────────────────────────────────────
   openAddPoint(): void {
     this.pointActionError.set(null);
     this.pointSearch.set('');

@@ -19,7 +19,7 @@ export class UserService {
     return this.http.get<User>(`${this.base}/me`, { withCredentials: true });
   }
 
-  // Public profile of any user. Admin viewers get email + role too (server-side).
+  // Public profile of any user. Admin viewers get email + role too
   getProfile(id: number) {
     return this.http.get<PublicProfile>(`${this.base}/users/${id}`, { withCredentials: true });
   }

@@ -1,5 +1,3 @@
-// ── Layout ─────────────────────────────────────────
-
 .admin-layout {
   display: flex;
   width: 100%;
@@ -7,8 +5,6 @@
   overflow: hidden;
   background: var(--surface);
 }
-
-// ── Sidebar nav ────────────────────────────────────
 
 .admin-nav {
   flex: 0 0 220px;
@@ -62,7 +58,9 @@ nav {
   cursor: pointer;
   text-align: left;
   border-radius: 0;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
@@ -85,8 +83,6 @@ nav {
   flex-shrink: 0;
 }
 
-// ── Main content ───────────────────────────────────
-
 .admin-main {
   flex: 1;
   display: flex;
@@ -94,8 +90,6 @@ nav {
   overflow: hidden;
   min-width: 0;
 }
-
-// ── Loading bar ────────────────────────────────────
 
 .loading-bar {
   height: 3px;
@@ -105,11 +99,13 @@ nav {
 }
 
 @keyframes loading-slide {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
-
-// ── Section header ─────────────────────────────────
 
 .section-header {
   display: flex;
@@ -135,8 +131,6 @@ nav {
   border-radius: 20px;
   padding: 2px 9px;
 }
-
-// ── Stats grid ─────────────────────────────────────
 
 .stats-grid {
   display: grid;
@@ -180,16 +174,12 @@ nav {
   letter-spacing: 0.6px;
 }
 
-// ── Table ──────────────────────────────────────────
-
 .table-wrap {
   flex: 1;
   overflow: auto;
   padding: 20px 28px;
 }
 
-// Categories are a short, narrow list — let the icon-picker popover overflow
-// the table instead of being clipped by the scroll container.
 .table-wrap--categories {
   overflow: visible;
 }
@@ -238,8 +228,6 @@ nav {
   text-overflow: ellipsis;
 }
 
-// ── Badges ─────────────────────────────────────────
-
 .status-badge {
   font-size: 0.7rem;
   font-weight: 600;
@@ -247,9 +235,18 @@ nav {
   border-radius: 20px;
   text-transform: capitalize;
 
-  &--pending   { background: #fef3c7; color: #92400e; }
-  &--resolved  { background: #d1fae5; color: #065f46; }
-  &--dismissed { background: #fee2e2; color: #991b1b; }
+  &--pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  &--resolved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  &--dismissed {
+    background: #fee2e2;
+    color: #991b1b;
+  }
 }
 
 .role-badge {
@@ -276,12 +273,19 @@ nav {
   border-radius: 6px;
   text-transform: capitalize;
 
-  &--destination { background: var(--primary-light); color: var(--primary-dark); }
-  &--review      { background: #fef3c7; color: #92400e; }
-  &--user        { background: #ede9fe; color: #5b21b6; }
+  &--destination {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+  }
+  &--review {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  &--user {
+    background: #ede9fe;
+    color: #5b21b6;
+  }
 }
-
-// ── Action buttons ─────────────────────────────────
 
 .action-btns {
   display: flex;
@@ -296,7 +300,6 @@ nav {
   white-space: nowrap;
 }
 
-// Expand/collapse chevron — only meaningful in the mobile card layout.
 .row-toggle {
   display: none;
 }
@@ -311,7 +314,9 @@ nav {
   font-family: inherit;
   transition: opacity 0.15s;
 
-  &:hover { opacity: 0.82; }
+  &:hover {
+    opacity: 0.82;
+  }
 
   &--approve {
     background: #d1fae5;
@@ -355,8 +360,6 @@ nav {
   }
 }
 
-// ── Reports ────────────────────────────────────────
-
 .report-filters {
   display: flex;
   flex-wrap: wrap;
@@ -387,7 +390,9 @@ nav {
   cursor: pointer;
   transition: all 0.15s;
 
-  &:hover { color: var(--text); }
+  &:hover {
+    color: var(--text);
+  }
 
   &.active {
     background: var(--surface);
@@ -462,7 +467,6 @@ nav {
   color: var(--text-muted);
 }
 
-// ── Reported target content (what was reported) ────
 .reported-target {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -520,7 +524,9 @@ nav {
   letter-spacing: 1px;
   color: var(--border);
 
-  .on { color: #f5a623; }
+  .on {
+    color: #f5a623;
+  }
 }
 
 .reported-review-author {
@@ -577,8 +583,6 @@ nav {
   color: var(--text-muted);
 }
 
-// ── Category form ──────────────────────────────────
-
 .category-form {
   display: flex;
   gap: 10px;
@@ -601,7 +605,6 @@ nav {
   }
 }
 
-// ── Emoji icon picker ──────────────────────────────
 .icon-picker {
   position: relative;
 }
@@ -618,10 +621,18 @@ nav {
   cursor: pointer;
   transition: border-color 0.15s;
 
-  &:hover { border-color: var(--primary); }
+  &:hover {
+    border-color: var(--primary);
+  }
 
-  .ip-current { font-size: 1.1rem; line-height: 1; }
-  .ip-caret { font-size: 0.7rem; color: var(--text-muted); }
+  .ip-current {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .ip-caret {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
 }
 
 .icon-backdrop {
@@ -660,9 +671,13 @@ nav {
   font-size: 1.15rem;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 
-  &:hover { background: var(--surface-alt); }
+  &:hover {
+    background: var(--surface-alt);
+  }
 
   &.selected {
     border-color: var(--primary);
@@ -681,8 +696,6 @@ nav {
   font-weight: 500;
 }
 
-// ── Empty state ────────────────────────────────────
-
 .empty-state {
   display: flex;
   align-items: center;
@@ -693,12 +706,11 @@ nav {
   font-weight: 500;
 }
 
-// ── Mobile ─────────────────────────────────────────
-
 .mobile-topbar {
   display: none;
 }
 
+// mobile device setup
 @media (max-width: 768px) {
   .admin-nav {
     position: fixed;
@@ -777,9 +789,6 @@ nav {
     gap: 12px;
   }
 
-  // The fixed-height shell scrolls the inner .table-wrap on desktop; on mobile
-  // the rows become stacked cards (overflow: visible), so the main column has to
-  // take over vertical scrolling — otherwise the bottom rows get clipped.
   .admin-main {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -830,7 +839,6 @@ nav {
       text-align: left;
     }
 
-    // Per-card cell separators (override the base last-row rule).
     tbody tr td,
     tbody tr:last-child td {
       border-bottom: 1px solid var(--border);
@@ -840,7 +848,7 @@ nav {
       border-bottom: none;
     }
 
-    // ── Collapsed cards: show only the key cells, no internal dividers ──
+    // Collapsed cards; show only the key cells, no internal dividers
     tbody tr:not(.row-expanded) td:not(.cell-key) {
       display: none;
     }
@@ -849,13 +857,13 @@ nav {
       border-bottom: none;
     }
 
-    // Report drill-down: render the detail cell as a full-width block, not a
-    // label/value flex row.
     .report-detail-row td {
       display: block;
       padding: 12px;
 
-      &::before { display: none; }
+      &::before {
+        display: none;
+      }
     }
 
     // The header cell is the tap target that toggles the card.
@@ -906,6 +914,10 @@ nav {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

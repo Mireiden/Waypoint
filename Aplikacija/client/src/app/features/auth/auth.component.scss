@@ -4,7 +4,6 @@
   overflow: hidden;
 }
 
-/* ── Brand panel ──────────────────────────── */
 .brand-panel {
   flex: 1 0 42%;
   background: linear-gradient(
@@ -129,7 +128,6 @@
   }
 }
 
-/* ── Form panel ───────────────────────────── */
 .form-panel {
   flex: 0 0 58%;
   background: var(--surface);
@@ -145,7 +143,6 @@
   max-width: 420px;
 }
 
-/* ── Tabs ─────────────────────────────────── */
 .tabs {
   display: flex;
   background: var(--surface-alt);
@@ -175,7 +172,6 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* ── Auth form ────────────────────────────── */
 .auth-form h2 {
   font-size: 1.55rem;
   font-weight: 700;

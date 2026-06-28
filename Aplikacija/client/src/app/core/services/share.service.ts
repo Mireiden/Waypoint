@@ -4,11 +4,7 @@ export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'failed';
 
 @Injectable({ providedIn: 'root' })
 export class ShareService {
-  /**
-   * Share a link. On devices that support the Web Share API (mostly mobile),
-   * this opens the native share sheet. Everywhere else it copies the URL to the
-   * clipboard. Returns what happened so the caller can show feedback.
-   */
+  // Sharing a link; on mobile devices it uses the native share sheeth feature and on any other device it copies the link to the clipboard
   async share(url: string, title?: string, text?: string): Promise<ShareResult> {
     const nav = navigator as Navigator & {
       share?: (data: ShareData) => Promise<void>;
@@ -19,16 +15,15 @@ export class ShareService {
         await nav.share({ title, text, url });
         return 'shared';
       } catch (err) {
-        // The user dismissed the share sheet — don't fall back to copying.
+        // if the user dismisses the share sheeth, don't copy
         if (err instanceof DOMException && err.name === 'AbortError') return 'cancelled';
-        // Any other failure: fall through to copying the link.
       }
     }
 
     return this.copy(url);
   }
 
-  /** Copy text to the clipboard, with a legacy fallback for blocked contexts. */
+  // Copy text to the clipboard, with a legacy fallback for blocked contexts
   async copy(text: string): Promise<ShareResult> {
     try {
       if (navigator.clipboard?.writeText) {

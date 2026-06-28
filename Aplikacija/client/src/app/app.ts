@@ -13,8 +13,15 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
   `,
   styles: [
     `
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100vh; /* fallback */
+        height: 100dvh; /* tracks the mobile browser chrome (URL bar) */
+      }
       main {
-        height: calc(100vh - 60px);
+        flex: 1;
+        min-height: 0;
       }
     `,
   ],
