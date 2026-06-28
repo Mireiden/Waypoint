@@ -10,8 +10,12 @@ node_modules/
 .npm
 
 # Environment files
+# Frontend env files hold only public config (apiUrl), no secrets — commit them
+# so the build works on CI/Vercel. Any secret-bearing env (e.g. environment.local.ts) stays ignored.
 src/environments/environment*.ts
 !src/environments/environment.example.ts
+!src/environments/environment.ts
+!src/environments/environment.development.ts
 
 # Logs
 *.log
