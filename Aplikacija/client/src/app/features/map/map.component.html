@@ -959,6 +959,27 @@
       }
     </div>
 
+    <button
+      type="button"
+      class="locate-btn"
+      [class.locating]="locating()"
+      [disabled]="locating()"
+      (click)="locateMe()"
+      title="Go to my location"
+      aria-label="Go to my location"
+    >
+      @if (locating()) {
+        <span class="spinner"></span>
+      } @else {
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm9 3h-2.07A7.01 7.01 0 0 0 13 5.07V3h-2v2.07A7.01 7.01 0 0 0 5.07 11H3v2h2.07A7.01 7.01 0 0 0 11 18.93V21h2v-2.07A7.01 7.01 0 0 0 18.93 13H21v-2zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"
+          />
+        </svg>
+      }
+    </button>
+
     <div id="map" class="leaflet-map"></div>
   </div>
 

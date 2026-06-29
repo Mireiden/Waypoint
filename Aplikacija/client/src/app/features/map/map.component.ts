@@ -199,6 +199,10 @@ export class MapComponent implements OnDestroy {
   favorites = signal<FavoriteDestination[]>([]);
   favoritesLoading = signal(false);
 
+  // True while a geolocation request is in flight (drives the locate button's
+  // spinner/disabled state).
+  locating = signal(false);
+
   readonly destinations = signal<DestinationSummary[]>([]);
   // True when the map is zoomed out past MIN_LIST_ZOOM after
   // which we stop rendering results and show a hint on the sidebar to zoom in
@@ -225,12 +229,14 @@ export class MapComponent implements OnDestroy {
         });
       }
 
-      // Deep link from elsewhere (like admin report tab)
+      // Deep link from elsewhere (like admin report tab): ?dest=&review=
       const params = this.route.snapshot.queryParamMap;
       const destId = Number(params.get('dest'));
       if (destId) {
         const reviewParam = params.get('review');
         this.openDestinationById(destId, reviewParam ? Number(reviewParam) : null);
+      } else {
+        this.locate(true);
       }
 
       this.reload$.next();
@@ -1132,6 +1138,36 @@ export class MapComponent implements OnDestroy {
 
   closeSuggestions(): void {
     setTimeout(() => this.showSuggestions.set(false), 150);
+  }
+
+  // The locate button: if we already know where the user is, just recenter on
+  // their marker; otherwise request a fresh fix (which also drops the marker).
+  locateMe(): void {
+    if (this.mapService.hasUserLocation()) {
+      this.mapService.flyToUser();
+    } else {
+      this.locate(true);
+    }
+  }
+
+  // Ask the browser for the user's position, drop/update their marker, and
+  // optionally fly to it. If the user denies the request, the map stays where it is
+  private locate(fly: boolean): void {
+    if (!navigator.geolocation || this.locating()) return;
+    this.locating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.locating.set(false);
+        const { latitude, longitude, accuracy } = pos.coords;
+        this.mapService.setUserLocation(latitude, longitude, accuracy);
+        if (fly) this.mapService.flyTo(latitude, longitude, 15);
+      },
+      (err) => {
+        this.locating.set(false);
+        console.warn('Could not get your location:', err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
   }
 
   ngOnDestroy(): void {

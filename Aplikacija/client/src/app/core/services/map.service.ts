@@ -19,11 +19,24 @@ const iconDefault = L.icon({
 });
 L.Marker.prototype.options.icon = iconDefault;
 
+const userLocationIcon = L.divIcon({
+  className: 'user-location-icon',
+  html: '<span class="user-location-pulse"></span><span class="user-location-dot"></span>',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+});
+
 @Injectable({ providedIn: 'root' })
 export class MapService {
   private map: L.Map | null = null;
   private markers: L.Marker[] = [];
   private routeLayers: L.Polyline[] = [];
+
+  // The user's own position: a marker plus an accuracy circle, and the last
+  // known coordinates so the "locate" button can recenter without re-querying.
+  private userMarker: L.Marker | null = null;
+  private userAccuracy: L.Circle | null = null;
+  private userLocation: L.LatLng | null = null;
 
   // create mode
   private drawnLayer: L.Layer | null = null;
@@ -272,6 +285,52 @@ export class MapService {
     this.map?.flyTo([lat, lng], zoom, { duration: 1.2 });
   }
 
+  // Place (or move) the marker showing the user's current position, along with a
+  // translucent circle for the reading's accuracy. Coordinates are remembered so
+  // flyToUser() can recenter on demand.
+  setUserLocation(lat: number, lng: number, accuracy = 0): void {
+    this.userLocation = L.latLng(lat, lng);
+    if (!this.map) return;
+
+    if (this.userMarker) {
+      this.userMarker.setLatLng(this.userLocation);
+    } else {
+      this.userMarker = L.marker(this.userLocation, {
+        icon: userLocationIcon,
+        interactive: false,
+        keyboard: false,
+        zIndexOffset: 1000,
+        pmIgnore: true,
+      }).addTo(this.map);
+    }
+
+    if (accuracy > 0) {
+      if (this.userAccuracy) {
+        this.userAccuracy.setLatLng(this.userLocation).setRadius(accuracy);
+      } else {
+        this.userAccuracy = L.circle(this.userLocation, {
+          radius: accuracy,
+          color: '#1a73e8',
+          weight: 1,
+          opacity: 0.4,
+          fillColor: '#1a73e8',
+          fillOpacity: 0.1,
+          interactive: false,
+          pmIgnore: true,
+        }).addTo(this.map);
+      }
+    }
+  }
+
+  hasUserLocation(): boolean {
+    return this.userLocation !== null;
+  }
+
+  /** Recenter on the user's last known position (no-op if we don't have one). */
+  flyToUser(zoom = 16): void {
+    if (this.userLocation) this.map?.flyTo(this.userLocation, zoom, { duration: 1.2 });
+  }
+
   /** Frame a route's full extent, leaving padding for the side panel. */
   fitRoute(latlngs: L.LatLngTuple[]): void {
     if (!this.map || latlngs.length === 0) return;
@@ -309,6 +368,9 @@ export class MapService {
     this.map = null;
     this.markers = [];
     this.routeLayers = [];
+    this.userMarker = null;
+    this.userAccuracy = null;
+    this.userLocation = null;
     this.drawnLayer = null;
     this.createCb = null;
     this.editCb = null;

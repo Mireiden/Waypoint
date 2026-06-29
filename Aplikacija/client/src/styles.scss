@@ -20,12 +20,6 @@ body {
   overscroll-behavior: none;
 }
 
-// While editing a route we add Geoman's `geoman-draw-cursor` class to the map so
-// empty map shows a crosshair ("click to keep drawing"). That rule also targets
-// `.leaflet-interactive`, which the vertex/middle handles are — so restore a hand
-// cursor over them to signal they're draggable (grab → grabbing while dragging).
-// Global (not component-scoped) because Leaflet/Geoman create these elements
-// outside Angular's view.
 .geoman-draw-cursor .marker-icon {
   cursor: grab !important;
 
@@ -34,33 +28,73 @@ body {
   }
 }
 
+.user-location-icon {
+  position: relative;
+}
+
+.user-location-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  background: #1a73e8;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.35);
+}
+
+.user-location-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  background: rgba(26, 115, 232, 0.35);
+  border-radius: 50%;
+  animation: user-location-pulse 2s ease-out infinite;
+}
+
+@keyframes user-location-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.2);
+    opacity: 0;
+  }
+}
+
 :root {
   // Primary — forest green
-  --primary:        #2e7d52;
-  --primary-mid:    #3a9c68;
-  --primary-light:  #b8dcc8;
-  --primary-dark:   #1b4d33;
+  --primary: #2e7d52;
+  --primary-mid: #3a9c68;
+  --primary-light: #b8dcc8;
+  --primary-dark: #1b4d33;
 
   // Accent — amber / golden orange
-  --accent:         #e8911a;
-  --accent-dark:    #b87020;
-  --accent-light:   #f5c85a;
+  --accent: #e8911a;
+  --accent-dark: #b87020;
+  --accent-light: #f5c85a;
 
   // Surfaces — warm undertone
-  --surface:        #faf8f4;
-  --surface-alt:    #f2ede3;
+  --surface: #faf8f4;
+  --surface-alt: #f2ede3;
 
   // Text
-  --text:           #191e18;
-  --text-muted:     #6b7a60;
+  --text: #191e18;
+  --text-muted: #6b7a60;
 
   // Utility
-  --border:         #cfd8c8;
-  --gold:           #f5c010;
-  --info:           #2e7d52;
-  --danger:         #dc2626;
-  --shadow:         0 2px 8px rgba(0, 0, 0, 0.10);
-  --shadow-md:      0 4px 16px rgba(0, 0, 0, 0.14);
-  --radius:         8px;
-  --radius-lg:      14px;
+  --border: #cfd8c8;
+  --gold: #f5c010;
+  --info: #2e7d52;
+  --danger: #dc2626;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.14);
+  --radius: 8px;
+  --radius-lg: 14px;
 }
