@@ -1,5 +1,6 @@
 import type { CreateCategoryInput, UpdateCategoryInput } from "../schemas/category.schema.js";
 
+import { BadRequestError } from "../errors/badRequestError.js";
 import { NotFoundError } from "../errors/notFoundError.js";
 import { prisma } from "../lib/prisma.js";
 import { removeUndefined } from "../utils/removeUndefined.js";
@@ -35,7 +36,14 @@ export const updateCategory = async (id: number, data: UpdateCategoryInput) => {
 };
 
 export const deleteCategory = async (id: number) => {
-  return prisma.category.delete({
+  const category = await prisma.category.findUnique({
     where: { id },
+    include: { _count: { select: { destinations: true } } },
   });
+  if (!category) throw new NotFoundError();
+
+  if (category._count.destinations > 0)
+    throw new BadRequestError("Cannot delete a category that is used");
+
+  return prisma.category.delete({ where: { id } });
 };
