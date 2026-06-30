@@ -7,6 +7,20 @@ import type { DestinationGeometry } from '../../models/destination.model';
 const DEFAULT_CENTER: L.LatLngTuple = [43.3217, 21.8959];
 const DEFAULT_ZOOM = 13;
 const ROUTE_COLOR = '#2e7d52';
+// Orange casing drawn under the green route line for contrast against the map.
+const ROUTE_OUTLINE = '#e8911a';
+
+// Point destinations: an orange teardrop marker with a green core. A divIcon
+// (CSS, no image) so it always renders — the default Leaflet marker image 404s
+// in the build and shows up as an empty square, including during Geoman drawing.
+// The icon anchors at the tip of the teardrop (bottom), not its center.
+const waypointIcon = L.divIcon({
+  className: 'waypoint-icon',
+  html: '<span class="waypoint-pin"><span class="waypoint-core"></span></span>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 28],
+  popupAnchor: [0, -28],
+});
 
 const iconDefault = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -141,7 +155,10 @@ export class MapService {
   ): void {
     this.clearMarkers();
     items.forEach((item) => {
-      const marker = L.marker([item.lat, item.lng], { interactive: this.overlaysInteractive })
+      const marker = L.marker([item.lat, item.lng], {
+        icon: waypointIcon,
+        interactive: this.overlaysInteractive,
+      })
         .bindTooltip(item.title, { direction: 'top' })
         .on('click', () => onClick(item.id));
       marker.addTo(this.map!);
@@ -161,10 +178,19 @@ export class MapService {
   ): void {
     this.clearRoutes();
     items.forEach((item) => {
+      const casing = L.polyline(item.latlngs, {
+        color: ROUTE_OUTLINE,
+        weight: 4.5,
+        opacity: 0.9,
+        interactive: false,
+      });
+      casing.addTo(this.map!);
+      this.routeLayers.push(casing);
+
       const line = L.polyline(item.latlngs, {
         color: ROUTE_COLOR,
-        weight: 4,
-        opacity: 0.85,
+        weight: 3,
+        opacity: 0.95,
         interactive: this.overlaysInteractive,
       })
         .bindTooltip(item.title, { direction: 'top', sticky: true })
@@ -188,10 +214,11 @@ export class MapService {
     this.map.pm.enableDraw(type === 'point' ? 'Marker' : 'Line', {
       continueDrawing: false,
       snappable: true,
+      markerStyle: { icon: waypointIcon },
     });
   }
 
-  // Stop drawing and discard the in-progress shape (used on cancel)
+  // Stop drawing and discard what is in progress (on cancel)
   disableCreate(): void {
     if (!this.map) return;
     this.map.pm.disableDraw();
@@ -326,12 +353,12 @@ export class MapService {
     return this.userLocation !== null;
   }
 
-  /** Recenter on the user's last known position (no-op if we don't have one). */
+  //Recenter on the user's last known position
   flyToUser(zoom = 16): void {
     if (this.userLocation) this.map?.flyTo(this.userLocation, zoom, { duration: 1.2 });
   }
 
-  /** Frame a route's full extent, leaving padding for the side panel. */
+  // Frame a route's full extent, leaving padding for the side panel.
   fitRoute(latlngs: L.LatLngTuple[]): void {
     if (!this.map || latlngs.length === 0) return;
     this.map.flyToBounds(L.latLngBounds(latlngs), {

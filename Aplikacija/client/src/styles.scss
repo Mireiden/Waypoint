@@ -13,9 +13,6 @@ body {
   font-family: 'Segoe UI', system-ui, sans-serif;
   background: var(--surface);
   color: var(--text);
-  // Pin the app to the viewport so the page itself can't scroll (which on
-  // mobile would drag the fixed navbar out of view). Internal panels scroll
-  // on their own. overscroll-behavior stops the iOS/Android rubber-band bounce.
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -68,27 +65,45 @@ body {
   }
 }
 
+.waypoint-pin {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transform: rotate(-45deg);
+  position: relative;
+}
+
+.waypoint-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--primary);
+  border-radius: 50%;
+}
+
 :root {
-  // Primary — forest green
   --primary: #2e7d52;
   --primary-mid: #3a9c68;
   --primary-light: #b8dcc8;
   --primary-dark: #1b4d33;
 
-  // Accent — amber / golden orange
   --accent: #e8911a;
   --accent-dark: #b87020;
   --accent-light: #f5c85a;
 
-  // Surfaces — warm undertone
   --surface: #faf8f4;
   --surface-alt: #f2ede3;
 
-  // Text
   --text: #191e18;
   --text-muted: #6b7a60;
 
-  // Utility
   --border: #cfd8c8;
   --gold: #f5c010;
   --info: #2e7d52;

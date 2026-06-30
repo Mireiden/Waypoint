@@ -6,7 +6,7 @@ import type { UserDestination } from '../../models/destination.model';
 
 export interface UpdateProfilePayload {
   // The backend's updateProfileSchema only accepts `name`; the avatar is managed
-  // separately via the dedicated upload/delete endpoints below.
+  // separately through the dedicated upload/delete endpoints below.
   name?: string;
 }
 

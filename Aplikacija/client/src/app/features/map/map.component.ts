@@ -260,10 +260,12 @@ export class MapComponent implements OnDestroy {
         next: (dests) => {
           this.destinations.set(dests);
           this.mapService.setMarkers(
-            dests.map((d) => {
-              const [lng, lat] = this.centerCoords(d);
-              return { id: d.id, lat, lng, title: d.title };
-            }),
+            dests
+              .filter((d) => d.geometry.type === 'Point')
+              .map((d) => {
+                const [lng, lat] = this.centerCoords(d);
+                return { id: d.id, lat, lng, title: d.title };
+              }),
             (id) => this.selectById(id),
           );
           this.mapService.setRoutes(
