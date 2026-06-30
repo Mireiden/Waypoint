@@ -38,7 +38,13 @@ import { AuthService } from '../../core/services/auth.service';
           <a class="explore-link" routerLink="/map">
             Explore without an account
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path
+                d="M5 12h14M13 6l6 6-6 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </a>
         </div>
@@ -82,10 +88,7 @@ import { AuthService } from '../../core/services/auth.service';
               </div>
 
               <div class="field">
-                <label for="login-password">
-                  Password
-                  <a class="forgot" href="#">Forgot?</a>
-                </label>
+                <label for="login-password"> Password </label>
                 <div class="input-wrap">
                   <input
                     id="login-password"

@@ -8,6 +8,7 @@ import {
   viewChild,
   ElementRef,
 } from '@angular/core';
+import * as L from 'leaflet';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -157,12 +158,7 @@ export class MapComponent implements OnDestroy {
   // Logged in, doesn't own this destination, and hasn't reviewed it yet.
   readonly canWriteReview = computed(() => {
     const dest = this.selectedDest();
-    return (
-      !!this.auth.currentUser() &&
-      !!dest &&
-      !this.ownedIds().has(dest.id) &&
-      !this.myReview()
-    );
+    return !!this.auth.currentUser() && !!dest && !this.ownedIds().has(dest.id) && !this.myReview();
   });
 
   createType = signal<'point' | 'route' | null>(null);
@@ -796,7 +792,6 @@ export class MapComponent implements OnDestroy {
     this.selectedDest.set({ ...dest, reviewCount, avgRating });
   }
 
-  // ─── Create destination ──────────────────────────────
   startCreate(): void {
     this.resetCreateForm();
     this.addPointRouteId.set(null);
@@ -1116,6 +1111,20 @@ export class MapComponent implements OnDestroy {
 
   locationLabel(dest: DestinationSummary): string {
     return [dest.city, dest.country].filter(Boolean).join(', ');
+  }
+
+  // Total geodesic length of a route, walking its LineString vertices and summing
+  // the great-circle distance between consecutive points. Formatted as m under 1km.
+  routeLength(dest: DestinationSummary): string {
+    if (dest.geometry.type !== 'LineString') return '';
+    const coords = dest.geometry.coordinates;
+    let meters = 0;
+    for (let i = 1; i < coords.length; i++) {
+      const [lng1, lat1] = coords[i - 1];
+      const [lng2, lat2] = coords[i];
+      meters += L.latLng(lat1, lng1).distanceTo(L.latLng(lat2, lng2));
+    }
+    return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
   }
 
   readonly categoryIcon = categoryIcon;

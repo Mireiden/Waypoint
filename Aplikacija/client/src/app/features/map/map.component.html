@@ -211,6 +211,9 @@
                   <span class="badge type-badge">{{
                     dest.type === 'route' ? '🗺 Route' : '📍 Point'
                   }}</span>
+                  @if (dest.type === 'route') {
+                    <span class="badge length-badge">📏 {{ routeLength(dest) }}</span>
+                  }
                 </div>
 
                 <div class="detail-rating-row">
@@ -921,9 +924,6 @@
     }
   </aside>
 
-  <!-- ══════════════════════════════════════════════
-       MAP AREA
-  ══════════════════════════════════════════════ -->
   <div class="map-area">
     @if (panelExpanded()) {
       <div class="map-dim-overlay" (click)="toggleExpanded()"></div>
