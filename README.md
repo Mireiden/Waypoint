@@ -93,7 +93,3 @@ npm start                   # ng serve at http://localhost:4200
 
 **Server:** `npm run dev`, `npm run build`, `npm start`, `npm run lint`, `npm run format`, `npm run type-check`
 **Client:** `npm start`, `npm run build`, `npm run watch`, `npm test`
-
-## Documentation
-
-Detailed project documentation (system vision, requirements specification, architecture, test plan and specification, user guide) lives in the [`Dokumentacija/`](Dokumentacija/) directory.
