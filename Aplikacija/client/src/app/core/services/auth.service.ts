@@ -38,6 +38,17 @@ export class AuthService {
     );
   }
 
+  refresh() {
+    return this.http
+      .post<AuthResponse>(`${this.apiBase}/refresh`, null, { withCredentials: true })
+      .pipe(tap((response) => this.updateStoredUser(response.user)));
+  }
+
+  clearSession(): void {
+    localStorage.removeItem(USER_KEY);
+    this.currentUser.set(null);
+  }
+
   private setSession(response: AuthResponse): void {
     localStorage.setItem(USER_KEY, JSON.stringify(response.user));
     this.currentUser.set(response.user);

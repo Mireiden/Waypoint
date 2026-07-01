@@ -19,7 +19,8 @@ const envSchema = z.object({
   FRONTEND_URL: z.url(),
 
   JWT_ALGO: z.enum(["HS256", "HS384", "HS512", "RS256"]).default("HS256"),
-  JWT_EXPIRES_IN: z.string().default("7d"),
+  JWT_EXPIRES_IN: z.string().default("15m"),
+  REFRESH_EXPIRES_DAYS: z.coerce.number().default(7),
   JWT_SECRET: z.string().min(32),
 
   NOMINATIM_URL: z.url().default("https://nominatim.openstreetmap.org/reverse"),
@@ -68,6 +69,7 @@ const config = {
   jwt: {
     algorithm: env.JWT_ALGO as Algorithm,
     expiresIn: env.JWT_EXPIRES_IN as ExpiresIn,
+    refreshExpiresDays: env.REFRESH_EXPIRES_DAYS,
     secret: env.JWT_SECRET,
   },
 
