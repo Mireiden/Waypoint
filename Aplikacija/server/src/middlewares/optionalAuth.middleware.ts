@@ -8,11 +8,7 @@ import { authUserSchema } from "../schemas/auth.schema.js";
 //calls next() even if the auth fails, basically just puts any user into req.user
 //used for routes that act differently based on user role.
 const optionalAuthMiddleware = (req: Request, _res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  let token: string | undefined;
-
-  if (authHeader?.startsWith("Bearer ")) token = authHeader.split(" ")[1];
-  else if (req.cookies.jwt) token = String(req.cookies.jwt);
+  const token = req.cookies.jwt ? String(req.cookies.jwt) : undefined;
 
   if (!token) {
     next();

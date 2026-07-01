@@ -7,13 +7,7 @@ import { UnauthorizedError } from "../errors/index.js";
 import { authUserSchema } from "../schemas/auth.schema.js";
 
 const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
-  //getting the token from the auth header will possibly be removed in future commits
-  //since the token is only sent via cookies
-  const authHeader = req.headers.authorization;
-  let token: string | undefined;
-
-  if (authHeader?.startsWith("Bearer ")) token = authHeader.split(" ")[1];
-  else if (req.cookies.jwt) token = String(req.cookies.jwt);
+  const token = req.cookies.jwt ? String(req.cookies.jwt) : undefined;
 
   if (!token) throw new UnauthorizedError("Unauthorized, no token provided");
 
