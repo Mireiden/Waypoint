@@ -522,7 +522,7 @@
         @if (categories().length === 0 && !loading()) {
           <div class="empty-state">No categories yet</div>
         } @else {
-          <div class="table-wrap table-wrap--categories">
+          <div class="table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
@@ -541,7 +541,8 @@
                           <button
                             type="button"
                             class="icon-picker-trigger"
-                            (click)="editIconPickerOpen.set(!editIconPickerOpen())"
+                            #editTrigger
+                            (click)="toggleEditIconPicker(editTrigger)"
                           >
                             <span class="ip-current">{{ categoryIcon(editIcon()) }}</span>
                             <span class="ip-caret">▾</span>
@@ -551,7 +552,12 @@
                               class="icon-backdrop"
                               (click)="editIconPickerOpen.set(false)"
                             ></div>
-                            <div class="icon-grid">
+                            <div
+                              class="icon-grid icon-grid--fixed"
+                              [style.top.px]="editIconPos()?.top"
+                              [style.bottom.px]="editIconPos()?.bottom"
+                              [style.left.px]="editIconPos()?.left"
+                            >
                               @for (emoji of emojiChoices; track emoji) {
                                 <button
                                   type="button"

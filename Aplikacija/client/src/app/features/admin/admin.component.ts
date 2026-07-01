@@ -83,6 +83,10 @@ export class AdminComponent implements OnInit {
   // Emoji picker open state (one for the add form, one for the row being edited).
   addIconPickerOpen = signal(false);
   editIconPickerOpen = signal(false);
+  // The edit picker lives inside the scrollable table, so its dropdown is
+  // rendered fixed and anchored to the trigger to avoid being clipped. It
+  // flips above the trigger when there's more room there than below.
+  editIconPos = signal<{ left: number; top?: number; bottom?: number } | null>(null);
 
   // Inline "are you sure?" state for destructive actions.
   confirmingDestId = signal<number | null>(null);
@@ -430,6 +434,23 @@ export class AdminComponent implements OnInit {
   pickNewIcon(emoji: string) {
     this.newCategoryIcon.set(emoji);
     this.addIconPickerOpen.set(false);
+  }
+
+  toggleEditIconPicker(trigger: HTMLElement) {
+    if (this.editIconPickerOpen()) {
+      this.editIconPickerOpen.set(false);
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    const gap = 6;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    if (spaceBelow >= spaceAbove) {
+      this.editIconPos.set({ left: rect.left, top: rect.bottom + gap });
+    } else {
+      this.editIconPos.set({ left: rect.left, bottom: window.innerHeight - rect.top + gap });
+    }
+    this.editIconPickerOpen.set(true);
   }
 
   pickEditIcon(emoji: string) {

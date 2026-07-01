@@ -180,10 +180,6 @@ nav {
   padding: 20px 28px;
 }
 
-.table-wrap--categories {
-  overflow: visible;
-}
-
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -658,6 +654,13 @@ nav {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+}
+
+.icon-grid--fixed {
+  position: fixed;
+  top: auto;
+  bottom: auto;
+  left: auto;
 }
 
 .icon-option {
