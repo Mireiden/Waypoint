@@ -11,7 +11,7 @@ export interface ReportedTarget {
   latest: string;
 }
 
-// One individual report against a target (admin drill-down view).
+// One individual report against a target
 export interface TargetReport {
   id: number;
   reason: ReportReason;

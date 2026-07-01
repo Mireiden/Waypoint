@@ -68,7 +68,6 @@ import { AuthService } from '../../core/services/auth.service';
             </button>
           </div>
 
-          <!-- Login form -->
           @if (mode() === 'login') {
             <form class="auth-form" (ngSubmit)="onLogin()">
               <h2>Welcome back</h2>
@@ -120,7 +119,6 @@ import { AuthService } from '../../core/services/auth.service';
             </form>
           }
 
-          <!-- Register form -->
           @if (mode() === 'register') {
             <form class="auth-form" (ngSubmit)="onRegister()">
               <h2>Join Waypoint</h2>

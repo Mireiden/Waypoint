@@ -12,7 +12,7 @@ export interface UserWithCount extends User {
 }
 
 // What GET /users/:id returns. A normal viewer gets only the public fields;
-// an admin viewer additionally gets email and role (the server branches on role).
+// an admin viewer additionally gets email and role
 export interface PublicProfile {
   id: number;
   name: string;

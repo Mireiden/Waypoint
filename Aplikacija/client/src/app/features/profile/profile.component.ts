@@ -16,7 +16,6 @@ import { categoryIcon } from '../../shared/category-icons';
   template: `
     @if (auth.currentUser(); as user) {
       <div class="profile-page">
-        <!-- Green hero: avatar + identity all inside -->
         <div class="profile-hero">
           <div class="hero-deco"></div>
 
@@ -43,9 +42,13 @@ import { categoryIcon } from '../../shared/category-icons';
           </span>
 
           <div class="stats-row">
-            <span class="stat"><strong>{{ routes().length }}</strong> routes</span>
+            <span class="stat"
+              ><strong>{{ routes().length }}</strong> routes</span
+            >
             <span class="stat-dot">·</span>
-            <span class="stat"><strong>{{ points().length }}</strong> points</span>
+            <span class="stat"
+              ><strong>{{ points().length }}</strong> points</span
+            >
             <span class="stat-dot">·</span>
             <span class="stat">Since {{ formatDate(user.createdAt) }}</span>
           </div>
@@ -105,7 +108,13 @@ import { categoryIcon } from '../../shared/category-icons';
                           [disabled]="isUploadingAvatar()"
                           (click)="avatarFile.click()"
                         >
-                          {{ isUploadingAvatar() ? 'Uploading…' : user.avatarUrl ? 'Change photo' : 'Upload photo' }}
+                          {{
+                            isUploadingAvatar()
+                              ? 'Uploading…'
+                              : user.avatarUrl
+                                ? 'Change photo'
+                                : 'Upload photo'
+                          }}
                         </button>
                         @if (user.avatarUrl) {
                           <button
@@ -144,15 +153,34 @@ import { categoryIcon } from '../../shared/category-icons';
                     <div class="edit-fields">
                       <div class="field">
                         <label for="pw-current">Current password</label>
-                        <input id="pw-current" type="password" [(ngModel)]="pwCurrent" name="pwCurrent" required />
+                        <input
+                          id="pw-current"
+                          type="password"
+                          [(ngModel)]="pwCurrent"
+                          name="pwCurrent"
+                          required
+                        />
                       </div>
                       <div class="field">
                         <label for="pw-new">New password</label>
-                        <input id="pw-new" type="password" [(ngModel)]="pwNew" name="pwNew" minlength="8" required />
+                        <input
+                          id="pw-new"
+                          type="password"
+                          [(ngModel)]="pwNew"
+                          name="pwNew"
+                          minlength="8"
+                          required
+                        />
                       </div>
                       <div class="field">
                         <label for="pw-confirm">Confirm new password</label>
-                        <input id="pw-confirm" type="password" [(ngModel)]="pwConfirm" name="pwConfirm" required />
+                        <input
+                          id="pw-confirm"
+                          type="password"
+                          [(ngModel)]="pwConfirm"
+                          name="pwConfirm"
+                          required
+                        />
                       </div>
                       <button type="submit" class="btn-save" [disabled]="isPwSaving()">
                         {{ isPwSaving() ? 'Saving…' : 'Update Password' }}
@@ -170,7 +198,6 @@ import { categoryIcon } from '../../shared/category-icons';
             </div>
           }
 
-          <!-- Tab bar -->
           <div class="tab-bar">
             <button
               class="tab"
@@ -195,7 +222,6 @@ import { categoryIcon } from '../../shared/category-icons';
             </button>
           </div>
 
-          <!-- Tab content -->
           <div class="tab-content">
             @if (activeTab() === 'saved') {
               @if (favoritesLoading()) {
@@ -228,7 +254,10 @@ import { categoryIcon } from '../../shared/category-icons';
                           }
                         </div>
                         <div class="dest-foot">
-                          <span>{{ dest._count.reviews }} {{ dest._count.reviews === 1 ? 'review' : 'reviews' }}</span>
+                          <span
+                            >{{ dest._count.reviews }}
+                            {{ dest._count.reviews === 1 ? 'review' : 'reviews' }}</span
+                          >
                           @if (dest.user) {
                             <span class="dest-date">by {{ dest.user.name }}</span>
                           }
@@ -285,7 +314,10 @@ import { categoryIcon } from '../../shared/category-icons';
                           }
                         </div>
                         <div class="dest-foot">
-                          <span>{{ dest._count.reviews }} {{ dest._count.reviews === 1 ? 'review' : 'reviews' }}</span>
+                          <span
+                            >{{ dest._count.reviews }}
+                            {{ dest._count.reviews === 1 ? 'review' : 'reviews' }}</span
+                          >
                           <span class="dest-date">{{ formatDate(dest.createdAt) }}</span>
                         </div>
                       </div>
@@ -453,28 +485,33 @@ export class ProfileComponent {
     }
 
     this.isPwSaving.set(true);
-    this.userService.changePassword({ currentPassword: this.pwCurrent, newPassword: this.pwNew }).subscribe({
-      next: () => {
-        this.isPwSaving.set(false);
-        this.pwSuccess.set(true);
-        this.pwCurrent = '';
-        this.pwNew = '';
-        this.pwConfirm = '';
-        setTimeout(() => {
-          this.pwSuccess.set(false);
-          this.pwOpen.set(false);
-        }, 1500);
-      },
-      error: (err) => {
-        this.isPwSaving.set(false);
-        this.pwError.set(err?.error?.error ?? 'Could not update password. Try again.');
-      },
-    });
+    this.userService
+      .changePassword({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+      .subscribe({
+        next: () => {
+          this.isPwSaving.set(false);
+          this.pwSuccess.set(true);
+          this.pwCurrent = '';
+          this.pwNew = '';
+          this.pwConfirm = '';
+          setTimeout(() => {
+            this.pwSuccess.set(false);
+            this.pwOpen.set(false);
+          }, 1500);
+        },
+        error: (err) => {
+          this.isPwSaving.set(false);
+          this.pwError.set(err?.error?.error ?? 'Could not update password. Try again.');
+        },
+      });
   }
 
   async shareProfile(id: number): Promise<void> {
     const url = `${location.origin}/users/${id}`;
-    const result = await this.shareService.share(url, `${this.auth.currentUser()?.name} on Waypoint`);
+    const result = await this.shareService.share(
+      url,
+      `${this.auth.currentUser()?.name} on Waypoint`,
+    );
     if (result === 'copied') this.flashShareLabel('✓ Link copied!');
     else if (result === 'failed') this.flashShareLabel('Could not share');
   }

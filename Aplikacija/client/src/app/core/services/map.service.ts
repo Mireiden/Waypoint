@@ -63,14 +63,14 @@ export class MapService {
   // created for the purpose of having a more natural feel when going into "edit" mode because the preview lines otherwise disappears
   private previewLine: L.Polyline | null = null;
 
+  // Edit mode
   private readonly handleEdit = (): void => {
     if (!this.drawnLayer) return;
     const feature = (this.drawnLayer as L.Polyline | L.Marker).toGeoJSON();
     this.editCb?.(feature.geometry as DestinationGeometry);
   };
 
-  // While editing a route, a click on empty map extends the polyline with a new vertex at its end.
-  // Clicks on Geoman's handles or the line itself are left to edit mode (move / insert / delete).
+  // While editing a route, clicking on an empty space on the map extends the current route (polyline) and adds the new vertex at the end
   private readonly handleMapAppend = (e: L.LeafletMouseEvent): void => {
     if (!(this.drawnLayer instanceof L.Polyline)) return;
     const target = e.originalEvent.target as HTMLElement | null;
@@ -137,7 +137,7 @@ export class MapService {
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // Geoman fires pm:create when a shape is finished while drawing is enabled.
+    // pm:create is called whenever a user finishes drawing a destination; disables drawing after finishing
     this.map.on('pm:create', (e: { layer: L.Layer }) => {
       this.drawnLayer = e.layer;
       const feature = (e.layer as L.Polyline | L.Marker).toGeoJSON();
@@ -271,9 +271,9 @@ export class MapService {
   }
 
   /**
-   * Enable Geoman edit mode on the drawn shape: drag vertices, add via middle
+   * Enable Geoman edit mode on the drawn shape; drag vertices, add via middle
    * handles, and tap a vertex to delete it (removeVertexOn: 'click' so it works
-   * on touch, where there is no right-click). `onChange` fires after each edit.
+   * on touch, where there is no right click). `onChange` is called after each edit.
    */
   enableEditDrawn(onChange: (geometry: DestinationGeometry) => void): void {
     const layer = this.drawnLayer as (L.Polyline | L.Marker) & { pm?: L.PM.PMLayer };
@@ -285,7 +285,7 @@ export class MapService {
     layer.on('pm:vertexremoved', this.handleEdit);
     layer.on('pm:markerdragend', this.handleEdit);
     // Routes can be extended in the edit mode; extending a route is the same as drawing one
-    // We are using Geoman's crosshair cursor for drawing and moving vertices now activates
+    // We are using Geoman's crosshair cursor for drawing and moving vertices now activates the
     // grabbing hand cursor for better user experience (otherwise, the crosshair would have been used for everything)
     if (layer instanceof L.Polyline) {
       this.map?.on('click', this.handleMapAppend);
@@ -314,7 +314,7 @@ export class MapService {
 
   // Place (or move) the marker showing the user's current position, along with a
   // translucent circle for the reading's accuracy. Coordinates are remembered so
-  // flyToUser() can recenter on demand.
+  // flyToUser() can recenter when the location button is clicked.
   setUserLocation(lat: number, lng: number, accuracy = 0): void {
     this.userLocation = L.latLng(lat, lng);
     if (!this.map) return;
@@ -358,7 +358,6 @@ export class MapService {
     if (this.userLocation) this.map?.flyTo(this.userLocation, zoom, { duration: 1.2 });
   }
 
-  // Frame a route's full extent, leaving padding for the side panel.
   fitRoute(latlngs: L.LatLngTuple[]): void {
     if (!this.map || latlngs.length === 0) return;
     this.map.flyToBounds(L.latLngBounds(latlngs), {

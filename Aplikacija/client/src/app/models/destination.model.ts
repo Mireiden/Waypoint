@@ -67,8 +67,7 @@ export interface Destination extends DestinationSummary {
   user: { id: number; name: string; avatarUrl: string | null } | null;
 }
 
-// A saved destination as returned by GET /me/favorites (flattened from the
-// favorite join rows). Lighter than a full Destination — no geometry/media.
+// A saved destination as returned by GET /me/favorites. Not a full destination — no geometry/media.
 export interface FavoriteDestination {
   id: number;
   title: string;

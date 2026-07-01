@@ -2,8 +2,8 @@ import type { DestinationReview } from './destination.model';
 
 export type { DestinationReview } from './destination.model';
 
-// Shape returned by GET /reviews/:id — a review plus the destination it belongs to,
-// so callers (e.g. report moderation) can navigate to it.
+// Shape returned by GET /reviews/:id; a review plus the destination it belongs to,
+// so callers (for example admins) can navigate to it.
 export interface ReviewDetail extends DestinationReview {
   destination: { id: number; title: string } | null;
 }

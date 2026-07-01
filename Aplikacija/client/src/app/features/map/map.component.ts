@@ -200,6 +200,7 @@ export class MapComponent implements OnDestroy {
   locating = signal(false);
 
   readonly destinations = signal<DestinationSummary[]>([]);
+
   // True when the map is zoomed out past MIN_LIST_ZOOM after
   // which we stop rendering results and show a hint on the sidebar to zoom in
   readonly tooZoomedOut = signal(false);
@@ -217,7 +218,7 @@ export class MapComponent implements OnDestroy {
         error: (err) => console.error('Failed to load categories:', err),
       });
 
-      // Track which destinations belong to the signed-in user so we can show management controls on their own routes.
+      // Track which destinations belong to the signed in user so we can show management controls on their own routes.
       if (this.auth.currentUser()) {
         this.destinationService.getMine().subscribe({
           next: (mine) => this.ownedIds.set(new Set(mine.map((d) => d.id))),
@@ -318,14 +319,13 @@ export class MapComponent implements OnDestroy {
     if (next && this.panelCollapsed()) this.panelCollapsed.set(false);
     setTimeout(() => this.mapService.invalidateSize(), 300);
   }
-
-  // ─── Bottom-sheet handle: drag to open/collapse (mobile) ──────────────
+  // Bottom sheet handler:
   // Pointer events cover both touch and mouse. A drag shorter than the tap
   // threshold falls back to a plain toggle, so the handle still works on tap.
   onHandlePointerDown(ev: PointerEvent): void {
     const panel = this.sidePanel()?.nativeElement;
     if (!panel) return;
-    // Collapsed state translates the sheet down by (height - 92px); see SCSS.
+    // Collapsed state translates the sheet down by (height - 92px)
     this.collapsedTranslate = panel.offsetHeight - 92;
     this.dragStartTranslate = this.panelCollapsed() ? this.collapsedTranslate : 0;
     this.dragStartY = ev.clientY;
@@ -444,14 +444,13 @@ export class MapComponent implements OnDestroy {
   }
 
   selectById(id: number): void {
-    // While creating/drawing, ignore clicks on existing destinations, otherwise an accidental click opens a detail view and the user gets stuck on the detail view before being
-    // able to create a destination
+    // While creating/drawing, ignore clicks on existing destinations, otherwise an accidental click opens a detail view and the user gets stuck on the detail view before being able to create a destination
     if (this.panelView() === 'create') return;
     const summary = this.destinations().find((d) => d.id === id);
     if (summary) this.selectDestination(summary);
   }
 
-  // Open a destination's detail straight from its id (used for deep links (even though the destination might not be in the bbox)
+  // Open a destination's detail straight from its id (used for deep links (even though the destination might not be in the bbox))
   private openDestinationById(id: number, reviewId: number | null = null): void {
     this.panelView.set('detail');
     if (this.panelCollapsed()) this.panelCollapsed.set(false);
@@ -507,7 +506,6 @@ export class MapComponent implements OnDestroy {
     this.mapService.zoomTo(13);
   }
 
-  // ─── Report (UC-10) ──────────────────────────────────
   openReport(type: ReportTargetType, id: number, label: string): void {
     this.reportTarget.set({ type, id, label });
   }
@@ -516,7 +514,7 @@ export class MapComponent implements OnDestroy {
     this.reportTarget.set(null);
   }
 
-  // True while a save/unsave request for the open destination is in flight.
+  // True while a save/unsave request for the open destination is in progress.
   togglingFavorite = signal(false);
 
   toggleFavorite(): void {
@@ -658,8 +656,7 @@ export class MapComponent implements OnDestroy {
     return metres < 1000 ? `${Math.round(metres)} m` : `${(metres / 1000).toFixed(1)} km`;
   }
 
-  // Shortest distance (metres) from a point to a polyline, via a local planar
-  // projection around the point — accurate enough at the city scale we work at.
+  // Shortest distance (metres) from a point to a polyline, via a local planar projection around the point
   private pointToPolylineMeters(lat: number, lng: number, coords: [number, number][]): number {
     if (coords.length === 0) return Infinity;
     const R = 6371000;
@@ -780,7 +777,7 @@ export class MapComponent implements OnDestroy {
     );
   }
 
-  /** Keep the detail header's rating row in sync with the current review list. */
+  // Keep the detail header's rating row in sync with the current review list.
   private recomputeRatingSummary(): void {
     const dest = this.selectedDest();
     if (!dest) return;
@@ -860,9 +857,8 @@ export class MapComponent implements OnDestroy {
     this.newFiles = this.newFiles.filter((_, i) => i !== index);
   }
 
-  // Accumulate picked files across multiple selections instead of replacing them
-  // (a file <input> only ever holds its most recent selection). De-dupes by
-  // name+size+mtime and resets the input so the same file can be re-picked.
+  // Accumulate picked files across multiple selections instead of overwriting the firstly selected ones
+  // De-dupes by name+size+last modified time and resets the input so the same file can be re-picked.
   private appendFiles(existing: File[], input: HTMLInputElement): File[] {
     const incoming = input.files ? Array.from(input.files) : [];
     const merged = [...existing];
@@ -938,7 +934,6 @@ export class MapComponent implements OnDestroy {
       },
       error: (err) => {
         this.publishing.set(false);
-        // The API returns errors as { error: "message" }.
         this.createError.set(err?.error?.error ?? 'Failed to publish destination.');
       },
     });
@@ -966,9 +961,9 @@ export class MapComponent implements OnDestroy {
     this.publishing.set(false);
   }
 
-  // ─── Edit an existing destination ────────────────────
+  // Editing a destination:
   // Open the inline edit form for the selected destination, pre-filled with its
-  // current title / category / description. Geometry isn't editable here.
+  // current title / category / description. Geometry isn't editable.
   startEditDest(): void {
     const dest = this.selectedDest();
     if (!dest || !this.canModifySelected()) return;
@@ -1042,14 +1037,14 @@ export class MapComponent implements OnDestroy {
 
   private finishEditDest(updated: Destination): void {
     this.setSelectedPreservingFavorite(updated);
-    this.reload$.next(); // refresh list + map marker/tooltip (title/category may have changed)
+    this.reload$.next();
     this.editSaving.set(false);
     this.editNewFiles = [];
     this.editingDest.set(false);
     this.confirmRemoveMediaId.set(null);
   }
 
-  // Delete an already-saved media item from the destination (owner/admin only).
+  // Delete an already saved media item from the destination (owner/admin only).
   deleteExistingMedia(mediaId: number): void {
     const dest = this.selectedDest();
     if (!dest) return;
@@ -1068,7 +1063,6 @@ export class MapComponent implements OnDestroy {
     });
   }
 
-  // ─── Delete a destination (admin) ────────────────────
   requestDeleteDest(): void {
     this.deleteDestError.set(null);
     this.confirmingDeleteDest.set(true);
@@ -1151,7 +1145,7 @@ export class MapComponent implements OnDestroy {
     setTimeout(() => this.showSuggestions.set(false), 150);
   }
 
-  // The locate button: if we already know where the user is, just recenter on
+  // The locate button; if we already know where the user is, just recenter on
   // their marker; otherwise request a fresh fix (which also drops the marker).
   locateMe(): void {
     if (this.mapService.hasUserLocation()) {

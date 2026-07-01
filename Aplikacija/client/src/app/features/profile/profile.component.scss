@@ -3,9 +3,13 @@
   background: var(--surface);
 }
 
-/* ── Hero (green identity section) ───────── */
 .profile-hero {
-  background: linear-gradient(145deg, var(--primary-dark) 0%, var(--primary) 58%, var(--primary-mid) 100%);
+  background: linear-gradient(
+    145deg,
+    var(--primary-dark) 0%,
+    var(--primary) 58%,
+    var(--primary-mid) 100%
+  );
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -118,7 +122,9 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 
   &:hover {
     background: rgba(255, 255, 255, 0.12);
@@ -126,14 +132,12 @@
   }
 }
 
-/* ── Content area ─────────────────────────── */
 .profile-container {
   max-width: 900px;
   margin: 0 auto;
   padding: 0 32px 64px;
 }
 
-/* ── Inline edit section ──────────────────── */
 .edit-section {
   margin-top: 24px;
   padding: 20px 24px;
@@ -175,7 +179,9 @@
   font-size: 0.9rem;
   color: var(--text);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   width: 100%;
 
   &::placeholder {
@@ -245,10 +251,19 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
 
-  &:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .btn-avatar-remove:hover:not(:disabled) {
@@ -267,11 +282,20 @@
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s, transform 0.1s;
+  transition:
+    background 0.2s,
+    transform 0.1s;
 
-  &:hover:not(:disabled) { background: var(--accent-dark); }
-  &:active:not(:disabled) { transform: scale(0.97); }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    background: var(--accent-dark);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .form-error {
@@ -287,7 +311,7 @@
   margin: 10px 0 0;
 }
 
-/* ── Password change ─────────────────────── */
+// Password change
 .pw-section {
   margin-top: 20px;
   padding-top: 20px;
@@ -303,7 +327,9 @@
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 
   &:hover {
     border-color: var(--primary);
@@ -315,7 +341,7 @@
   margin-top: 16px;
 }
 
-/* ── Tabs ─────────────────────────────────── */
+// Tabs
 .tab-bar {
   display: flex;
   margin-top: 28px;
@@ -345,17 +371,20 @@
     transition: transform 0.2s;
   }
 
-  &:hover { color: var(--text); }
+  &:hover {
+    color: var(--text);
+  }
 
   &.active {
     color: var(--primary);
     font-weight: 600;
 
-    &::after { transform: scaleX(1); }
+    &::after {
+      transform: scaleX(1);
+    }
   }
 }
 
-/* ── Tab content ──────────────────────────── */
 .tab-content {
   padding-top: 40px;
 }
@@ -401,10 +430,11 @@
   text-decoration: none;
   transition: background 0.2s;
 
-  &:hover { background: var(--primary-dark); }
+  &:hover {
+    background: var(--primary-dark);
+  }
 }
 
-/* ── Destination cards ────────────────────── */
 .dest-grid,
 .dest-skeleton-grid {
   display: grid;
@@ -419,7 +449,9 @@
   border-radius: var(--radius-lg);
   background: var(--surface);
   overflow: hidden;
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
 
   &:hover {
     box-shadow: var(--shadow);
@@ -427,7 +459,6 @@
   }
 }
 
-// Favorites cards are links to the map detail — strip the anchor styling.
 .dest-card-link {
   text-decoration: none;
   color: inherit;
@@ -491,17 +522,26 @@
 .dest-skeleton {
   aspect-ratio: 16 / 10;
   border-radius: var(--radius-lg);
-  background: linear-gradient(90deg, var(--surface-alt) 25%, var(--border) 50%, var(--surface-alt) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--surface-alt) 25%,
+    var(--border) 50%,
+    var(--surface-alt) 75%
+  );
   background-size: 200% 100%;
   animation: dest-shimmer 1.3s infinite;
 }
 
 @keyframes dest-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
-/* ── Responsive ───────────────────────────── */
+// Mobile view
 @media (max-width: 640px) {
   .profile-container {
     padding: 0 16px 48px;
