@@ -23,7 +23,7 @@ const accessCookieOptions: CookieOptions = {
   maxAge: 1000 * 60 * 60 * 24 * 7,
 };
 
-// refresh token: only ever sent to the auth routes (refresh + logout)
+// refresh token: only ever sent to /refresh and /logout
 const refreshCookieOptions: CookieOptions = {
   ...cookieBase,
   path: "/api/auth",
