@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 
 import { treeifyError } from "zod";
 
-import { ValidationError } from "../errors/validationError.js";
+import { ValidationError } from "../errors/index.js";
 import {
   createReportSchema,
   listReportsQuerySchema,

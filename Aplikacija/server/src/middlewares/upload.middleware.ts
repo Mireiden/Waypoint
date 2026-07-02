@@ -7,7 +7,6 @@ const SUPPORTED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
-  "image/gif",
   "image/avif",
 
   "video/mp4",

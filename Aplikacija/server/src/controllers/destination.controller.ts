@@ -1,7 +1,7 @@
 import { type Request, type Response } from "express";
 import { treeifyError } from "zod";
 
-import { ValidationError } from "../errors/validationError.js";
+import { ValidationError } from "../errors/index.js";
 import {
   addRoutePointSchema,
   createDestinationSchema,
@@ -36,8 +36,6 @@ export const getMyDestinations = async (req: Request, res: Response) => {
   res.json(destinations);
 };
 
-// Public: the destinations created by a given user (for their profile page).
-// Reuses the same query as getMyDestinations, just keyed by the URL id.
 export const getUserDestinations = async (req: Request, res: Response) => {
   const userId = parseIdParam(req.params.id, "user id");
   const destinations = await destinationService.findByUser(userId);
