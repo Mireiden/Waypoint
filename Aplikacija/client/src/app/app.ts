@@ -22,6 +22,7 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
       main {
         flex: 1;
         min-height: 0;
+        overflow-y: auto;
       }
     `,
   ],
