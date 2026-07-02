@@ -22,10 +22,11 @@ const shutdown = (signal: string) => {
     });
   });
 
+  // force exit if shutting down doesn't happen after 10s
   setTimeout(() => {
     console.error("Forced shutdown after timeout");
     process.exit(1);
-  }, 10_000).unref(); //this timer doesn't keep the process alive
+  }, 10_000).unref(); //unref to that this timer doesn't keep the process alive
 };
 
 process.on("SIGTERM", () => {

@@ -1,7 +1,6 @@
 import type { CreateCategoryInput, UpdateCategoryInput } from "../schemas/category.schema.js";
 
-import { BadRequestError } from "../errors/badRequestError.js";
-import { NotFoundError } from "../errors/notFoundError.js";
+import { BadRequestError, NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/prisma.js";
 import { removeUndefined } from "../utils/removeUndefined.js";
 

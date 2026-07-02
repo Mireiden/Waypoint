@@ -72,7 +72,11 @@ export const deleteMe = async (req: Request, res: Response) => {
   const parsed = deleteAccountSchema.safeParse(req.body);
   if (!parsed.success) throw new ValidationError(treeifyError(parsed.error));
   await userService.deleteAccount(req.user.id, parsed.data.currentPassword);
-  res.clearCookie("jwt").status(204).send();
+  res
+    .clearCookie("jwt", { path: "/api" })
+    .clearCookie("refresh", { path: "/api/auth" })
+    .status(204)
+    .send();
 };
 
 export const changePassword = async (req: Request, res: Response) => {

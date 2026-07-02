@@ -5,7 +5,7 @@ export class ConflictError extends AppError {
     public message = "Conflict",
     public details?: string,
   ) {
-    super(message, 403);
+    super(message, 409);
     this.details = details;
   }
 }
